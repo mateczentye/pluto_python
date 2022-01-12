@@ -1,14 +1,13 @@
 #%%
-from _pytest.python_api import raises
 from h5py._hl import selections
 from matplotlib.colors import Colormap
+from numpy.lib.arraypad import pad
 import pandas
 import numpy as np
 import h5py
 import os
 import matplotlib.pyplot as plt
 import matplotlib.animation as pla
-import pytest
 
 class PlutoPython:
     """
@@ -29,6 +28,8 @@ class PlutoPython:
         self.image_size = image_size
         self.selector = select_variable
         self.time_step = time_step
+
+        self.closure = False
 
         ### Classifier variables
         self.variables = None
@@ -71,21 +72,21 @@ class PlutoPython:
         self.azimuthal_velocity = v_azi
         self.axial_velocity = v_axi
 
-        self.data = data[self.variables[self.selector]] # data[z][phi][rad]
-        self.data_reshape = np.reshape(self.data, (600,300)).T
-
         grid = h5_read[cell_coord]
-        
+            
         self.radial_grid = [r[0] for r in list(np.reshape(grid['X'], (600, 300)).T)]
         self.axial_grid = np.reshape(grid['Z'], (600, 300)).T[0]
 
         if output_selector == None:
+            self.data = data[self.variables[self.selector]] # data[z][phi][rad]
+            self.data_reshape = np.reshape(self.data, (600,300)).T
             return [self.data_reshape, self.axial_grid, self.axial_grid]
+
         elif output_selector == 'all':
             return data
 
 
-    def plot(self):
+    def plot(self,close=False):
         """
         General plotting with more arguments to select what data set to plot.
         
@@ -99,41 +100,38 @@ class PlutoPython:
 
         self.classifier()
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        plt.tight_layout()
 
         if self.variables[self.selector] == self.pressure: # or variables[selector] == density:
-            pl = axes.contourf(self.axial_grid, self.radial_grid, np.log(self.data_reshape), cmap='Spectral')
-            plt.title(f'log({self.variables[self.selector]}) at {self.timestep.replace("_", " ")}')
+            pl = axes.contourf(self.axial_grid, self.radial_grid, np.log(self.data_reshape), cmap='Spectral', levels=128)
+            axes.set_title(f'log({self.variables[self.selector]}) at {self.timestep.replace("_", " ")}')
 
         else:
-            pl = axes.contourf(self.axial_grid, self.radial_grid, self.data_reshape, cmap='Spectral')
-            plt.title(f'{self.variables[self.selector]} at {self.timestep.replace("_", " ")}')
+            pl = axes.contourf(self.axial_grid, self.radial_grid, self.data_reshape, cmap='Spectral', levels=128)
+            axes.set_title(f'{self.variables[self.selector]} at {self.timestep.replace("_", " ")}')
 
         figure.colorbar(pl, location='right', shrink=0.83, aspect=20,pad=0.02)
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
         return pl
 
-    def plot_bfield_magnitude(self):
+    def plot_bfield_magnitude(self,close=False):
         """
         plots the magnitude of the magnetic fields, with no direction,
         calculated from the 3 components produced by PLUTO
 
-        Returns a matplotlib plot object
+        Returns the data set that is being plotted
         """
         data = self.classifier(output_selector='all')
         bx1 = np.reshape(data[self.b_radial], (600, 300)).T
         bx2 = np.reshape(data[self.b_azimuthal], (600, 300)).T
         bx3 = np.reshape(data[self.b_axial], (600, 300)).T
-        b_mag = np.sqrt(np.asarray(bx1)**2 + np.asarray(bx2)**2 + np.asarray(bx3)**2)
+        data2plot = np.sqrt(np.asarray(bx1)**2 + np.asarray(bx2)**2 + np.asarray(bx3)**2)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, b_mag, cmap='Spectral')
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
         
         figure.colorbar(pl, 
             location='right',  
@@ -144,28 +142,27 @@ class PlutoPython:
             format='%.2f'
         )
 
-        plt.title(f'Magnetic field magnitude at {self.timestep.replace("_", " ")}')
-        plt.tight_layout()
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_title(f'Magnetic field magnitude at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
-        return pl
+        if close==True:
+            plt.close()
+        return data2plot
 
-    def plot_glm(self):
+    def plot_glm(self,close=False):
         """
         Plots the General Lagrangian Multiplier which is an output due to the divB control
         
-        Returns a matplotlib plot object
+        Returns the data set that is being plotted
         """     
         data = self.classifier(output_selector='all')
-        glm = np.reshape(data[self.variables[4]], (600, 300)).T
+        data2plot = np.reshape(data[self.variables[4]], (600, 300)).T
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        er = axes.contourf(self.axial_grid, self.radial_grid, glm, cmap='Spectral')
+        er = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
         
         figure.colorbar(er, 
             location='right', 
@@ -176,28 +173,27 @@ class PlutoPython:
             format='%.2f'
             )
         
-        plt.title(f'General Lagrangian Multiplier at {self.timestep.replace("_", " ")}')
-        plt.tight_layout()
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_title(f'General Lagrangian Multiplier at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
-        return er
+        if close==True:
+            plt.close()
+        return data2plot
 
-    def plot_bx1(self):
+    def plot_bx1(self,close=False):
         """
         Plots the magnetic field in the first defined axis direction, x1 from the init file.
         
-        Returns a matplotlib plot object
+        Returns the data set that is being plotted
         """    
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.b_radial], (600, 300)).T
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral')
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
         
         figure.colorbar(pl, 
             location='right', 
@@ -208,28 +204,27 @@ class PlutoPython:
             format='%.2f'
             )
         
-        plt.title(f'Magnetic field in x1 direction at {self.timestep.replace("_", " ")}')
-        plt.tight_layout()
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_title(f'Magnetic field in x1 direction at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
-        return pl
+        if close==True:
+            plt.close()
+        return data2plot
 
-    def plot_bx2(self):
+    def plot_bx2(self,close=False):
         """
         Plots the magnetic field in the second defined axis direction, x2 from the init file.
         
-        Returns a matplotlib plot object
+        Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.b_azimuthal], (600, 300)).T
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral')
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
         
         figure.colorbar(pl, 
             location='right', 
@@ -240,28 +235,27 @@ class PlutoPython:
             format='%.2f'
             )
         
-        plt.title(f'Magnetic field in x2 direction at {self.timestep.replace("_", " ")}')
-        plt.tight_layout()
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_title(f'Magnetic field in x2 direction at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
-        return pl
+        if close==True:
+            plt.close()
+        return data2plot
 
-    def plot_bx3(self):
+    def plot_bx3(self,close=False):
         """
         Plots the magnetic field in the third defined axis direction, x3 from the init file.
         
-        Returns a matplotlib plot object
+        Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.b_axial], (600, 300)).T
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral')
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
         
         figure.colorbar(pl, 
             location='right', 
@@ -272,28 +266,27 @@ class PlutoPython:
             format='%.2f'
             )
         
-        plt.title(f'Magnetic field in x3 direction at {self.timestep.replace("_", " ")}')
-        plt.tight_layout()
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_title(f'Magnetic field in x3 direction at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
-        return pl
+        if close==True:
+            plt.close()
+        return data2plot
 
-    def plot_pressure(self):
+    def plot_pressure(self,close=False):
         """
         Plots the pressure field.
         
-        Returns a matplotlib plot object
+        Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.pressure], (600, 300)).T
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral')
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
         
         figure.colorbar(pl, 
             location='right', 
@@ -304,28 +297,27 @@ class PlutoPython:
             format='%.2f'
             )
         
-        plt.title(f'Pressure at {self.timestep.replace("_", " ")}')
-        plt.tight_layout()
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_title(f'Pressure at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
-        return pl
+        if close==True:
+            plt.close()
+        return data2plot
 
-    def plot_log_pressure(self):
+    def plot_log_pressure(self,close=False):
         """
         Plots the log pressure field.
         
-        Returns a matplotlib plot object
+        Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.pressure], (600, 300)).T
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, np.log(data2plot), cmap='Spectral')
+        pl = axes.contourf(self.axial_grid, self.radial_grid, np.log(data2plot), cmap='Spectral', levels=128)
         
         figure.colorbar(pl, 
             location='right', 
@@ -336,28 +328,27 @@ class PlutoPython:
             format='%.2f'
             )
         
-        plt.title(f'Log Pressure at {self.timestep.replace("_", " ")}')
-        plt.tight_layout()
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_title(f'Log Pressure at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
-        return pl
+        if close==True:
+            plt.close()
+        return data2plot
 
-    def plot_log_pressure(self):
+    def plot_density(self,close=False):
         """
         Plots the mass density field.
         
-        Returns a matplotlib plot object
+        Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.density], (600, 300)).T
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral')
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
         
         figure.colorbar(pl, 
             location='right', 
@@ -368,24 +359,216 @@ class PlutoPython:
             format='%.2f'
             )
         
-        plt.title(f'Mass Density at {self.timestep.replace("_", " ")}')
-        plt.tight_layout()
-        plt.xlim(0, max(self.axial_grid))
-        plt.ylim(0, max(self.radial_grid))
-        plt.ylabel('Radial distance in Jet Radii')
-        plt.xlabel('Axial distance in Jet Radii')
-        plt.show()
-        plt.close()
+        axes.set_title(f'Mass Density at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
 
-        return pl
+        if close==True:
+            plt.close()
+        return data2plot
 
+    def plot_tracer(self,close=False):
+        """
+        Plots the tracer.
+        
+        Returns the data set that is being plotted
+        """   
+        data = self.classifier(output_selector='all')
+        data2plot = np.reshape(data[self.tracer1], (600, 300)).T
+        
+        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
+        
+        figure.colorbar(pl, 
+            location='right', 
+            shrink=0.95, 
+            aspect=20,
+            pad=0.02, 
+            label='Tracer', 
+            format='%.2f'
+            )
+        
+        axes.set_title(f'Tracer at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
+
+        if close==True:
+            plt.close()
+        return data2plot
+
+    def plot_vx1(self,close=False):
+        """
+        Plots the velocity field in x1 direction.
+        
+        Returns the data set that is being plotted
+        """   
+        data = self.classifier(output_selector='all')
+        data2plot = np.reshape(data[self.radial_velocity], (600, 300)).T
+        
+        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
+        
+        figure.colorbar(pl, 
+            location='right', 
+            shrink=0.95, 
+            aspect=20,
+            pad=0.02, 
+            label='Velocity, vx1', 
+            format='%.2f'
+            )
+        
+        axes.set_title(f'Velocity field in x1 direction at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
+
+        if close==True:
+            plt.close()
+        return data2plot
+
+    def plot_vx2(self,close=False):
+        """
+        Plots the velocity field in x2 direction.
+        
+        Returns the data set that is being plotted
+        """   
+        data = self.classifier(output_selector='all')
+        data2plot = np.reshape(data[self.azimuthal_velocity], (600, 300)).T
+        
+        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
+        
+        figure.colorbar(pl, 
+            location='right', 
+            shrink=0.95, 
+            aspect=20,
+            pad=0.02, 
+            label='Velocity, vx2', 
+            format='%.2f'
+            )
+        
+        axes.set_title(f'Velocity field in x2 direction at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
+
+        if close==True:
+            plt.close()
+        return data2plot
+
+    def plot_vx3(self,close=False):
+        """
+        Plots the velocity field in x3 direction.
+        
+        Returns the data set that is being plotted
+        """   
+        data = self.classifier(output_selector='all')
+        data2plot = np.reshape(data[self.axial_velocity], (600, 300)).T
+        
+        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
+        
+        figure.colorbar(pl, 
+            location='right', 
+            shrink=0.95, 
+            aspect=20,
+            pad=0.02, 
+            label='Velocity, vx3', 
+            format='%.2f'
+            )
+        
+        axes.set_title(f'Velocity field in x3 direction at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
+
+        if close==True:
+            plt.close()
+        return data2plot
+
+    def plot_velocity_field_magnitude(self,close=False):
+        """
+        Plots the magnitude of the velocity fields, with no direction,
+        calculated from the 3 components produced by PLUTO
+
+        Returns the data set that is being plotted
+        """
+        data = self.classifier(output_selector='all')
+        vx1 = np.reshape(data[self.radial_velocity], (600, 300)).T
+        vx2 = np.reshape(data[self.azimuthal_velocity], (600, 300)).T
+        vx3 = np.reshape(data[self.axial_velocity], (600, 300)).T
+        data2plot = np.sqrt(np.asarray(vx1)**2 + np.asarray(vx2)**2 + np.asarray(vx3**2))
+        
+        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='Spectral', levels=128)
+        
+        figure.colorbar(pl, 
+            location='right',  
+            shrink=0.95, 
+            aspect=20,
+            pad=0.02, 
+            label='Velocity Field magnitude', 
+            format='%.2f'
+        )
+
+        axes.set_title(f'Velocity field magnitude at {self.timestep.replace("_", " ")}')
+        axes.set_xlim(0, max(self.axial_grid))
+        axes.set_ylim(0, max(self.radial_grid))
+        axes.set_ylabel('Radial distance in Jet Radii')
+        axes.set_xlabel('Axial distance in Jet Radii')
+
+        if close==True:
+            plt.close()
+        return data2plot
+
+    def velocity_quad(self,close=False):
+        """
+        Plots a graph with 4 plots of the velocity components and overall magnetude.
+        """
+        data = self.classifier(output_selector='all')
+
+        data1 = self.plot_vx1(close=True)
+        data2 = self.plot_vx2(close=True)
+        data3 = self.plot_vx3(close=True)
+        data4 = self.plot_velocity_field_magnitude(close=True)
+        figure = plt.figure(figsize=(self.image_size[0]*2,self.image_size[1]*2), dpi=self.dpi)
+        subfigs = figure.add_gridspec(2,2,hspace=0.15, wspace=0)
+        axes = subfigs.subplots(sharex='col', sharey='row')
+        figure.suptitle('Velocity Quad plot')
+        axes[0,0].contourf(self.axial_grid, self.radial_grid, data1, cmap='Spectral', levels=128,label='vx1')
+        axes[0,0].set_title('vx1', pad=0.5)
+        axes[0,1].contourf(self.axial_grid, self.radial_grid, data2, cmap='Spectral', levels=128)
+        axes[0,1].set_title('vx2', pad=0.5)
+        axes[1,0].contourf(self.axial_grid, self.radial_grid, data3, cmap='Spectral', levels=128)
+        axes[1,0].set_title('vx3', pad=0.5)
+        axes[1,1].contourf(self.axial_grid, self.radial_grid, data4, cmap='Spectral', levels=128)
+        axes[1,1].set_title('|v|', pad=0.5)
+                
+        if close==True:
+            plt.close()
+
+        return figure
 
 if __name__== "__main__":
 
     #obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/low_b_low_eta_outflow/', 300, (10,5), 5)
     obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/Mms2_low_b/', time_step=18)
     
-    obj.plot()
-    obj.plot_bfield_magnitude()
-    obj.plot_glm()
-    obj.plot_glm()
+    #obj.plot()
+    #obj.plot_bfield_magnitude()
+    #obj.plot_glm()
+    #obj.plot_log_pressure()
+    #obj.plot_density()
+    #obj.plot_tracer()
+    #obj.plot_vx1()
+    #obj.plot_vx2()
+    #obj.plot_vx3()
+    #obj.plot_velocity_field_magnitude()
+    obj.velocity_quad()
