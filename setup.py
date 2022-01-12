@@ -7,7 +7,7 @@ setup(
     version='0.0.1',
     author_email='czentyemate@gmail.com',
     license='MIT',
-    url='',
+    url='https://github.com/mateczentye/pluto_python',
     description='Package includes analytical code to read in HDF5 output files from PLUTO',
     packages=["pluto_python"],
 )
