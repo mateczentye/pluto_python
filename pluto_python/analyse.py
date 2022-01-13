@@ -11,6 +11,7 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.animation as pla
 import matplotlib
+import os
 
 class PlutoPython:
     """
@@ -95,7 +96,7 @@ class PlutoPython:
             return data
 
 
-    def plot(self,close=False):
+    def plot(self,close=False,save=False):
         """
         General plotting with more arguments to select what data set to plot.
         
@@ -126,7 +127,7 @@ class PlutoPython:
 
         return pl
 
-    def plot_bfield_magnitude(self,close=False):
+    def plot_bfield_magnitude(self,close=False,save=False):
         """
         plots the magnitude of the magnetic fields, with no direction,
         calculated from the 3 components produced by PLUTO
@@ -161,7 +162,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_glm(self,close=False):
+    def plot_glm(self,close=False,save=False):
         """
         Plots the General Lagrangian Multiplier which is an output due to the divB control
         
@@ -192,7 +193,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_bx1(self,close=False):
+    def plot_bx1(self,close=False,save=False):
         """
         Plots the magnetic field in the first defined axis direction, x1 from the init file.
         
@@ -223,7 +224,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_bx2(self,close=False):
+    def plot_bx2(self,close=False,save=False):
         """
         Plots the magnetic field in the second defined axis direction, x2 from the init file.
         
@@ -254,7 +255,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_bx3(self,close=False):
+    def plot_bx3(self,close=False,save=False):
         """
         Plots the magnetic field in the third defined axis direction, x3 from the init file.
         
@@ -285,7 +286,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_pressure(self,close=False):
+    def plot_pressure(self,close=False,save=False):
         """
         Plots the pressure field.
         
@@ -316,7 +317,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_log_pressure(self,close=False):
+    def plot_log_pressure(self,close=False,save=False):
         """
         Plots the log pressure field.
         
@@ -347,7 +348,7 @@ class PlutoPython:
             plt.close()
         return np.log(data2plot)
 
-    def plot_density(self,close=False):
+    def plot_density(self,close=False,save=False):
         """
         Plots the mass density field.
         
@@ -378,7 +379,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_tracer(self,close=False):
+    def plot_tracer(self,close=False,save=False):
         """
         Plots the tracer.
         
@@ -409,7 +410,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_vx1(self,close=False):
+    def plot_vx1(self,close=False,save=False):
         """
         Plots the velocity field in x1 direction.
         
@@ -440,7 +441,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_vx2(self,close=False):
+    def plot_vx2(self,close=False,save=False):
         """
         Plots the velocity field in x2 direction.
         
@@ -471,7 +472,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_vx3(self,close=False):
+    def plot_vx3(self,close=False,save=False):
         """
         Plots the velocity field in x3 direction.
         
@@ -502,7 +503,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def plot_velocity_field_magnitude(self,close=False):
+    def plot_velocity_field_magnitude(self,close=False,save=False):
         """
         Plots the magnitude of the velocity fields, with no direction,
         calculated from the 3 components produced by PLUTO
@@ -537,7 +538,7 @@ class PlutoPython:
             plt.close()
         return data2plot
 
-    def _velocity_quad(self,close=False):
+    def _velocity_quad(self,close=False,save=False):
         """
         Plots a graph with 4 plots of the velocity components and overall magnetude.
 
@@ -574,9 +575,11 @@ class PlutoPython:
         if close==True:
             plt.close()
 
+        if save==True:
+            plt.savefig(f'{self.data_path}/old_v_quad_{self.time_step}.jpeg')
         return figure
 
-    def _magneticfield_quad(self,close=False):
+    def _magneticfield_quad(self,close=False,save=False):
         """
         Plots a graph with 4 plots of the velocity components and overall magnetude.
 
@@ -614,9 +617,11 @@ class PlutoPython:
         if close==True:
             plt.close()
 
+        if save==True:
+            plt.savefig(f'{self.data_path}/old_B_quad_{self.time_step}.jpeg')
         return figure
 
-    def plot_pressure_density(self,close=False):
+    def plot_pressure_density(self,close=False,save=False):
         """
         Plots a pressure and density plot on one figure
 
@@ -664,7 +669,7 @@ class PlutoPython:
 
         return None
     
-    def magneticfield_quad(self,close=False):
+    def magneticfield_quad(self,close=False,save=False):
         """
         Plots a graph with 4 plots of the magnetic field components and overall magnitude.
 
@@ -682,35 +687,35 @@ class PlutoPython:
                 
         negative_levels = np.linspace(min_val,0,64)
         positive_levels = np.linspace(0,np.max(data4),65)
-        
-        levels = np.concatenate([negative_levels, positive_levels[1:]])
+        if min_val == 0:
+            levels = np.linspace(0,np.max(data4),128)
+        else:
+            levels = np.concatenate([negative_levels, positive_levels[1:]])
                 
         figure, axes = plt.subplots(2,2,figsize=(self.image_size[0]*1.2, self.image_size[1]*1.8), dpi=self.dpi)
         cax = plt.axes([1, 0.05, 0.05, 0.9], label='magnetic field')
-        
-        plt.tight_layout()
-        #plt.subplot(221, title='bx1', ylabel=r'radial distance [$R_{jet}$]', ylim=self.ylim, xlim=self.xlim)
+        # x1 direction 
         axes[0][0].contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
         axes[0][0].set_title(f'Magnetic field in x1 direction at {self.timestep.replace("_", " ")}')
         axes[0][0].set_xlim(0, self.xlim[1])
         axes[0][0].set_ylim(0, self.ylim[1])
         axes[0][0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0][0].set_xlabel(r'Axial distance [$R_{jet}$]')
-       
+        # x2 direction 
         axes[0][1].contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
         axes[0][1].set_title(f'Magnetic field in x2 direction at {self.timestep.replace("_", " ")}')
         axes[0][1].set_xlim(0, self.xlim[1])
         axes[0][1].set_ylim(0, self.ylim[1])
         axes[0][1].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0][1].set_xlabel(r'Axial distance [$R_{jet}$]')
-
+        # x3 direction 
         axes[1][0].contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
         axes[1][0].set_title(f'Magnetic field in x3 direction at {self.timestep.replace("_", " ")}')
         axes[1][0].set_xlim(0, self.xlim[1])
         axes[1][0].set_ylim(0, self.ylim[1])
         axes[1][0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[1][0].set_xlabel(r'Axial distance [$R_{jet}$]')
-        
+        # magnitude
         axes[1][1].contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
         axes[1][1].set_title(f'Magnetic field magnitude at {self.timestep.replace("_", " ")}')
         axes[1][1].set_xlim(0, self.xlim[1])
@@ -731,9 +736,15 @@ class PlutoPython:
         if close==True:
             plt.close()
 
+        if save==True:
+            check_dir = f'{self.data_path}b_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}b_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
         return figure
 
-    def velocity_quad(self,close=False):
+    def velocity_quad(self,close=False,save=False):
         """
         Plots a graph with 4 plots of the velocity components and overall magnitude.
 
@@ -748,17 +759,20 @@ class PlutoPython:
         for x in [data1,data2,data3,data4]:
             if np.min(x) < min_val:
                 min_val = np.min(x)
-                
+        
         negative_levels = np.linspace(-np.max(data4),0,64)
         positive_levels = np.linspace(0,np.max(data4),65)
         
-        levels = np.concatenate([negative_levels, positive_levels[1:]])
+        if np.max(data4) == 0:
+            levels = None
+        elif min_val == 0:
+            levels = np.linspace(0,np.max(data4),128)
+        else:
+            levels = np.concatenate([negative_levels, positive_levels[1:]])
                 
         figure, axes = plt.subplots(2,2,figsize=(self.image_size[0]*1.2, self.image_size[1]*1.8), dpi=self.dpi)
         cax = plt.axes([1, 0.05, 0.05, 0.9], label='Velocity field')
         
-        plt.tight_layout()
-        #plt.subplot(221, title='bx1', ylabel=r'radial distance [$R_{jet}$]', ylim=self.ylim, xlim=self.xlim)
         axes[0][0].contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
         axes[0][0].set_title(f'Velocity field in x1 direction at {self.timestep.replace("_", " ")}')
         axes[0][0].set_xlim(0, self.xlim[1])
@@ -795,17 +809,28 @@ class PlutoPython:
                             hspace=0.25)
 
         norm = matplotlib.colors.Normalize(vmin=min_val, vmax=np.max(data4))
-        plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=self.cmap), cax=cax, format='%.2f', label='Magnetic Field')
+        plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=self.cmap), cax=cax, format='%.2f', label='Velocity Field')
         
         if close==True:
             plt.close()
 
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
         return figure
 
 if __name__== "__main__":
 
     #obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/low_b_low_eta_outflow/', 300, (10,5), 5)
-    obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/Mms2_low_b/', time_step=27, cmap='seismic')
+    obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/Mms2_low_b/', time_step=1, cmap='seismic')
+
+    for time in range(28):
+        obj.time_step = time
+        obj.classifier(output_selector='all')
+        obj.velocity_quad(save=True)
     
     #obj.plot()
     #obj.plot_bfield_magnitude()
@@ -818,7 +843,7 @@ if __name__== "__main__":
     #obj.plot_vx3()
     #obj.plot_velocity_field_magnitude()
     #obj.velocity_quad()
-    obj.magneticfield_quad()
-    obj.velocity_quad()
+    #obj.magneticfield_quad()
+    #obj.velocity_quad()
     #obj.plot_pressure_density()
     #obj.plot_bx1()
