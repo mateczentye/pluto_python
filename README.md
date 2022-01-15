@@ -1,1 +1,1 @@
-Hello
+Package currently works with 3D arrays where one dimension is single valued.

@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as pla
 import matplotlib
 import os
+import calculator as calc
 
 class PlutoPython:
     """
@@ -56,6 +57,9 @@ class PlutoPython:
         self.azimuthal_velocity = None
         self.axial_velocity = None
 
+        self.reader()
+        self.global_limits = self.get_limits()
+
     def reader(self):
         path = os.getcwd()
         files  = os.listdir(self.data_path)
@@ -97,6 +101,49 @@ class PlutoPython:
         elif output_selector == 'all':
             return data
 
+    def get_limits(self):
+        """
+        This method runs through all available data to set the colour limits up
+        for each variable globally.
+        """
+        limits = {}
+        ### Gets the last data file to find the data limits through the entire data range
+        max_file = self.data_list[-1].replace('.dbl.h5', '').replace('data.', '')
+        ### loops through everything to find limits for the data
+        for step in range(-1, int(max_file)):
+            data = self.classifier(output_selector='all')
+            keys = list(data.keys())
+            
+            if step == -1:
+                for key in keys:
+                    limits[key] = {'min' : 0, 'max' : 0}
+
+            else:
+                for index, variable in enumerate(keys):
+                    var_min = np.min(list(data[variable]))
+                    var_max = np.max(list(data[variable]))
+                    
+                    current_min = limits[variable]['min']
+                    current_max = limits[variable]['max']
+
+                    if var_min < current_min:
+                        limits[variable].update({'min' : var_min})
+                    if var_max > current_max:
+                        limits[variable].update({'max' : var_max})
+        
+        self.limits = limits
+        return limits
+
+    def set_levels(self,variable):
+
+        levels = np.linspace(self.global_limits[variable]['min'],
+                             self.global_limits[variable]['max'],
+                             128)
+        
+        if len(levels[levels != 0]) == 0:
+            levels = 128
+        
+        return levels
 
     def plot(self,close=False,save=False):
         """
@@ -180,10 +227,12 @@ class PlutoPython:
         Returns the data set that is being plotted
         """     
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.variables[4]], (600, 300)).T
-        
+        data2plot = np.reshape(data[self.psi_glm], (600, 300)).T
+
+        levels = self.set_levels(self.psi_glm)
+                
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        er = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        er = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
         
         figure.colorbar(er, 
             location='right', 
@@ -204,11 +253,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}glm'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}glm/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -221,9 +270,11 @@ class PlutoPython:
         """    
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.b_radial], (600, 300)).T
+
+        levels = self.set_levels(self.b_radial)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -244,11 +295,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}bx1'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}bx1/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -261,6 +312,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.b_azimuthal], (600, 300)).T
+
+        levels = levels = self.set_levels(self.b_azimuthal)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
         pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
@@ -284,11 +337,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}bx2'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}bx2/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -301,9 +354,11 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.b_axial], (600, 300)).T
+
+        levels = levels = self.set_levels(self.b_axial)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -324,11 +379,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}bx3'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}bx3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -341,9 +396,11 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.pressure], (600, 300)).T
+
+        levels = levels = self.set_levels(self.pressure)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -364,11 +421,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}pressure'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}pressure/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -381,9 +438,12 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.pressure], (600, 300)).T
+
+        p_levels = self.set_levels(self.pressure)
+        levels = np.linspace(-np.max(p_levels), np.max(p_levels), 128)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, np.log(data2plot), cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, np.log(data2plot), cmap='hot', levels=128)
         
         figure.colorbar(pl, 
             location='right', 
@@ -404,11 +464,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}log_pressure'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}log_presure/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return np.log(data2plot)
@@ -421,9 +481,11 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.density], (600, 300)).T
+
+        levels = self.set_levels(self.density)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='hot', levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -444,11 +506,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}density'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}density/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -461,9 +523,11 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.tracer1], (600, 300)).T
+
+        levels = self.set_levels(self.tracer1)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -484,11 +548,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}tracer'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}tracer/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -501,9 +565,11 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.radial_velocity], (600, 300)).T
+
+        levels = self.set_levels(self.radial_velocity)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -524,11 +590,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}vx1'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}vx1/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -541,9 +607,11 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.azimuthal_velocity], (600, 300)).T
+
+        levels = self.set_levels(self.azimuthal_velocity)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -564,11 +632,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}vx2'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}vx2/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -581,9 +649,11 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all')
         data2plot = np.reshape(data[self.axial_velocity], (600, 300)).T
-        
+
+        levels = self.set_levels(self.axial_velocity)
+
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -604,11 +674,11 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}vx3'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}vx3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
@@ -625,9 +695,22 @@ class PlutoPython:
         vx2 = np.reshape(data[self.azimuthal_velocity], (600, 300)).T
         vx3 = np.reshape(data[self.axial_velocity], (600, 300)).T
         data2plot = np.sqrt(np.asarray(vx1)**2 + np.asarray(vx2)**2 + np.asarray(vx3**2))
+
+        levels1 = self.set_levels(self.radial_velocity)
+        levels2 = self.set_levels(self.azimuthal_velocity)
+        levels3 = self.set_levels(self.axial_velocity)
+        
+        collection_array = calc.get_magnitude([
+                                                np.asarray([np.min(levels1),np.max(levels1)]),
+                                                np.asarray([np.min(levels2),np.max(levels2)]),
+                                                np.asarray([np.min(levels3),np.max(levels3)])
+                                              ]
+                                              )
+    
+        levels = np.linspace(-np.max(collection_array), np.max(collection_array), 128)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='hot', levels=levels)
         
         figure.colorbar(pl, 
             location='right',  
@@ -648,103 +731,14 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}v_quad'
+            check_dir = f'{self.data_path}v_mag'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}v_mag/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return data2plot
-
-    def _velocity_quad(self,close=False,save=False):
-        """
-        Plots a graph with 4 plots of the velocity components and overall magnetude.
-
-        Returns a matlpotlib figure object
-        """
-        data1 = self.plot_vx1(close=True)
-        data2 = self.plot_vx2(close=True)
-        data3 = self.plot_vx3(close=True)
-        data4 = self.plot_velocity_field_magnitude(close=True)
-        min_val = 0
-        for x in [data1,data2,data3,data4]:
-            if np.min(x) < min_val:
-                min_val = np.min(x)
-        
-        negative_levels = np.linspace(-np.max(data4),0,64)
-        positive_levels = np.linspace(0,np.max(data4),65)
-        
-        levels = np.concatenate([negative_levels, positive_levels[1:]])
-        scalar = 1.1
-        figure, axes = plt.subplots(figsize=(self.image_size[0]*scalar, self.image_size[1]*scalar), dpi=self.dpi)
-        cax = plt.axes([1.01, 0.05, 0.05, 0.9], label='velocity')
-
-        plt.tight_layout()        
-        plt.subplot(221, title='vx1', ylabel=r'radial distance [$R_{jet}$]', ylim=self.ylim, xlim=self.xlim)
-        plt.contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
-        plt.subplot(222, title='vx2', ylim=self.ylim, xlim=self.xlim)
-        plt.contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
-        plt.subplot(223, title='vx3', xlabel=r'axial distance [$R_{jet}$]', ylabel=r'radial distance [$R_{jet}$]', ylim=self.ylim, xlim=self.xlim)
-        plt.contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
-        plt.subplot(224, title='|v|', xlabel=r'axial distance [$R_{jet}$]', ylim=self.ylim, xlim=self.xlim)
-        plt.contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
-        plt.colorbar(cax=cax, format='%.2f', label='Velocity')
-        
-        if close==True:
-            plt.close()
-
-        if save==True:
-            plt.savefig(f'{self.data_path}/old_v_quad_{self.time_step}.jpeg')
-        return figure
-
-    def _magneticfield_quad(self,close=False,save=False):
-        """
-        Plots a graph with 4 plots of the velocity components and overall magnetude.
-
-        Returns a matlpotlib figure object
-        """
-        data1 = self.plot_bx1(close=True)
-        data2 = self.plot_bx2(close=True)
-        data3 = self.plot_bx3(close=True)
-        data4 = self.plot_bfield_magnitude(close=True)
-
-        min_val = 0
-        for x in [data1,data2,data3,data4]:
-            if np.min(x) < min_val:
-                min_val = np.min(x)
-        
-        negative_levels = np.linspace(-np.max(data4),0,64)
-        positive_levels = np.linspace(0,np.max(data4),65)
-        
-        levels = np.concatenate([negative_levels, positive_levels[1:]])
-        scalar = 1.1
-        figure, axes = plt.subplots(figsize=(self.image_size[0]*scalar, self.image_size[1]*scalar), dpi=self.dpi)
-        cax = plt.axes([1.01, 0.05, 0.05, 0.9], label='magnetic field')
-        
-        plt.tight_layout()
-        plt.subplot(221, title='bx1', ylabel=r'radial distance [$R_{jet}$]', ylim=self.ylim, xlim=self.xlim)
-        plt.contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
-        plt.subplot(222, title='bx2', ylim=self.ylim, xlim=self.xlim)
-        plt.contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
-        plt.subplot(223, title='bx3', xlabel=r'axial distance [$R_{jet}$]', ylabel=r'radial distance [$R_{jet}$]', ylim=self.ylim, xlim=self.xlim)
-        plt.contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
-        plt.subplot(224, title='|B|', xlabel=r'axial distance [$R_{jet}$]', ylim=self.ylim, xlim=self.xlim)
-        plt.contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
-        plt.colorbar(cax=cax, format='%.2f', label='Magnetif Field')
-        
-        if close==True:
-            plt.close()
-
-        if save==True:
-            check_dir = f'{self.data_path}v_quad'
-            if os.path.exists(check_dir) is False:
-                os.mkdir(check_dir)
-            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
-            plt.close()
-
-        return figure
 
     def plot_pressure_density(self,close=False,save=False):
         """
@@ -758,7 +752,7 @@ class PlutoPython:
         
         figure, axes = plt.subplots(2,1,figsize=self.image_size, dpi=self.dpi)
         self.cmap = 'hot'
-        density_levels = np.linspace(0, np.max(density_data), 128)
+        density_levels = levels = self.set_levels(self.density)
         
         axes[0].contourf(self.axial_grid, self.radial_grid, density_data, cmap=self.cmap, levels=density_levels)
         im1 = axes[0].imshow(density_data, cmap=self.cmap)
@@ -771,6 +765,7 @@ class PlutoPython:
         axes[0].set_ylabel('Radial distance in Jet Radii')
         axes[0].set_xlabel('Axial distance in Jet Radii')
         
+        pressure_levels = self.set_levels(self.pressure)
         axes[1].contourf(self.axial_grid, self.radial_grid, np.log(pressure_data), cmap=self.cmap, levels=128)
         im1 = axes[1].imshow(pressure_data, cmap=self.cmap)
         divider = mal(axes[1])
@@ -968,10 +963,10 @@ class PlutoPython:
 
         density = self.plot_density(close=True)
 
-        data1 = bx1 / np.sqrt(density)
-        data2 = bx2 / np.sqrt(density)
-        data3 = bx3 / np.sqrt(density)
-        data4 = bxm / np.sqrt(density)
+        data1 = calc.alfven_velocity(bx1, density)
+        data2 = calc.alfven_velocity(bx2, density)
+        data3 = calc.alfven_velocity(bx3, density)
+        data4 = calc.alfven_velocity(bxm, density)
 
         min_val = 0
         for x in [data1,data2,data3,data4]:
@@ -1109,25 +1104,24 @@ if __name__== "__main__":
 
     #obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/low_b_low_eta_outflow/', 300, (10,5), 5)
     obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/Mms2_mid_upper_b_pol/', time_step=37, cmap='seismic')
-    #obj.magneticfield_quad()
-    #obj.alfven_velocity()
-    
 
-    #for time in range(0,38):
+    #for time in range(0,5):
     #    obj.time_step = time
     #    obj.classifier(output_selector='all')
     ##    obj.magneticfield_quad(save=True)
-    #    obj.magnetic_streamlines(save=True)
+    #    #obj.magnetic_streamlines(save=True)
+    #    obj.plot_bx1()
     
     #obj.plot()
+    #obj.magneticfield_quad()
+    #obj.alfven_velocity()
     #obj.plot_bx1()
     #obj.plot_bx2()
     #obj.plot_bx3()
     #obj.plot_bfield_magnitude()
     #obj.plot_glm()
-
     #obj.plot_pressure()
-    #obj.plot_log_pressure()
+    obj.plot_log_pressure()
     #obj.plot_density()
     #obj.plot_tracer()
     
@@ -1136,6 +1130,6 @@ if __name__== "__main__":
     #obj.plot_vx3()
     #obj.plot_velocity_field_magnitude()
     
-    #obj.velocity_quad()
-    #obj.magneticfield_quad()
-    #obj.plot_pressure_density()
+    obj.velocity_quad()
+    obj.plot_pressure_density()
+    obj.magnetic_streamlines()
