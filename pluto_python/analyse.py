@@ -16,6 +16,8 @@ import os
 class PlutoPython:
     """
     This class creates an opject for pluto output HDF5 files
+    Use methods for each variable to be plotted at certain time step.
+    Group variables have multi-plot graph options as separate methods.
     """
     def __init__(
         self,
@@ -26,7 +28,7 @@ class PlutoPython:
         image_size = (10,5),
         ylim = (0,10),
         xlim = (0,20),
-        cmap = 'Spectral'
+        cmap = 'rwb'
         
     ):
 
@@ -65,7 +67,7 @@ class PlutoPython:
         data_file = self.data_list[self.time_step]
         h5_read = h5py.File(self.data_path + data_file, 'r')
 
-        self.timestep, cell_coord, node_coord = h5_read.keys()
+        self.timestep, cell_coord, self.node_coord = h5_read.keys()
         
         data = h5_read[self.timestep]['vars']
         self.variables = list(data.keys())
@@ -82,10 +84,10 @@ class PlutoPython:
         self.azimuthal_velocity = v_azi
         self.axial_velocity = v_axi
 
-        grid = h5_read[cell_coord]
+        self.grid = h5_read[cell_coord]
             
-        self.radial_grid = [r[0] for r in list(np.reshape(grid['X'], (600, 300)).T)]
-        self.axial_grid = np.reshape(grid['Z'], (600, 300)).T[0]
+        self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'], (600, 300)).T)]
+        self.axial_grid = np.reshape(self.grid['Z'], (600, 300)).T[0]
 
         if output_selector == None:
             self.data = data[self.variables[self.selector]] # data[z][phi][rad]
@@ -160,6 +162,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_glm(self,close=False,save=False):
@@ -191,6 +202,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_bx1(self,close=False,save=False):
@@ -222,6 +242,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_bx2(self,close=False,save=False):
@@ -253,6 +282,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_bx3(self,close=False,save=False):
@@ -284,6 +322,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_pressure(self,close=False,save=False):
@@ -315,6 +362,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_log_pressure(self,close=False,save=False):
@@ -346,6 +402,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return np.log(data2plot)
 
     def plot_density(self,close=False,save=False):
@@ -377,6 +442,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_tracer(self,close=False,save=False):
@@ -408,6 +482,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_vx1(self,close=False,save=False):
@@ -439,6 +522,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_vx2(self,close=False,save=False):
@@ -470,6 +562,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_vx3(self,close=False,save=False):
@@ -501,6 +602,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def plot_velocity_field_magnitude(self,close=False,save=False):
@@ -536,6 +646,15 @@ class PlutoPython:
 
         if close==True:
             plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return data2plot
 
     def _velocity_quad(self,close=False,save=False):
@@ -618,7 +737,13 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            plt.savefig(f'{self.data_path}/old_B_quad_{self.time_step}.jpeg')
+            check_dir = f'{self.data_path}v_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
         return figure
 
     def plot_pressure_density(self,close=False,save=False):
@@ -646,12 +771,12 @@ class PlutoPython:
         axes[0].set_ylabel('Radial distance in Jet Radii')
         axes[0].set_xlabel('Axial distance in Jet Radii')
         
-        axes[1].contourf(self.axial_grid, self.radial_grid, pressure_data, cmap=self.cmap, levels=128)
+        axes[1].contourf(self.axial_grid, self.radial_grid, np.log(pressure_data), cmap=self.cmap, levels=128)
         im1 = axes[1].imshow(pressure_data, cmap=self.cmap)
         divider = mal(axes[1])
         cax = divider.append_axes('right',size='5%',pad=0.05)
         plt.colorbar(im1,cax,ticks=np.linspace(0,np.max(pressure_data), 6))
-        axes[1].set_title(f'Pressure at {self.timestep.replace("_", " ")}')
+        axes[1].set_title(f'Log of Pressure at {self.timestep.replace("_", " ")}')
         axes[1].set_xlim(0, self.xlim[1])
         axes[1].set_ylim(0, self.ylim[1])
         axes[1].set_ylabel('Radial distance in Jet Radii')
@@ -665,6 +790,14 @@ class PlutoPython:
                             hspace=0.35)
 
         if close==True:
+            plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}pressure_density'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}pressure_density/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
         return None
@@ -820,30 +953,189 @@ class PlutoPython:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}v_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
         return figure
+
+    def alfven_velocity(self,close=False,save=False):
+        """
+        Method calculates the alfven velocity components and plots them side by side.
+        """
+
+        bx1 = self.plot_bx1(close=True)
+        bx2 = self.plot_bx2(close=True)
+        bx3 = self.plot_bx3(close=True)
+        bxm = self.plot_bfield_magnitude(close=True)
+
+        density = self.plot_density(close=True)
+
+        data1 = bx1 / np.sqrt(density)
+        data2 = bx2 / np.sqrt(density)
+        data3 = bx3 / np.sqrt(density)
+        data4 = bxm / np.sqrt(density)
+
+        min_val = 0
+        for x in [data1,data2,data3,data4]:
+            if np.min(x) < min_val:
+                min_val = np.min(x)
+        
+        negative_levels = np.linspace(-np.max(data4),0,64)
+        positive_levels = np.linspace(0,np.max(data4),65)
+        
+        if np.max(data4) == 0:
+            levels = None
+        elif min_val == 0:
+            levels = np.linspace(0,np.max(data4),128)
+        else:
+            levels = np.concatenate([negative_levels, positive_levels[1:]])
+        
+        figure, axes = plt.subplots(2,2,figsize=(self.image_size[0]*1.2, self.image_size[1]*1.8), dpi=self.dpi)
+        cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
+        
+        axes[0][0].contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
+        axes[0][0].set_title(f'Alfvén Velocity field in x1 direction at {self.timestep.replace("_", " ")}')
+        axes[0][0].set_xlim(0, self.xlim[1])
+        axes[0][0].set_ylim(0, self.ylim[1])
+        axes[0][0].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[0][0].set_xlabel(r'Axial distance [$R_{jet}$]')
+       
+        axes[0][1].contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
+        axes[0][1].set_title(f'Alfvén Velocity field in x2 direction at {self.timestep.replace("_", " ")}')
+        axes[0][1].set_xlim(0, self.xlim[1])
+        axes[0][1].set_ylim(0, self.ylim[1])
+        axes[0][1].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[0][1].set_xlabel(r'Axial distance [$R_{jet}$]')
+
+        axes[1][0].contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
+        axes[1][0].set_title(f'Alfvén Velocity field in x3 direction at {self.timestep.replace("_", " ")}')
+        axes[1][0].set_xlim(0, self.xlim[1])
+        axes[1][0].set_ylim(0, self.ylim[1])
+        axes[1][0].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[1][0].set_xlabel(r'Axial distance [$R_{jet}$]')
+        
+        axes[1][1].contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
+        axes[1][1].set_title(f'Alfvén Velocity field magnitude at {self.timestep.replace("_", " ")}')
+        axes[1][1].set_xlim(0, self.xlim[1])
+        axes[1][1].set_ylim(0, self.ylim[1])
+        axes[1][1].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[1][1].set_xlabel(r'Axial distance [$R_{jet}$]')
+        
+        plt.subplots_adjust(left=0.0,
+                            right=0.95,
+                            bottom=0.1,
+                            top=0.9,
+                            wspace=0.15,
+                            hspace=0.25)
+
+        norm = matplotlib.colors.Normalize(vmin=min_val, vmax=np.max(data4))
+
+        plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=self.cmap), cax=cax, format='%.2f', label='Alfvén Velocity Field')
+        
+
+
+        if close==True:
+            plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}av_quad'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}av_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
+        return figure
+
+    def magnetic_streamlines(self,close=False,save=False):
+        """
+        Plots a vector plot of the magnetic field lines.
+        """
+        self.classifier(output_selector='all')
+        data1 = self.plot_bx1(close=True)
+        data2 = self.plot_bx3(close=True)
+        cmp = 'Wistia'
+        cmp='viridis'
+
+        X, Y = np.meshgrid(np.linspace(0,20,400), np.linspace(0,10,200))
+        test = np.ones(np.shape(X))
+
+        figure, axes = plt.subplots(1,1,figsize=(10,5),dpi=self.dpi)
+
+        y_data = np.array([row[:400] for row in data1][:200])
+        x_data = np.array([row[:400] for row in data2][:200])
+
+        mag_dat = np.sqrt(x_data**2 + y_data**2)
+
+        axes.contourf(np.linspace(0,20,400),np.linspace(0,10,200), mag_dat, cmap=cmp)
+
+        axes.streamplot(X,
+                        Y,
+                        x_data,
+                        y_data,
+                        density=2.5,
+                        color='black',
+                        #cmap='Greys',
+                        integration_direction='both',
+                        maxlength=20,
+                        arrowsize=0.95,
+                        arrowstyle='->',
+                        linewidth=0.5
+
+                        )
+
+        norm = matplotlib.colors.Normalize(vmin=np.min(mag_dat), vmax=np.max(mag_dat))
+        #cax = plt.axes([0.95, 0.1, 0.25, 1], label='Magnetic field')
+        plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field')
+        plt.title('Magnetic field with field line direction')
+        plt.ylim(self.ylim)
+        plt.xlim(self.xlim)
+
+
+        if close==True:
+            plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}field_line'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}field_line/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
+
+        return figure
+    
 
 if __name__== "__main__":
 
     #obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/low_b_low_eta_outflow/', 300, (10,5), 5)
-    obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/Mms2_low_b/', time_step=1, cmap='seismic')
+    obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/Mms2_mid_upper_b_pol/', time_step=37, cmap='seismic')
+    #obj.magneticfield_quad()
+    #obj.alfven_velocity()
+    
 
-    for time in range(28):
-        obj.time_step = time
-        obj.classifier(output_selector='all')
-        obj.velocity_quad(save=True)
+    #for time in range(0,38):
+    #    obj.time_step = time
+    #    obj.classifier(output_selector='all')
+    ##    obj.magneticfield_quad(save=True)
+    #    obj.magnetic_streamlines(save=True)
     
     #obj.plot()
+    #obj.plot_bx1()
+    #obj.plot_bx2()
+    #obj.plot_bx3()
     #obj.plot_bfield_magnitude()
     #obj.plot_glm()
+
+    #obj.plot_pressure()
     #obj.plot_log_pressure()
     #obj.plot_density()
     #obj.plot_tracer()
+    
     #obj.plot_vx1()
     #obj.plot_vx2()
     #obj.plot_vx3()
     #obj.plot_velocity_field_magnitude()
+    
     #obj.velocity_quad()
     #obj.magneticfield_quad()
-    #obj.velocity_quad()
     #obj.plot_pressure_density()
-    #obj.plot_bx1()
