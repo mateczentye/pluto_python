@@ -262,8 +262,8 @@ class PlutoPython:
         axes.set_title(f'Magnetic field magnitude at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -304,8 +304,8 @@ class PlutoPython:
         axes.set_title(f'General Lagrangian Multiplier at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -346,8 +346,8 @@ class PlutoPython:
         axes.set_title(f'Magnetic field in x1 direction at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -388,8 +388,8 @@ class PlutoPython:
         axes.set_title(f'Magnetic field in x2 direction at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -430,8 +430,8 @@ class PlutoPython:
         axes.set_title(f'Magnetic field in x3 direction at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -472,8 +472,8 @@ class PlutoPython:
         axes.set_title(f'Pressure at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -515,8 +515,8 @@ class PlutoPython:
         axes.set_title(f'Log Pressure at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -557,8 +557,8 @@ class PlutoPython:
         axes.set_title(f'Mass Density at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -599,8 +599,8 @@ class PlutoPython:
         axes.set_title(f'Tracer at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -641,8 +641,8 @@ class PlutoPython:
         axes.set_title(f'Velocity field in x1 direction at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -683,8 +683,8 @@ class PlutoPython:
         axes.set_title(f'Velocity field in x2 direction at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -725,8 +725,8 @@ class PlutoPython:
         axes.set_title(f'Velocity field in x3 direction at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -782,8 +782,8 @@ class PlutoPython:
         axes.set_title(f'Velocity field magnitude at {self.timestep.replace("_", " ")}')
         axes.set_xlim(0, self.xlim[1])
         axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
@@ -820,8 +820,8 @@ class PlutoPython:
         axes[0].set_title(f'Mass Density at {self.timestep.replace("_", " ")}')
         axes[0].set_xlim(0, self.xlim[1])
         axes[0].set_ylim(0, self.ylim[1])
-        axes[0].set_ylabel('Radial distance in Jet Radii')
-        axes[0].set_xlabel('Axial distance in Jet Radii')
+        axes[0].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[0].set_xlabel(r'Axial distance [$R_{jet}$]')
         
         pressure_levels = self.set_levels(self.pressure)
         axes[1].contourf(self.axial_grid, self.radial_grid, np.log(pressure_data), cmap=self.cmap, levels=128)
@@ -832,8 +832,8 @@ class PlutoPython:
         axes[1].set_title(f'Log of Pressure at {self.timestep.replace("_", " ")}')
         axes[1].set_xlim(0, self.xlim[1])
         axes[1].set_ylim(0, self.ylim[1])
-        axes[1].set_ylabel('Radial distance in Jet Radii')
-        axes[1].set_xlabel('Axial distance in Jet Radii')
+        axes[1].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[1].set_xlabel(r'Axial distance [$R_{jet}$]')
 
         plt.subplots_adjust(left=0.125,
                             right=0.9,
