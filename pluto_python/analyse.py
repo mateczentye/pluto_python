@@ -24,11 +24,12 @@ class PlutoPython:
         self,
         data_path,
         time_step,
+        ini_path = None,
         select_variable = None,
         dpi = 300,
         image_size = (10,5),
-        ylim = (0,10),
-        xlim = (0,20),
+        ylim = None,
+        xlim = None,
         cmap = 'rwb'
         
     ):
@@ -38,10 +39,10 @@ class PlutoPython:
         self.image_size = image_size
         self.selector = select_variable
         self.time_step = time_step
-        self.xlim = xlim
-        self.ylim = ylim
+        
         self.cmap = cmap
-
+        self.ini_path = ini_path
+        
         self.closure = False
 
         ### Classifier variables
@@ -58,7 +59,86 @@ class PlutoPython:
         self.axial_velocity = None
 
         self.reader()
+        self.shape_limits = self.read_init()
+        self.XZ_shape = (self.shape_limits['X3-grid'], self.shape_limits['X1-grid'])
+
+        ### Define axes limits from defaults from the ini file if not given. To see max grid,
+        if xlim == None:
+            self.xlim = (
+                    float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][0]),
+                    float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][1][0])
+                    )
+        else:
+            self.xlim = xlim
+
+        if ylim == None:
+            self.ylim = (
+                    float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][0]),
+                    float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][1][0])
+                    )
+        else:
+            self.ylim = ylim
+
         self.global_limits = self.get_limits()
+
+    def read_init(self):
+        """
+        Method reads in data from the .ini file currently works for cylindrical polar coords
+        """
+        files = os.listdir(self.data_path)
+        ini_file = [file for file in files if '.ini' in file]
+        self.ini_content = {
+            '[Grid]' : {},
+            '[Chombo Refinement]' : {},
+            '[Time]' : {},
+            '[Solver]' : {},
+            '[Boudary]' : {},
+            '[Static Grid Output]' : {},
+            '[Particles]' : {},
+            '[Parameters]' : {},
+        }
+
+        if len(ini_file) == 0:
+            print('*.ini file is not present in given directory, please specify location directory')
+        elif len(ini_file) > 1:
+            print('There are multiple ".ini" files contained in the working directory, please select the apropriate file!')
+        else:
+            ### Chose the right ini file
+            if self.ini_path != None:
+                print(f'.ini file is given as:\n{self.ini_path}')
+                ini_data = list(open(self.ini_path))
+            else:
+                ini_data = list(open(self.data_path + ini_file[0], 'r'))
+            ### tidy up the file read in
+            filtr_data = [line for line in ini_data if line != '\n'] # removed empty lines
+            filtr2_data = [line.replace('\n', '') for line in filtr_data]# remove unwanted new line operators
+            split_data = [element.split(' ') for element in filtr2_data if '[' not in element] # this also removes the headers
+            trim_data = [[element for element in line if element != ''] for line in split_data]
+            ### Define grid parameters
+            for line in trim_data:
+                if '-grid' in line[0]:
+                    sub_grid_num = {'Subgrids' : int(line[1])}
+                    low_lim = {'Lower limit' : float(line[2])}
+                    high_lim = {'Upper limit' : float(line[-1])}
+                    # split subgrid into 3 element blocks while adding to dict
+                    sub_grid_data = {'Subgrids Data' : np.reshape(line[2:-1], (sub_grid_num['Subgrids'], 3))}
+                    new_dict = {line[0] : {}}
+                    new_dict[line[0]].update(sub_grid_num)
+                    new_dict[line[0]].update(low_lim)
+                    new_dict[line[0]].update(high_lim)
+                    new_dict[line[0]].update(sub_grid_data)
+                    self.ini_content['[Grid]'].update(new_dict)
+
+            ### Define axis grid size via subgrids 2nd element values
+            grid_size = {}
+            keys = self.ini_content['[Grid]'].keys()
+            for grid in keys:
+                x_grid_size = 0
+                for subgrid in self.ini_content['[Grid]'][grid]['Subgrids Data']:
+                    x_grid_size += int(subgrid[1])
+                grid_size.update({grid : x_grid_size})
+
+        return grid_size
 
     def reader(self):
         path = os.getcwd()
@@ -90,12 +170,12 @@ class PlutoPython:
 
         self.grid = h5_read[cell_coord]
             
-        self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'], (600, 300)).T)]
-        self.axial_grid = np.reshape(self.grid['Z'], (600, 300)).T[0]
+        self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'], self.XZ_shape).T)]
+        self.axial_grid = np.reshape(self.grid['Z'], self.XZ_shape).T[0]
 
         if output_selector == None:
             self.data = data[self.variables[self.selector]] # data[z][phi][rad]
-            self.data_reshape = np.reshape(self.data, (600,300)).T
+            self.data_reshape = np.reshape(self.data, self.XZ_shape).T
             return [self.data_reshape, self.axial_grid, self.axial_grid]
 
         elif output_selector == 'all':
@@ -135,7 +215,7 @@ class PlutoPython:
         return limits
 
     def set_levels(self,variable):
-
+        
         levels = np.linspace(self.global_limits[variable]['min'],
                              self.global_limits[variable]['max'],
                              128)
@@ -143,38 +223,16 @@ class PlutoPython:
         if len(levels[levels != 0]) == 0:
             levels = 128
         
+        if levels[0] < 0:
+            min_abs = abs(levels[0])
+            if min_abs < levels[-1]:
+                levels = np.linspace(-levels[-1], levels[-1], 128)
+            elif min_abs > levels[-1]:
+                levels = np.linspace(-min_abs, min_abs, 128)
+            else:
+                print('Something went wrong, levels set to default 128')
+                levels = 128
         return levels
-
-    def plot(self,close=False,save=False):
-        """
-        General plotting with more arguments to select what data set to plot.
-        
-        Returns a matplotlib plot object
-        """
-        if self.selector == None:
-            msg_str = 'Please select a variable when initialising the class to use the plot() method\n \
-               or use one of the specific plotting methods'
-            raise AttributeError(msg_str)
-            return None
-
-        self.classifier()
-        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-
-        if self.variables[self.selector] == self.pressure: # or variables[selector] == density:
-            pl = axes.contourf(self.axial_grid, self.radial_grid, np.log(self.data_reshape), cmap=self.cmap, levels=128)
-            axes.set_title(f'log({self.variables[self.selector]}) at {self.timestep.replace("_", " ")}')
-
-        else:
-            pl = axes.contourf(self.axial_grid, self.radial_grid, self.data_reshape, cmap=self.cmap, levels=128)
-            axes.set_title(f'{self.variables[self.selector]} at {self.timestep.replace("_", " ")}')
-
-        figure.colorbar(pl, location='right', shrink=0.83, aspect=20,pad=0.02)
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
-        axes.set_ylabel('Radial distance in Jet Radii')
-        axes.set_xlabel('Axial distance in Jet Radii')
-
-        return pl
 
     def plot_bfield_magnitude(self,close=False,save=False):
         """
@@ -184,9 +242,9 @@ class PlutoPython:
         Returns the data set that is being plotted
         """
         data = self.classifier(output_selector='all')
-        bx1 = np.reshape(data[self.b_radial], (600, 300)).T
-        bx2 = np.reshape(data[self.b_azimuthal], (600, 300)).T
-        bx3 = np.reshape(data[self.b_axial], (600, 300)).T
+        bx1 = np.reshape(data[self.b_radial], self.XZ_shape).T
+        bx2 = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
+        bx3 = np.reshape(data[self.b_axial], self.XZ_shape).T
         data2plot = np.sqrt(np.asarray(bx1)**2 + np.asarray(bx2)**2 + np.asarray(bx3)**2)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -227,7 +285,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """     
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.psi_glm], (600, 300)).T
+        data2plot = np.reshape(data[self.psi_glm], self.XZ_shape).T
 
         levels = self.set_levels(self.psi_glm)
                 
@@ -269,7 +327,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """    
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.b_radial], (600, 300)).T
+        data2plot = np.reshape(data[self.b_radial], self.XZ_shape).T
 
         levels = self.set_levels(self.b_radial)
         
@@ -311,7 +369,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.b_azimuthal], (600, 300)).T
+        data2plot = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
 
         levels = levels = self.set_levels(self.b_azimuthal)
         
@@ -353,7 +411,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.b_axial], (600, 300)).T
+        data2plot = np.reshape(data[self.b_axial], self.XZ_shape).T
 
         levels = levels = self.set_levels(self.b_axial)
         
@@ -395,7 +453,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.pressure], (600, 300)).T
+        data2plot = np.reshape(data[self.pressure], self.XZ_shape).T
 
         levels = levels = self.set_levels(self.pressure)
         
@@ -437,7 +495,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.pressure], (600, 300)).T
+        data2plot = np.reshape(data[self.pressure], self.XZ_shape).T
 
         p_levels = self.set_levels(self.pressure)
         levels = np.linspace(-np.max(p_levels), np.max(p_levels), 128)
@@ -480,7 +538,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.density], (600, 300)).T
+        data2plot = np.reshape(data[self.density], self.XZ_shape).T
 
         levels = self.set_levels(self.density)
         
@@ -522,7 +580,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.tracer1], (600, 300)).T
+        data2plot = np.reshape(data[self.tracer1], self.XZ_shape).T
 
         levels = self.set_levels(self.tracer1)
         
@@ -564,7 +622,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.radial_velocity], (600, 300)).T
+        data2plot = np.reshape(data[self.radial_velocity], self.XZ_shape).T
 
         levels = self.set_levels(self.radial_velocity)
         
@@ -606,7 +664,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.azimuthal_velocity], (600, 300)).T
+        data2plot = np.reshape(data[self.azimuthal_velocity], self.XZ_shape).T
 
         levels = self.set_levels(self.azimuthal_velocity)
         
@@ -648,7 +706,7 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all')
-        data2plot = np.reshape(data[self.axial_velocity], (600, 300)).T
+        data2plot = np.reshape(data[self.axial_velocity], self.XZ_shape).T
 
         levels = self.set_levels(self.axial_velocity)
 
@@ -691,9 +749,9 @@ class PlutoPython:
         Returns the data set that is being plotted
         """
         data = self.classifier(output_selector='all')
-        vx1 = np.reshape(data[self.radial_velocity], (600, 300)).T
-        vx2 = np.reshape(data[self.azimuthal_velocity], (600, 300)).T
-        vx3 = np.reshape(data[self.axial_velocity], (600, 300)).T
+        vx1 = np.reshape(data[self.radial_velocity], self.XZ_shape).T
+        vx2 = np.reshape(data[self.azimuthal_velocity], self.XZ_shape).T
+        vx3 = np.reshape(data[self.axial_velocity], self.XZ_shape).T
         data2plot = np.sqrt(np.asarray(vx1)**2 + np.asarray(vx2)**2 + np.asarray(vx3**2))
 
         levels1 = self.set_levels(self.radial_velocity)
@@ -747,8 +805,8 @@ class PlutoPython:
         Returns None
         """
         data = self.classifier(output_selector='all')
-        density_data = np.reshape(data[self.density], (600, 300)).T
-        pressure_data = np.reshape(data[self.pressure], (600, 300)).T
+        density_data = np.reshape(data[self.density], self.XZ_shape).T
+        pressure_data = np.reshape(data[self.pressure], self.XZ_shape).T
         
         figure, axes = plt.subplots(2,1,figsize=self.image_size, dpi=self.dpi)
         self.cmap = 'hot'
@@ -1103,7 +1161,11 @@ class PlutoPython:
 if __name__== "__main__":
 
     #obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/low_b_low_eta_outflow/', 300, (10,5), 5)
-    obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/Mms2_mid_upper_b_pol/', time_step=37, cmap='seismic')
+    obj = PlutoPython(
+        data_path='/mnt/f/OneDrive/ResearchProject/data/Mms2_mid_upper_b_pol/',
+        time_step=37,
+        cmap='seismic',
+        )
 
     #for time in range(0,5):
     #    obj.time_step = time
@@ -1112,16 +1174,15 @@ if __name__== "__main__":
     #    #obj.magnetic_streamlines(save=True)
     #    obj.plot_bx1()
     
-    #obj.plot()
     #obj.magneticfield_quad()
     #obj.alfven_velocity()
-    #obj.plot_bx1()
+    obj.plot_bx1()
     #obj.plot_bx2()
     #obj.plot_bx3()
     #obj.plot_bfield_magnitude()
     #obj.plot_glm()
     #obj.plot_pressure()
-    obj.plot_log_pressure()
+    #obj.plot_log_pressure()
     #obj.plot_density()
     #obj.plot_tracer()
     
@@ -1130,6 +1191,6 @@ if __name__== "__main__":
     #obj.plot_vx3()
     #obj.plot_velocity_field_magnitude()
     
-    obj.velocity_quad()
-    obj.plot_pressure_density()
-    obj.magnetic_streamlines()
+    #obj.velocity_quad()
+    #obj.plot_pressure_density()
+    #obj.magnetic_streamlines()
