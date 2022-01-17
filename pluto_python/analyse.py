@@ -30,7 +30,7 @@ class PlutoPython:
         image_size = (10,5),
         ylim = None,
         xlim = None,
-        cmap = 'rwb'
+        cmap = 'bwr'
         
     ):
 
@@ -348,6 +348,8 @@ class PlutoPython:
         axes.set_ylim(0, self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+        
 
         if close==True:
             plt.close()
@@ -1156,6 +1158,19 @@ class PlutoPython:
 
 
         return figure
+
+    def histogram(self, data, title, bins):
+        """
+        Method to plot histogram of the data which is passed in as the argument
+        """
+        shape = data.shape
+        new_shape = (shape[0]*shape[1], 1)
+        data2plot = np.reshape(data, new_shape)
+        fig, axes = plt.subplots(1,1,figsize=self.image_size, dpi=self.dpi)
+        axes.set_title(f'Histogram data for {title} value (normalised) at {self.time_step}')
+        axes.hist(data2plot, bins=bins, density=True, align='mid')
+        axes.set_xlabel('Value')
+        axes.set_ylabel('Count')
     
 
 if __name__== "__main__":
@@ -1176,7 +1191,8 @@ if __name__== "__main__":
     
     #obj.magneticfield_quad()
     #obj.alfven_velocity()
-    obj.plot_bx1()
+    bx1 = obj.plot_bx1()
+    obj.histogram(bx1,'BX1', 1024)
     #obj.plot_bx2()
     #obj.plot_bx3()
     #obj.plot_bfield_magnitude()
