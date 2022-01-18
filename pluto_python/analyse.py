@@ -222,17 +222,17 @@ class PlutoPython:
                              128)
         
         if len(levels[levels != 0]) == 0:
-            levels = 128
-        
-        if levels[0] < 0:
+                levels = 128
+        elif levels[0] < 0:
             min_abs = abs(levels[0])
             if min_abs < levels[-1]:
-                levels = np.linspace(-levels[-1], levels[-1], 128)
+                levels = np.linspace(-abs(levels[-1]), levels[-1], 128)
             elif min_abs > levels[-1]:
                 levels = np.linspace(-min_abs, min_abs, 128)
             else:
                 print('Something went wrong, levels set to default 128')
                 levels = 128
+
         return levels
 
     def plot_bfield_magnitude(self,close=False,save=False):
@@ -1217,13 +1217,13 @@ if __name__== "__main__":
     #    obj.plot_bx1()
     
     #obj.magneticfield_quad()
-    #obj.alfven_velocity()
-    #bx1 = obj.plot_bx1()
-    #obj.histogram(bx1,'BX1', 16, True)
+    #obj.alfven_velocity(save=True)
+    bx1 = obj.plot_bx1(save=True)
+    obj.histogram(bx1,'BX1', 16, True)
     #obj.plot_bx2()
     #obj.plot_bx3()
     #obj.plot_bfield_magnitude()
-    #obj.plot_glm()
+    #obj.plot_glm(save=True)
     #obj.plot_pressure()
     #obj.plot_log_pressure()
     #obj.plot_density()
@@ -1234,6 +1234,6 @@ if __name__== "__main__":
     #obj.plot_vx3()
     #obj.plot_velocity_field_magnitude()
     
-    #obj.velocity_quad()
-    #obj.plot_pressure_density()
-    obj.magnetic_streamlines()
+    #obj.velocity_quad(save=True)
+    #obj.plot_pressure_density(save=True)
+    #obj.magnetic_streamlines(save=True)
