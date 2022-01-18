@@ -1159,19 +1159,31 @@ class PlutoPython:
 
         return figure
 
-    def histogram(self, data, title, bins):
+    def histogram(self, data, title, bins=None, log=False):
         """
         Method to plot histogram of the data which is passed in as the argument
         """
         shape = data.shape
-        new_shape = (shape[0]*shape[1], 1)
+        x_shape = shape[0]*shape[1]
+        new_shape = (x_shape, 1)
         data2plot = np.reshape(data, new_shape)
+        plt.rc('font', size=8)
         fig, axes = plt.subplots(1,1,figsize=self.image_size, dpi=self.dpi)
         axes.set_title(f'Histogram data for {title} value (normalised) at {self.time_step}')
-        axes.hist(data2plot, bins=bins, density=True, align='mid')
+        hist = axes.hist(data2plot, bins=bins, align='mid', edgecolor='white')
         axes.set_xlabel('Value')
-        axes.set_ylabel('Count')
+        axes.set_ylabel('Frequency')
+        cols = axes.patches
+        labels = [f'{int(x)/x_shape*100:.2f}%' for x in hist[0]]
+        for col, label in zip(cols, labels):
+            height = col.get_height()
+            axes.text(col.get_x() + col.get_width() / 2, height+0.01, label, ha='center', va='bottom')
     
+        if log==True:
+            plt.semilogy()
+    
+        plt.show()
+        return hist
 
 if __name__== "__main__":
 
@@ -1192,7 +1204,7 @@ if __name__== "__main__":
     #obj.magneticfield_quad()
     #obj.alfven_velocity()
     bx1 = obj.plot_bx1()
-    obj.histogram(bx1,'BX1', 1024)
+    obj.histogram(bx1,'BX1', 16, True)
     #obj.plot_bx2()
     #obj.plot_bx3()
     #obj.plot_bfield_magnitude()
