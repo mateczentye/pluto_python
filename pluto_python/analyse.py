@@ -4,6 +4,7 @@ from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Colormap
 from numpy.lib.arraypad import pad
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
+from pluto_python.calculator import get_magnitude, alfven_velocity
 import pandas
 import numpy as np
 import h5py
@@ -12,7 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as pla
 import matplotlib
 import os
-import calculator as calc
+#import calculator as calc
 
 class PlutoPython:
     """
@@ -760,7 +761,7 @@ class PlutoPython:
         levels2 = self.set_levels(self.azimuthal_velocity)
         levels3 = self.set_levels(self.axial_velocity)
         
-        collection_array = calc.get_magnitude([
+        collection_array = get_magnitude([
                                                 np.asarray([np.min(levels1),np.max(levels1)]),
                                                 np.asarray([np.min(levels2),np.max(levels2)]),
                                                 np.asarray([np.min(levels3),np.max(levels3)])
@@ -1023,10 +1024,10 @@ class PlutoPython:
 
         density = self.plot_density(close=True)
 
-        data1 = calc.alfven_velocity(bx1, density)
-        data2 = calc.alfven_velocity(bx2, density)
-        data3 = calc.alfven_velocity(bx3, density)
-        data4 = calc.alfven_velocity(bxm, density)
+        data1 = alfven_velocity(bx1, density)
+        data2 = alfven_velocity(bx2, density)
+        data3 = alfven_velocity(bx3, density)
+        data4 = alfven_velocity(bxm, density)
 
         min_val = 0
         for x in [data1,data2,data3,data4]:
@@ -1110,17 +1111,31 @@ class PlutoPython:
         cmp = 'Wistia'
         cmp='viridis'
 
-        X, Y = np.meshgrid(np.linspace(0,20,400), np.linspace(0,10,200))
+        subgrid_x_low = float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][0])
+        subgrid_y_low = float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][0])
+        subgrid_x = float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][1][0])
+        subgrid_y = float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][1][0])
+        subgrid_x_res = int(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][1])
+        subgrid_y_res = int(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][1])
+        
+        X, Y = np.meshgrid(np.linspace(subgrid_x_low,subgrid_x,subgrid_x_res),
+                            np.linspace(subgrid_y_low,subgrid_y,subgrid_y_res))
         test = np.ones(np.shape(X))
 
         figure, axes = plt.subplots(1,1,figsize=(10,5),dpi=self.dpi)
 
-        y_data = np.array([row[:400] for row in data1][:200])
-        x_data = np.array([row[:400] for row in data2][:200])
+        y_data = np.array([row[:subgrid_x_res] for row in data1][:subgrid_y_res])
+        x_data = np.array([row[:subgrid_x_res] for row in data2][:subgrid_y_res])
 
         mag_dat = np.sqrt(x_data**2 + y_data**2)
 
-        axes.contourf(np.linspace(0,20,400),np.linspace(0,10,200), mag_dat, cmap=cmp)
+        
+
+        axes.contourf(
+                    np.linspace(subgrid_x_low, subgrid_x, subgrid_x_res), 
+                    np.linspace(subgrid_y_low, subgrid_y, subgrid_y_res),
+                    mag_dat,
+                    cmap=cmp)
 
         axes.streamplot(X,
                         Y,
@@ -1203,8 +1218,8 @@ if __name__== "__main__":
     
     #obj.magneticfield_quad()
     #obj.alfven_velocity()
-    bx1 = obj.plot_bx1()
-    obj.histogram(bx1,'BX1', 16, True)
+    #bx1 = obj.plot_bx1()
+    #obj.histogram(bx1,'BX1', 16, True)
     #obj.plot_bx2()
     #obj.plot_bx3()
     #obj.plot_bfield_magnitude()
@@ -1221,4 +1236,4 @@ if __name__== "__main__":
     
     #obj.velocity_quad()
     #obj.plot_pressure_density()
-    #obj.magnetic_streamlines()
+    obj.magnetic_streamlines()
