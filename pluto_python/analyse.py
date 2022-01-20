@@ -31,7 +31,8 @@ class PlutoPython:
         image_size = (10,5),
         ylim = None,
         xlim = None,
-        cmap = 'bwr'
+        cmap = 'bwr',
+        global_limits = False,
         
     ):
 
@@ -40,7 +41,7 @@ class PlutoPython:
         self.image_size = image_size
         self.selector = select_variable
         self.time_step = time_step
-        
+        self.global_limits_bool = global_limits
         self.cmap = cmap
         self.ini_path = ini_path
         
@@ -67,20 +68,19 @@ class PlutoPython:
         if xlim == None:
             self.xlim = (
                     float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][0]),
-                    float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][1][0])
-                    )
+                    float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][1][0]))
         else:
             self.xlim = xlim
 
         if ylim == None:
             self.ylim = (
                     float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][0]),
-                    float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][1][0])
-                    )
+                    float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][1][0]))
         else:
             self.ylim = ylim
-
-        self.global_limits = self.get_limits()
+        ### If global limit bool is set to False, the limits are not run
+        if self.global_limits_bool == True:
+            self.global_limits = self.get_limits()
 
     def read_init(self):
         """
@@ -138,7 +138,9 @@ class PlutoPython:
                 for subgrid in self.ini_content['[Grid]'][grid]['Subgrids Data']:
                     x_grid_size += int(subgrid[1])
                 grid_size.update({grid : x_grid_size})
-
+        
+        self.grid_size = grid_size
+        
         return grid_size
 
     def reader(self):
@@ -146,13 +148,14 @@ class PlutoPython:
         files  = os.listdir(self.data_path)
         extension = '.h5'
         self.data_list = [file for file in files if extension in file]
+        return self.data_list
         
-    def classifier(self, output_selector=None):
+    def classifier(self, delta_time, output_selector=None):
         self.reader()
-        data_file = self.data_list[self.time_step]
+        data_file = self.data_list[delta_time]
         h5_read = h5py.File(self.data_path + data_file, 'r')
 
-        self.timestep, cell_coord, self.node_coord = h5_read.keys()
+        self.timestep, self.cell_coord, self.node_coord = h5_read.keys()
         
         data = h5_read[self.timestep]['vars']
         self.variables = list(data.keys())
@@ -169,7 +172,7 @@ class PlutoPython:
         self.azimuthal_velocity = v_azi
         self.axial_velocity = v_axi
 
-        self.grid = h5_read[cell_coord]
+        self.grid = h5_read[self.cell_coord]
             
         self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'], self.XZ_shape).T)]
         self.axial_grid = np.reshape(self.grid['Z'], self.XZ_shape).T[0]
@@ -185,20 +188,22 @@ class PlutoPython:
     def get_limits(self):
         """
         This method runs through all available data to set the colour limits up
-        for each variable globally.
+        for each variable globally, across all time steps.
         """
         limits = {}
         ### Gets the last data file to find the data limits through the entire data range
         max_file = self.data_list[-1].replace('.dbl.h5', '').replace('data.', '')
+        self.max_file = int(max_file)
         ### loops through everything to find limits for the data
         for step in range(-1, int(max_file)):
-            data = self.classifier(output_selector='all')
+            # read files in here
+            data = self.classifier(output_selector='all', delta_time=step)
             keys = list(data.keys())
-            
+            # set step to a valid value when its -1 for the classifier
             if step == -1:
                 for key in keys:
                     limits[key] = {'min' : 0, 'max' : 0}
-
+                    step = 0
             else:
                 for index, variable in enumerate(keys):
                     var_min = np.min(list(data[variable]))
@@ -216,7 +221,13 @@ class PlutoPython:
         return limits
 
     def set_levels(self,variable):
-        
+        """
+        This sets the global limits for the colourbars
+        """
+        if self.global_limits_bool == False:
+            
+            return 128
+
         levels = np.linspace(self.global_limits[variable]['min'],
                              self.global_limits[variable]['max'],
                              128)
@@ -242,7 +253,7 @@ class PlutoPython:
 
         Returns the data set that is being plotted
         """
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         bx1 = np.reshape(data[self.b_radial], self.XZ_shape).T
         bx2 = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
         bx3 = np.reshape(data[self.b_axial], self.XZ_shape).T
@@ -285,7 +296,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """     
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.psi_glm], self.XZ_shape).T
 
         levels = self.set_levels(self.psi_glm)
@@ -327,7 +338,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """    
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.b_radial], self.XZ_shape).T
 
         levels = self.set_levels(self.b_radial)
@@ -371,7 +382,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
 
         levels = levels = self.set_levels(self.b_azimuthal)
@@ -413,7 +424,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.b_axial], self.XZ_shape).T
 
         levels = levels = self.set_levels(self.b_axial)
@@ -455,7 +466,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.pressure], self.XZ_shape).T
 
         levels = levels = self.set_levels(self.pressure)
@@ -497,7 +508,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.pressure], self.XZ_shape).T
 
         p_levels = self.set_levels(self.pressure)
@@ -540,7 +551,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.density], self.XZ_shape).T
 
         levels = self.set_levels(self.density)
@@ -582,7 +593,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.tracer1], self.XZ_shape).T
 
         levels = self.set_levels(self.tracer1)
@@ -624,7 +635,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.radial_velocity], self.XZ_shape).T
 
         levels = self.set_levels(self.radial_velocity)
@@ -666,7 +677,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.azimuthal_velocity], self.XZ_shape).T
 
         levels = self.set_levels(self.azimuthal_velocity)
@@ -708,7 +719,7 @@ class PlutoPython:
         
         Returns the data set that is being plotted
         """   
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.axial_velocity], self.XZ_shape).T
 
         levels = self.set_levels(self.axial_velocity)
@@ -751,7 +762,7 @@ class PlutoPython:
 
         Returns the data set that is being plotted
         """
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         vx1 = np.reshape(data[self.radial_velocity], self.XZ_shape).T
         vx2 = np.reshape(data[self.azimuthal_velocity], self.XZ_shape).T
         vx3 = np.reshape(data[self.axial_velocity], self.XZ_shape).T
@@ -807,7 +818,7 @@ class PlutoPython:
 
         Returns None
         """
-        data = self.classifier(output_selector='all')
+        data = self.classifier(output_selector='all', delta_time=self.time_step)
         density_data = np.reshape(data[self.density], self.XZ_shape).T
         pressure_data = np.reshape(data[self.pressure], self.XZ_shape).T
         
@@ -1105,7 +1116,7 @@ class PlutoPython:
         """
         Plots a vector plot of the magnetic field lines.
         """
-        self.classifier(output_selector='all')
+        self.classifier(output_selector='all', delta_time=self.time_step)
         data1 = self.plot_bx1(close=True)
         data2 = self.plot_bx3(close=True)
         cmp = 'Wistia'
@@ -1200,6 +1211,499 @@ class PlutoPython:
         plt.show()
         return hist
 
+    def plot_spacetime(self, variable, save=False, close=False):
+        """
+        Method plots a space time diagram of the variables along the jet axis
+
+            Accepted Variables:
+                'bx1' -> Magnetic Field in x1 direction,
+                'bx2' -> Magnetic Field in x2 direction,
+                'bx3' -> Magnetic Field in x3 direction,
+                'vx1' -> Velocity Field in x1 direction,
+                'vx2' -> Velocity Field in x2 direction,
+                'vx3' -> Velocity Field in x3 direction,
+                'prs' -> Pressure Field,
+                'rho' -> Density Field,
+                'glm' -> General Lagrangian Multiplier,
+                'av1' -> Alfvén Velocity Field in x1 direction,
+                'av2' -> Alfvén Velocity Field in x2 direction,
+                'av3' -> Alfvén Velocity Field in x3 direction]
+        """
+        names = ['Bx1', 'Bx2', 'Bx3', 'vx1', 'vx2', 'vx3', 'prs', 'rho', 'psi_glm', 'av1', 'av2', 'av3']
+        if variable not in names:
+            raise ValueError("Please give a valid variable to plot:\n'bx1', 'bx2', 'bx3', 'vx1', 'vx2', 'vx3', 'prs', 'rho', 'glm', 'av1', 'av2', 'av3'")
+        
+        if variable == 'Bx1':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Magnetic Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Magnetic field in x1 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time-step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/bx1'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/bx1/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+        
+        elif variable == 'Bx2':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Magnetic Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Magnetic field in x2 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/bx2'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/bx2/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        elif variable == 'Bx3':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Magnetic Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Magnetic field in x3 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/bx3'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/bx3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        elif variable == 'psi_glm':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Magnetic Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the GLM field along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/psi_glm'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/psi_glm/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        elif variable == 'prs':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, np.log(axial_array), cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Magnetic Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the log of Pressure field along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/prs'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/prs/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        elif variable == 'rho':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Magnetic Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Density field along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/rho'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/rho/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        elif variable == 'vx1':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Velocity Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Velocity field in x1 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time-step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/vx1'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/vx1/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+        
+        elif variable == 'vx2':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Velocity Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Velocity field in x2 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/vx2'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/vx2/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        elif variable == 'vx3':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Velocity Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Velocity field in x3 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/vx3'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/vx3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+        
+        elif variable == 'av1':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            alfven_velocity()
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Velocity Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Velocity field in x2 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/vx2'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/vx2/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        elif variable == 'av2':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Velocity Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Velocity field in x3 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/vx3'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/vx3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        elif variable == 'av3':
+            axial_array = []
+            time_list = range(len(self.data_list))
+            for time, data_file in enumerate(self.data_list):
+                d_file = h5py.File(self.data_path + data_file, 'r')
+                keys = list(d_file.keys())
+                data = d_file[keys[0]]['vars']
+                transposed = np.reshape(data[variable], self.XZ_shape).T
+                data2plot = transposed[0]
+                axial_array.append(data2plot)
+            
+            X, Y = np.meshgrid(self.axial_grid, time_list)
+            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            
+            figure.colorbar(pl, 
+                location='right', 
+                shrink=0.95, 
+                aspect=20,
+                pad=0.02, 
+                label='Velocity Field magnitude', 
+                format='%.2f'
+                )
+            
+            axes.set_title(f'Space-Time diagram of the Velocity field in x3 direction along Jet axis')
+            axes.set_ylabel(r'Time [$time step$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+            if close==True:
+                plt.close()
+
+            if save==True:
+                check_dir = f'{self.data_path}spacetime/vx3'
+                if os.path.exists(check_dir) is False:
+                    os.mkdir(check_dir)
+                bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+                plt.savefig(f'{self.data_path}spacetime/vx3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.close()
+
+        return
+
 if __name__== "__main__":
 
     #obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/low_b_low_eta_outflow/', 300, (10,5), 5)
@@ -1207,23 +1711,28 @@ if __name__== "__main__":
         data_path='/mnt/f/OneDrive/ResearchProject/data/Mms2_mid_upper_b_pol/',
         time_step=37,
         cmap='seismic',
+        global_limits=True
         )
 
+    #obj.classifier(delta_time=37, output_selector='all')
+
     #for time in range(0,5):
-    #    obj.time_step = time
-    #    obj.classifier(output_selector='all')
-    ##    obj.magneticfield_quad(save=True)
+    #    obj.classifier(time, output_selector='all')
+    #    #obj.magneticfield_quad(save=True)
     #    #obj.magnetic_streamlines(save=True)
     #    obj.plot_bx1()
     
+    names = ['Bx1', 'Bx2', 'Bx3', 'vx1', 'vx2', 'vx3', 'prs', 'rho', 'psi_glm', 'av1', 'av2', 'av3']
+    for i in names[:-3]:
+        obj.plot_spacetime(i)
     #obj.magneticfield_quad()
-    #obj.alfven_velocity(save=True)
-    bx1 = obj.plot_bx1(save=True)
-    obj.histogram(bx1,'BX1', 16, True)
+    #obj.alfven_velocity()
+    #bx1 = obj.plot_bx1(save=True)
+    #obj.histogram(bx1,'BX1', 16, True)
     #obj.plot_bx2()
     #obj.plot_bx3()
     #obj.plot_bfield_magnitude()
-    #obj.plot_glm(save=True)
+    #obj.plot_glm()
     #obj.plot_pressure()
     #obj.plot_log_pressure()
     #obj.plot_density()
