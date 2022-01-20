@@ -1374,7 +1374,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the GLM field along Jet axis')
+            axes.set_title(f'Space-Time diagram of the GLM along Jet axis')
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1413,7 +1413,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the log of Pressure field along Jet axis')
+            axes.set_title(f'Space-Time diagram of the log(Pressure) along Jet axis')
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1452,7 +1452,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Density field along Jet axis')
+            axes.set_title(f'Space-Time diagram of the Density along Jet axis')
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1491,7 +1491,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity field in x1 direction along Jet axis')
+            axes.set_title(f'Space-Time diagram of the Velocity in x1 direction along Jet axis')
             axes.set_ylabel(r'Time [$time-step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1530,7 +1530,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity field in x2 direction along Jet axis')
+            axes.set_title(f'Space-Time diagram of the Velocity in x2 direction along Jet axis')
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1569,7 +1569,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity field in x3 direction along Jet axis')
+            axes.set_title(f'Space-Time diagram of the Velocity in x3 direction along Jet axis')
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1585,20 +1585,24 @@ class PlutoPython:
                 plt.close()
         
         elif variable == 'av1':
-            axial_array = []
+            magfield = []
+            density = []
             time_list = range(len(self.data_list))
             for time, data_file in enumerate(self.data_list):
                 d_file = h5py.File(self.data_path + data_file, 'r')
                 keys = list(d_file.keys())
                 data = d_file[keys[0]]['vars']
-                transposed = np.reshape(data[variable], self.XZ_shape).T
-                data2plot = transposed[0]
-                axial_array.append(data2plot)
+                transposedB = np.reshape(data['Bx1'], self.XZ_shape).T
+                transposedD = np.reshape(data['rho'], self.XZ_shape).T
+                b2plot = transposedB[0]
+                rho2plot = transposedD[0]
+                magfield.append(b2plot)
+                density.append(rho2plot)
+
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
             figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-            alfven_velocity()
-            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            pl = axes.contourf(X, Y, alfven_velocity(B=magfield, density=density), cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
                 location='right', 
@@ -1609,7 +1613,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity field in x2 direction along Jet axis')
+            axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x1 direction along Jet axis')
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1617,27 +1621,32 @@ class PlutoPython:
                 plt.close()
 
             if save==True:
-                check_dir = f'{self.data_path}spacetime/vx2'
+                check_dir = f'{self.data_path}spacetime/av2'
                 if os.path.exists(check_dir) is False:
                     os.mkdir(check_dir)
                 bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-                plt.savefig(f'{self.data_path}spacetime/vx2/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.savefig(f'{self.data_path}spacetime/av2/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
                 plt.close()
 
         elif variable == 'av2':
-            axial_array = []
+            magfield = []
+            density = []
             time_list = range(len(self.data_list))
             for time, data_file in enumerate(self.data_list):
                 d_file = h5py.File(self.data_path + data_file, 'r')
                 keys = list(d_file.keys())
                 data = d_file[keys[0]]['vars']
-                transposed = np.reshape(data[variable], self.XZ_shape).T
-                data2plot = transposed[0]
-                axial_array.append(data2plot)
+                transposedB = np.reshape(data['Bx2'], self.XZ_shape).T
+                transposedD = np.reshape(data['rho'], self.XZ_shape).T
+                b2plot = transposedB[0]
+                rho2plot = transposedD[0]
+                magfield.append(b2plot)
+                density.append(rho2plot)
+
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
             figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            pl = axes.contourf(X, Y, alfven_velocity(B=magfield, density=density), cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
                 location='right', 
@@ -1648,7 +1657,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity field in x3 direction along Jet axis')
+            axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x2 direction along Jet axis')
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1656,27 +1665,32 @@ class PlutoPython:
                 plt.close()
 
             if save==True:
-                check_dir = f'{self.data_path}spacetime/vx3'
+                check_dir = f'{self.data_path}spacetime/av3'
                 if os.path.exists(check_dir) is False:
                     os.mkdir(check_dir)
                 bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-                plt.savefig(f'{self.data_path}spacetime/vx3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.savefig(f'{self.data_path}spacetime/av3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
                 plt.close()
 
         elif variable == 'av3':
-            axial_array = []
+            magfield = []
+            density = []
             time_list = range(len(self.data_list))
             for time, data_file in enumerate(self.data_list):
                 d_file = h5py.File(self.data_path + data_file, 'r')
                 keys = list(d_file.keys())
                 data = d_file[keys[0]]['vars']
-                transposed = np.reshape(data[variable], self.XZ_shape).T
-                data2plot = transposed[0]
-                axial_array.append(data2plot)
+                transposedB = np.reshape(data['Bx3'], self.XZ_shape).T
+                transposedD = np.reshape(data['rho'], self.XZ_shape).T
+                b2plot = transposedB[0]
+                rho2plot = transposedD[0]
+                magfield.append(b2plot)
+                density.append(rho2plot)
+
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
             figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-            pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
+            pl = axes.contourf(X, Y, alfven_velocity(B=magfield, density=density), cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
                 location='right', 
@@ -1687,7 +1701,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity field in x3 direction along Jet axis')
+            axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x3 direction along Jet axis')
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1695,11 +1709,11 @@ class PlutoPython:
                 plt.close()
 
             if save==True:
-                check_dir = f'{self.data_path}spacetime/vx3'
+                check_dir = f'{self.data_path}spacetime/av3'
                 if os.path.exists(check_dir) is False:
                     os.mkdir(check_dir)
                 bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-                plt.savefig(f'{self.data_path}spacetime/vx3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+                plt.savefig(f'{self.data_path}spacetime/av3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
                 plt.close()
 
         return
@@ -1723,7 +1737,7 @@ if __name__== "__main__":
     #    obj.plot_bx1()
     
     names = ['Bx1', 'Bx2', 'Bx3', 'vx1', 'vx2', 'vx3', 'prs', 'rho', 'psi_glm', 'av1', 'av2', 'av3']
-    for i in names[:-3]:
+    for i in names[-3:]:
         obj.plot_spacetime(i)
     #obj.magneticfield_quad()
     #obj.alfven_velocity()
