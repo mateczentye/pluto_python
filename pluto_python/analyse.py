@@ -1609,7 +1609,7 @@ class PlutoPython:
                 shrink=0.95, 
                 aspect=20,
                 pad=0.02, 
-                label='Velocity Field magnitude', 
+                label='Alfvén Velocity magnitude', 
                 format='%.2f'
                 )
             
@@ -1653,7 +1653,7 @@ class PlutoPython:
                 shrink=0.95, 
                 aspect=20,
                 pad=0.02, 
-                label='Velocity Field magnitude', 
+                label='Alfvén Velocity magnitude', 
                 format='%.2f'
                 )
             
@@ -1697,7 +1697,7 @@ class PlutoPython:
                 shrink=0.95, 
                 aspect=20,
                 pad=0.02, 
-                label='Velocity Field magnitude', 
+                label='Alfvén Velocity magnitude', 
                 format='%.2f'
                 )
             
@@ -1717,46 +1717,3 @@ class PlutoPython:
                 plt.close()
 
         return
-
-if __name__== "__main__":
-
-    #obj = PlutoPython('/mnt/f/OneDrive/ResearchProject/data/low_b_low_eta_outflow/', 300, (10,5), 5)
-    obj = PlutoPython(
-        data_path='/mnt/f/OneDrive/ResearchProject/data/Mms2_mid_upper_b_pol/',
-        time_step=37,
-        cmap='seismic',
-        global_limits=True
-        )
-
-    #obj.classifier(delta_time=37, output_selector='all')
-
-    #for time in range(0,5):
-    #    obj.classifier(time, output_selector='all')
-    #    #obj.magneticfield_quad(save=True)
-    #    #obj.magnetic_streamlines(save=True)
-    #    obj.plot_bx1()
-    
-    names = ['Bx1', 'Bx2', 'Bx3', 'vx1', 'vx2', 'vx3', 'prs', 'rho', 'psi_glm', 'av1', 'av2', 'av3']
-    for i in names[-3:]:
-        obj.plot_spacetime(i)
-    #obj.magneticfield_quad()
-    #obj.alfven_velocity()
-    #bx1 = obj.plot_bx1(save=True)
-    #obj.histogram(bx1,'BX1', 16, True)
-    #obj.plot_bx2()
-    #obj.plot_bx3()
-    #obj.plot_bfield_magnitude()
-    #obj.plot_glm()
-    #obj.plot_pressure()
-    #obj.plot_log_pressure()
-    #obj.plot_density()
-    #obj.plot_tracer()
-    
-    #obj.plot_vx1()
-    #obj.plot_vx2()
-    #obj.plot_vx3()
-    #obj.plot_velocity_field_magnitude()
-    
-    #obj.velocity_quad(save=True)
-    #obj.plot_pressure_density(save=True)
-    #obj.magnetic_streamlines(save=True)
