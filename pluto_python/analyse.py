@@ -1178,16 +1178,15 @@ class PlutoPython:
         while plots the true magnitude of the magnetic field accounted in all 3 directions.
         """
         data =self.classifier(output_selector='all', delta_time=self.time_step)
-        #data1, data2, data3, b_mag = self.magneticfield_quad(close=True)
-
+        
         data1 = np.reshape(data[self.b_radial], self.XZ_shape).T
         data2 = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
         data3 = np.reshape(data[self.b_axial], self.XZ_shape).T
         b_mag = np.sqrt(data1**2 + data2**2 + data3**2)
 
-        cmp='Reds'
+        cmp='jet'
         scmap = 'seismic'
-        density=2.5
+        density=4
 
         subgrid_x_low = float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][0])
         subgrid_y_low = float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][0])
@@ -1217,20 +1216,24 @@ class PlutoPython:
         x2_comp = np.asarray(data2)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
         x3_comp = np.asarray(data3)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
         magnitude = np.asarray(b_mag)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+
         X, Y = np.meshgrid(self.axial_grid[:subgrid_x_res],
                             self.radial_grid[subgrid_y_start:subgrid_y_end])
 
+        X2, Y2 = np.meshgrid(np.linspace(subgrid_x_low, subgrid_x, subgrid_x_res),
+                            np.linspace(-1*subgrid_y, subgrid_y, subgrid_y_res*2))
+
         figure, axes = plt.subplots(1,1,figsize=figsize,dpi=self.dpi)        
         axes.contourf(
-                    X, 
+                    X,
                     Y,
                     magnitude,
                     cmap=cmp,
                     alpha=0.95,
                     levels=128)
 
-        axes.streamplot(X,
-                        Y,
+        axes.streamplot(X2, 
+                        Y2,
                         x3_comp,
                         x1_comp,
                         density=density,
@@ -1238,18 +1241,14 @@ class PlutoPython:
                         cmap=scmap,
                         integration_direction='both',
                         maxlength=20,
-                        arrowsize=0.95,
+                        arrowsize=1.25,
                         arrowstyle='->',
-                        linewidth=0.75,
+                        linewidth=0.5,
                         )
-        
-
-        
-
-        #norm = matplotlib.colors.Normalize(vmin=np.min(mag_dat), vmax=np.max(mag_dat))
-        #linenorm = matplotlib.colors.Normalize(vmin=np.min(phi_data), vmax=np.max(phi_data))
-        #plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field Strength',  location='bottom', pad=0.01)
-        #plt.colorbar(matplotlib.cm.ScalarMappable(norm=linenorm, cmap=scmap), ax=axes, format='%.2f', label='Magnetic Field in direction x2',  location='bottom', pad=0.05)
+        norm = matplotlib.colors.Normalize(vmin=np.min(magnitude), vmax=np.max(magnitude))
+        linenorm = matplotlib.colors.Normalize(vmin=np.min(x2_comp), vmax=np.max(x2_comp))
+        plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field Strength',  location='bottom', pad=0.01)
+        plt.colorbar(matplotlib.cm.ScalarMappable(norm=linenorm, cmap=scmap), ax=axes, format='%.2f', label='Magnetic Field in direction x2',  location='bottom', pad=0.05)
         
         plt.title(f'Magnetic field with field line direction at {self.time_step}')
         
@@ -1823,16 +1822,3 @@ class PlutoPython:
             self.mirrored = True
 
         return
-
-jet = PlutoPython(
-        data_path='/mnt/h/thesis_data/prelims/low_b_low_eta/',
-        time_step=1001,
-        cmap='seismic',
-        global_limits=False,
-        xlim=(0,20),
-        ylim=(0,10),
-        mirrored=True
-        )
-
-bms = jet.magnetic_streamlines()
-#bfm = jet.magneticfield_quad()
