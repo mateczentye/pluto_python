@@ -1,4 +1,5 @@
 #%%
+from re import S
 from h5py._hl import selections
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Colormap
@@ -33,6 +34,7 @@ class PlutoPython:
         xlim = None,
         cmap = 'bwr',
         global_limits = False,
+        mirrored = False
         
     ):
 
@@ -44,7 +46,7 @@ class PlutoPython:
         self.global_limits_bool = global_limits
         self.cmap = cmap
         self.ini_path = ini_path
-        
+        self.mirrored = mirrored
         self.closure = False
 
         ### Classifier variables
@@ -129,7 +131,17 @@ class PlutoPython:
                     new_dict[line[0]].update(high_lim)
                     new_dict[line[0]].update(sub_grid_data)
                     self.ini_content['[Grid]'].update(new_dict)
-
+                
+                elif 'tstop' == line[0]:
+                    self.ini_content['[Time]'].update({line[0] : float(line[-1])})
+                    self.tstop = float(line[-1])
+                elif 'CFL' == line[0]:
+                    self.ini_content['[Time]'].update({line[0] : float(line[-1])})
+                elif 'CFL_max_var' == line[0]:
+                    self.ini_content['[Time]'].update({line[0] : float(line[-1])})
+                elif 'first_dt' == line[0]:
+                    self.ini_content['[Time]'].update({line[0] : float(line[-1])})
+                
             ### Define axis grid size via subgrids 2nd element values
             grid_size = {}
             keys = self.ini_content['[Grid]'].keys()
@@ -138,19 +150,27 @@ class PlutoPython:
                 for subgrid in self.ini_content['[Grid]'][grid]['Subgrids Data']:
                     x_grid_size += int(subgrid[1])
                 grid_size.update({grid : x_grid_size})
+
+            
         
         self.grid_size = grid_size
         
+
+
         return grid_size
 
     def reader(self):
         path = os.getcwd()
         files  = os.listdir(self.data_path)
         extension = '.h5'
-        self.data_list = [file for file in files if extension in file]
+        self.data_list = [file for file in files if extension in file and 'out' not in file]
         return self.data_list
         
     def classifier(self, delta_time, output_selector=None):
+        """
+        delta_time: is the time step of which is number of the file by pluto
+        output_selector: None or 'all' <- will be removed soon
+        """
         self.reader()
         data_file = self.data_list[delta_time]
         h5_read = h5py.File(self.data_path + data_file, 'r')
@@ -185,7 +205,22 @@ class PlutoPython:
         elif output_selector == 'all':
             return data
 
-    def get_limits(self):
+    def _flip_multiply(self, array):
+        """
+        This method makes a single quadrant mirrored along the axial direction
+        """
+        x = self.axial_grid
+        y = self.radial_grid
+        xi = np.flip(x, 0)
+        yi = np.flip(y, 0)
+        self.radial_grid = np.concatenate((-yi[:-1], y), axis=0)
+        array_inverse = np.flip(array, 0)
+        new_array = np.concatenate((array_inverse[:-1], array),axis=0)
+        self.ylim = (-self.ylim[1], self.ylim[1])
+        return new_array
+
+
+    def get_limits(self,log=False):
         """
         This method runs through all available data to set the colour limits up
         for each variable globally, across all time steps.
@@ -195,7 +230,7 @@ class PlutoPython:
         max_file = self.data_list[-1].replace('.dbl.h5', '').replace('data.', '')
         self.max_file = int(max_file)
         ### loops through everything to find limits for the data
-        for step in range(-1, int(max_file)):
+        for step in range(-1, self.time_step):
             # read files in here
             data = self.classifier(output_selector='all', delta_time=step)
             keys = list(data.keys())
@@ -206,8 +241,12 @@ class PlutoPython:
                     step = 0
             else:
                 for index, variable in enumerate(keys):
-                    var_min = np.min(list(data[variable]))
-                    var_max = np.max(list(data[variable]))
+                    if log == True:
+                        var_min = np.min(np.log(list(data[variable])))
+                        var_max = np.max(np.log(list(data[variable])))
+                    elif log == False:
+                        var_min = np.min(list(data[variable]))
+                        var_max = np.max(list(data[variable]))
                     
                     current_min = limits[variable]['min']
                     current_max = limits[variable]['max']
@@ -258,9 +297,11 @@ class PlutoPython:
         bx2 = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
         bx3 = np.reshape(data[self.b_axial], self.XZ_shape).T
         data2plot = np.sqrt(np.asarray(bx1)**2 + np.asarray(bx2)**2 + np.asarray(bx3)**2)
-        
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
         pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=128)
+        #axes.contourf(self.axial_grid, np.flip(-self.radial_grid), np.flipdata2plot, cmap=self.cmap, levels=128)
         
         figure.colorbar(pl, 
             location='right',  
@@ -271,9 +312,9 @@ class PlutoPython:
             format='%.2f'
         )
 
-        axes.set_title(f'Magnetic field magnitude at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Magnetic field magnitude at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -298,7 +339,8 @@ class PlutoPython:
         """     
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.psi_glm], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = self.set_levels(self.psi_glm)
                 
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -313,9 +355,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'General Lagrangian Multiplier at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'General Lagrangian Multiplier at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -340,6 +382,8 @@ class PlutoPython:
         """    
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.b_radial], self.XZ_shape).T
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
 
         levels = self.set_levels(self.b_radial)
         
@@ -355,9 +399,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Magnetic field in x1 direction at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Magnetic field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -384,7 +428,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = levels = self.set_levels(self.b_azimuthal)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -399,9 +444,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Magnetic field in x2 direction at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Magnetic field in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -426,7 +471,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.b_axial], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = levels = self.set_levels(self.b_axial)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -441,9 +487,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Magnetic field in x3 direction at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Magnetic field in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -468,7 +514,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.pressure], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = levels = self.set_levels(self.pressure)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -483,9 +530,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Pressure at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Pressure at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -509,8 +556,9 @@ class PlutoPython:
         Returns the data set that is being plotted
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
-        data2plot = np.reshape(data[self.pressure], self.XZ_shape).T
-
+        data2plot  = np.reshape(data[self.pressure], self.XZ_shape).T
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         p_levels = self.set_levels(self.pressure)
         levels = np.linspace(-np.max(p_levels), np.max(p_levels), 128)
         
@@ -526,9 +574,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Log Pressure at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Log Pressure at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -553,7 +601,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.density], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = self.set_levels(self.density)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -568,9 +617,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Mass Density at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Mass Density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -595,7 +644,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.tracer1], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = self.set_levels(self.tracer1)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -610,9 +660,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Tracer at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Tracer at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -637,7 +687,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.radial_velocity], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = self.set_levels(self.radial_velocity)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -652,9 +703,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Velocity field in x1 direction at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Velocity field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -679,7 +730,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.azimuthal_velocity], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = self.set_levels(self.azimuthal_velocity)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -694,9 +746,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Velocity field in x2 direction at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Velocity field in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -721,7 +773,8 @@ class PlutoPython:
         """   
         data = self.classifier(output_selector='all', delta_time=self.time_step)
         data2plot = np.reshape(data[self.axial_velocity], self.XZ_shape).T
-
+        if self.mirrored == True:
+            data2plot = self._flip_multiply(data2plot)
         levels = self.set_levels(self.axial_velocity)
 
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -736,9 +789,9 @@ class PlutoPython:
             format='%.2f'
             )
         
-        axes.set_title(f'Velocity field in x3 direction at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Velocity field in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -767,7 +820,8 @@ class PlutoPython:
         vx2 = np.reshape(data[self.azimuthal_velocity], self.XZ_shape).T
         vx3 = np.reshape(data[self.axial_velocity], self.XZ_shape).T
         data2plot = np.sqrt(np.asarray(vx1)**2 + np.asarray(vx2)**2 + np.asarray(vx3**2))
-
+        #if self.mirrored == True:
+        #    data2plot = self._flip_multiply(data2plot)
         levels1 = self.set_levels(self.radial_velocity)
         levels2 = self.set_levels(self.azimuthal_velocity)
         levels3 = self.set_levels(self.axial_velocity)
@@ -793,9 +847,9 @@ class PlutoPython:
             format='%.2f'
         )
 
-        axes.set_title(f'Velocity field magnitude at {self.timestep.replace("_", " ")}')
-        axes.set_xlim(0, self.xlim[1])
-        axes.set_ylim(0, self.ylim[1])
+        axes.set_title(f'Velocity field magnitude at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -819,33 +873,34 @@ class PlutoPython:
         Returns None
         """
         data = self.classifier(output_selector='all', delta_time=self.time_step)
-        density_data = np.reshape(data[self.density], self.XZ_shape).T
-        pressure_data = np.reshape(data[self.pressure], self.XZ_shape).T
-        
+        density_data = self.plot_density(close=True)
+        pressure_data = self.plot_pressure(close=True)
+
         figure, axes = plt.subplots(2,1,figsize=self.image_size, dpi=self.dpi)
         self.cmap = 'hot'
-        density_levels = levels = self.set_levels(self.density)
+        density_levels = self.set_levels(self.density)
         
-        axes[0].contourf(self.axial_grid, self.radial_grid, density_data, cmap=self.cmap, levels=density_levels)
-        im1 = axes[0].imshow(density_data, cmap=self.cmap)
+        axes[0].contourf(self.axial_grid, self.radial_grid, np.log(density_data), cmap=self.cmap, levels=density_levels)
+        im1 = axes[0].imshow(np.log(density_data), cmap=self.cmap)
+
         divider = mal(axes[0])
         cax = divider.append_axes('right',size='5%',pad=0.05)
-        plt.colorbar(im1,cax,ticks=np.linspace(0,np.max(density_data), 6))
-        axes[0].set_title(f'Mass Density at {self.timestep.replace("_", " ")}')
-        axes[0].set_xlim(0, self.xlim[1])
-        axes[0].set_ylim(0, self.ylim[1])
+        plt.colorbar(im1,cax,ticks=np.linspace(np.min(np.log(density_data)),np.max(np.log(density_data)), 6))
+        axes[0].set_title(f'Log of Mass Density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0].set_ylim(self.ylim[0], self.ylim[1])
         axes[0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0].set_xlabel(r'Axial distance [$R_{jet}$]')
         
         pressure_levels = self.set_levels(self.pressure)
         axes[1].contourf(self.axial_grid, self.radial_grid, np.log(pressure_data), cmap=self.cmap, levels=128)
-        im1 = axes[1].imshow(pressure_data, cmap=self.cmap)
+        im1 = axes[1].imshow(np.log(pressure_data), cmap=self.cmap)
         divider = mal(axes[1])
         cax = divider.append_axes('right',size='5%',pad=0.05)
-        plt.colorbar(im1,cax,ticks=np.linspace(0,np.max(pressure_data), 6))
-        axes[1].set_title(f'Log of Pressure at {self.timestep.replace("_", " ")}')
-        axes[1].set_xlim(0, self.xlim[1])
-        axes[1].set_ylim(0, self.ylim[1])
+        plt.colorbar(im1,cax,ticks=np.linspace(np.min(np.log(pressure_data)),np.max(np.log(pressure_data)), 6))
+        axes[1].set_title(f'Log of Pressure at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1].set_ylim(self.ylim[0], self.ylim[1])
         axes[1].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[1].set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -879,7 +934,7 @@ class PlutoPython:
         data2 = self.plot_bx2(close=True)
         data3 = self.plot_bx3(close=True)
         data4 = self.plot_bfield_magnitude(close=True)
-
+            
         min_val = 0
         for x in [data1,data2,data3,data4]:
             if np.min(x) < min_val:
@@ -891,35 +946,37 @@ class PlutoPython:
             levels = np.linspace(0,np.max(data4),128)
         else:
             levels = np.concatenate([negative_levels, positive_levels[1:]])
+
+        self.magnetic_field_levels = levels
                 
         figure, axes = plt.subplots(2,2,figsize=(self.image_size[0]*1.2, self.image_size[1]*1.8), dpi=self.dpi)
         cax = plt.axes([1, 0.05, 0.05, 0.9], label='magnetic field')
         # x1 direction 
         axes[0][0].contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
-        axes[0][0].set_title(f'Magnetic field in x1 direction at {self.timestep.replace("_", " ")}')
-        axes[0][0].set_xlim(0, self.xlim[1])
-        axes[0][0].set_ylim(0, self.ylim[1])
+        axes[0][0].set_title(f'Magnetic field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0][0].set_ylim(self.ylim[0], self.ylim[1])
         axes[0][0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0][0].set_xlabel(r'Axial distance [$R_{jet}$]')
         # x2 direction 
         axes[0][1].contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
-        axes[0][1].set_title(f'Magnetic field in x2 direction at {self.timestep.replace("_", " ")}')
-        axes[0][1].set_xlim(0, self.xlim[1])
-        axes[0][1].set_ylim(0, self.ylim[1])
+        axes[0][1].set_title(f'Magnetic field in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0][1].set_ylim(self.ylim[0], self.ylim[1])
         axes[0][1].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0][1].set_xlabel(r'Axial distance [$R_{jet}$]')
         # x3 direction 
         axes[1][0].contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
-        axes[1][0].set_title(f'Magnetic field in x3 direction at {self.timestep.replace("_", " ")}')
-        axes[1][0].set_xlim(0, self.xlim[1])
-        axes[1][0].set_ylim(0, self.ylim[1])
+        axes[1][0].set_title(f'Magnetic field in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1][0].set_ylim(self.ylim[0], self.ylim[1])
         axes[1][0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[1][0].set_xlabel(r'Axial distance [$R_{jet}$]')
         # magnitude
         axes[1][1].contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
-        axes[1][1].set_title(f'Magnetic field magnitude at {self.timestep.replace("_", " ")}')
-        axes[1][1].set_xlim(0, self.xlim[1])
-        axes[1][1].set_ylim(0, self.ylim[1])
+        axes[1][1].set_title(f'Magnetic field magnitude at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1][1].set_ylim(self.ylim[0], self.ylim[1])
         axes[1][1].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[1][1].set_xlabel(r'Axial distance [$R_{jet}$]')
         
@@ -942,7 +999,7 @@ class PlutoPython:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}b_quad/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
-        return figure
+        return [data1, data2, data3, data4]
 
     def velocity_quad(self,close=False,save=False):
         """
@@ -954,6 +1011,9 @@ class PlutoPython:
         data2 = self.plot_vx2(close=True)
         data3 = self.plot_vx3(close=True)
         data4 = self.plot_velocity_field_magnitude(close=True)
+        
+        if self.mirrored == True:
+            data4 = self._flip_multiply(data4)
 
         min_val = 0
         for x in [data1,data2,data3,data4]:
@@ -974,30 +1034,30 @@ class PlutoPython:
         cax = plt.axes([1, 0.05, 0.05, 0.9], label='Velocity field')
         
         axes[0][0].contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
-        axes[0][0].set_title(f'Velocity field in x1 direction at {self.timestep.replace("_", " ")}')
-        axes[0][0].set_xlim(0, self.xlim[1])
-        axes[0][0].set_ylim(0, self.ylim[1])
+        axes[0][0].set_title(f'Velocity field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0][0].set_ylim(self.ylim[0], self.ylim[1])
         axes[0][0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0][0].set_xlabel(r'Axial distance [$R_{jet}$]')
        
         axes[0][1].contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
-        axes[0][1].set_title(f'Velocity field in x2 direction at {self.timestep.replace("_", " ")}')
-        axes[0][1].set_xlim(0, self.xlim[1])
-        axes[0][1].set_ylim(0, self.ylim[1])
+        axes[0][1].set_title(f'Velocity field in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0][1].set_ylim(self.ylim[0], self.ylim[1])
         axes[0][1].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0][1].set_xlabel(r'Axial distance [$R_{jet}$]')
 
         axes[1][0].contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
-        axes[1][0].set_title(f'Velocity field in x3 direction at {self.timestep.replace("_", " ")}')
-        axes[1][0].set_xlim(0, self.xlim[1])
-        axes[1][0].set_ylim(0, self.ylim[1])
+        axes[1][0].set_title(f'Velocity field in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1][0].set_ylim(self.ylim[0], self.ylim[1])
         axes[1][0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[1][0].set_xlabel(r'Axial distance [$R_{jet}$]')
         
         axes[1][1].contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
-        axes[1][1].set_title(f'Velocity field magnitude at {self.timestep.replace("_", " ")}')
-        axes[1][1].set_xlim(0, self.xlim[1])
-        axes[1][1].set_ylim(0, self.ylim[1])
+        axes[1][1].set_title(f'Velocity field magnitude at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1][1].set_ylim(self.ylim[0], self.ylim[1])
         axes[1][1].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[1][1].set_xlabel(r'Axial distance [$R_{jet}$]')
         
@@ -1059,30 +1119,30 @@ class PlutoPython:
         cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
         
         axes[0][0].contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
-        axes[0][0].set_title(f'Alfvén Velocity field in x1 direction at {self.timestep.replace("_", " ")}')
-        axes[0][0].set_xlim(0, self.xlim[1])
-        axes[0][0].set_ylim(0, self.ylim[1])
+        axes[0][0].set_title(f'Alfvén Velocity field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0][0].set_ylim(self.ylim[0], self.ylim[1])
         axes[0][0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0][0].set_xlabel(r'Axial distance [$R_{jet}$]')
        
         axes[0][1].contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
-        axes[0][1].set_title(f'Alfvén Velocity field in x2 direction at {self.timestep.replace("_", " ")}')
-        axes[0][1].set_xlim(0, self.xlim[1])
-        axes[0][1].set_ylim(0, self.ylim[1])
+        axes[0][1].set_title(f'Alfvén Velocity field in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0][1].set_ylim(self.ylim[0], self.ylim[1])
         axes[0][1].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[0][1].set_xlabel(r'Axial distance [$R_{jet}$]')
 
         axes[1][0].contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
-        axes[1][0].set_title(f'Alfvén Velocity field in x3 direction at {self.timestep.replace("_", " ")}')
-        axes[1][0].set_xlim(0, self.xlim[1])
-        axes[1][0].set_ylim(0, self.ylim[1])
+        axes[1][0].set_title(f'Alfvén Velocity field in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1][0].set_ylim(self.ylim[0], self.ylim[1])
         axes[1][0].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[1][0].set_xlabel(r'Axial distance [$R_{jet}$]')
         
         axes[1][1].contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
-        axes[1][1].set_title(f'Alfvén Velocity field magnitude at {self.timestep.replace("_", " ")}')
-        axes[1][1].set_xlim(0, self.xlim[1])
-        axes[1][1].set_ylim(0, self.ylim[1])
+        axes[1][1].set_title(f'Alfvén Velocity field magnitude at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1][1].set_ylim(self.ylim[0], self.ylim[1])
         axes[1][1].set_ylabel(r'Radial distance [$R_{jet}$]')
         axes[1][1].set_xlabel(r'Axial distance [$R_{jet}$]')
         
@@ -1114,13 +1174,20 @@ class PlutoPython:
 
     def magnetic_streamlines(self,close=False,save=False):
         """
-        Plots a vector plot of the magnetic field lines.
+        Plots a vector plot of the magnetic field lines in the axial-radial plane,
+        while plots the true magnitude of the magnetic field accounted in all 3 directions.
         """
-        self.classifier(output_selector='all', delta_time=self.time_step)
-        data1 = self.plot_bx1(close=True)
-        data2 = self.plot_bx3(close=True)
-        cmp = 'Wistia'
-        cmp='viridis'
+        data =self.classifier(output_selector='all', delta_time=self.time_step)
+        #data1, data2, data3, b_mag = self.magneticfield_quad(close=True)
+
+        data1 = np.reshape(data[self.b_radial], self.XZ_shape).T
+        data2 = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
+        data3 = np.reshape(data[self.b_axial], self.XZ_shape).T
+        b_mag = np.sqrt(data1**2 + data2**2 + data3**2)
+
+        cmp='Reds'
+        scmap = 'seismic'
+        density=2.5
 
         subgrid_x_low = float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][0])
         subgrid_y_low = float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][0])
@@ -1128,47 +1195,64 @@ class PlutoPython:
         subgrid_y = float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][1][0])
         subgrid_x_res = int(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][1])
         subgrid_y_res = int(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][1])
-        
-        X, Y = np.meshgrid(np.linspace(subgrid_x_low,subgrid_x,subgrid_x_res),
-                            np.linspace(subgrid_y_low,subgrid_y,subgrid_y_res))
-        test = np.ones(np.shape(X))
 
-        figure, axes = plt.subplots(1,1,figsize=(10,5),dpi=self.dpi)
+        ### taking the correct indecies for the unbiform subgrid
+        if self.mirrored == False:
+            subgrid_y_start = 0
+            subgrid_y_end = subgrid_y_res
+            figsize = (10,5)
+        elif self.mirrored == True:
+            data1 = self._flip_multiply(data1)
+            data3 = self._flip_multiply(data3)
+            b_mag = self._flip_multiply(b_mag)
+            data2 = np.concatenate((-1*np.flip(data2), data2[1:]), axis=0)
 
-        y_data = np.array([row[:subgrid_x_res] for row in data1][:subgrid_y_res])
-        x_data = np.array([row[:subgrid_x_res] for row in data2][:subgrid_y_res])
+            total_y = len(b_mag)
+            mid_plane = int(total_y/2)
+            subgrid_y_start = mid_plane - subgrid_y_res
+            subgrid_y_end = mid_plane + subgrid_y_res
+            figsize = (10,10)
 
-        mag_dat = np.sqrt(x_data**2 + y_data**2)
+        x1_comp = np.asarray(data1)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+        x2_comp = np.asarray(data2)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+        x3_comp = np.asarray(data3)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+        magnitude = np.asarray(b_mag)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+        X, Y = np.meshgrid(self.axial_grid[:subgrid_x_res],
+                            self.radial_grid[subgrid_y_start:subgrid_y_end])
 
-        
-
+        figure, axes = plt.subplots(1,1,figsize=figsize,dpi=self.dpi)        
         axes.contourf(
-                    np.linspace(subgrid_x_low, subgrid_x, subgrid_x_res), 
-                    np.linspace(subgrid_y_low, subgrid_y, subgrid_y_res),
-                    mag_dat,
-                    cmap=cmp)
+                    X, 
+                    Y,
+                    magnitude,
+                    cmap=cmp,
+                    alpha=0.95,
+                    levels=128)
 
         axes.streamplot(X,
                         Y,
-                        x_data,
-                        y_data,
-                        density=2.5,
-                        color='black',
-                        #cmap='Greys',
+                        x3_comp,
+                        x1_comp,
+                        density=density,
+                        color=x2_comp,
+                        cmap=scmap,
                         integration_direction='both',
                         maxlength=20,
                         arrowsize=0.95,
                         arrowstyle='->',
-                        linewidth=0.5
-
+                        linewidth=0.75,
                         )
+        
 
-        norm = matplotlib.colors.Normalize(vmin=np.min(mag_dat), vmax=np.max(mag_dat))
-        #cax = plt.axes([0.95, 0.1, 0.25, 1], label='Magnetic field')
-        plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field')
-        plt.title('Magnetic field with field line direction')
-        plt.ylim(self.ylim)
-        plt.xlim(self.xlim)
+        
+
+        #norm = matplotlib.colors.Normalize(vmin=np.min(mag_dat), vmax=np.max(mag_dat))
+        #linenorm = matplotlib.colors.Normalize(vmin=np.min(phi_data), vmax=np.max(phi_data))
+        #plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field Strength',  location='bottom', pad=0.01)
+        #plt.colorbar(matplotlib.cm.ScalarMappable(norm=linenorm, cmap=scmap), ax=axes, format='%.2f', label='Magnetic Field in direction x2',  location='bottom', pad=0.05)
+        
+        plt.title(f'Magnetic field with field line direction at {self.time_step}')
+        
 
 
         if close==True:
@@ -1232,7 +1316,14 @@ class PlutoPython:
         names = ['Bx1', 'Bx2', 'Bx3', 'vx1', 'vx2', 'vx3', 'prs', 'rho', 'psi_glm', 'av1', 'av2', 'av3']
         if variable not in names:
             raise ValueError("Please give a valid variable to plot:\n'bx1', 'bx2', 'bx3', 'vx1', 'vx2', 'vx3', 'prs', 'rho', 'glm', 'av1', 'av2', 'av3'")
+        self.classifier(self.time_step, output_selector='all')
+        self.cmap='hot'
         
+        check = False
+        if self.mirrored == True:
+            self.mirrored = False
+            check = True
+
         if variable == 'Bx1':
             axial_array = []
             time_list = range(len(self.data_list))
@@ -1245,7 +1336,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1258,6 +1349,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Magnetic field in x1 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time-step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1284,7 +1376,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1297,6 +1389,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Magnetic field in x2 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1323,7 +1416,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1336,6 +1429,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Magnetic field in x3 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1362,7 +1456,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1370,11 +1464,12 @@ class PlutoPython:
                 shrink=0.95, 
                 aspect=20,
                 pad=0.02, 
-                label='Magnetic Field magnitude', 
+                label='General Lagrangian Multiplier', 
                 format='%.2f'
                 )
             
             axes.set_title(f'Space-Time diagram of the GLM along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1401,7 +1496,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, np.log(axial_array), cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1409,11 +1504,12 @@ class PlutoPython:
                 shrink=0.95, 
                 aspect=20,
                 pad=0.02, 
-                label='Magnetic Field magnitude', 
+                label='log(Pressure) Field', 
                 format='%.2f'
                 )
             
             axes.set_title(f'Space-Time diagram of the log(Pressure) along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1440,7 +1536,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1448,11 +1544,12 @@ class PlutoPython:
                 shrink=0.95, 
                 aspect=20,
                 pad=0.02, 
-                label='Magnetic Field magnitude', 
+                label='Density Field', 
                 format='%.2f'
                 )
             
             axes.set_title(f'Space-Time diagram of the Density along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1479,7 +1576,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1492,6 +1589,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Velocity in x1 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time-step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1518,7 +1616,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1531,6 +1629,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Velocity in x2 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1557,7 +1656,7 @@ class PlutoPython:
                 axial_array.append(data2plot)
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, axial_array, cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1570,6 +1669,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Velocity in x3 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1601,7 +1701,7 @@ class PlutoPython:
 
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, alfven_velocity(B=magfield, density=density), cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1614,6 +1714,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x1 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1645,7 +1746,7 @@ class PlutoPython:
 
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, alfven_velocity(B=magfield, density=density), cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1658,6 +1759,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x2 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1689,7 +1791,7 @@ class PlutoPython:
 
             
             X, Y = np.meshgrid(self.axial_grid, time_list)
-            figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
             pl = axes.contourf(X, Y, alfven_velocity(B=magfield, density=density), cmap=self.cmap, levels=128)
             
             figure.colorbar(pl, 
@@ -1702,6 +1804,7 @@ class PlutoPython:
                 )
             
             axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x3 direction along Jet axis')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
@@ -1716,4 +1819,20 @@ class PlutoPython:
                 plt.savefig(f'{self.data_path}spacetime/av3/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
                 plt.close()
 
+        if self.mirrored == False and check == True:
+            self.mirrored = True
+
         return
+
+jet = PlutoPython(
+        data_path='/mnt/h/thesis_data/prelims/low_b_low_eta/',
+        time_step=1001,
+        cmap='seismic',
+        global_limits=False,
+        xlim=(0,20),
+        ylim=(0,10),
+        mirrored=True
+        )
+
+bms = jet.magnetic_streamlines()
+#bfm = jet.magneticfield_quad()
