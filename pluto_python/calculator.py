@@ -22,3 +22,13 @@ def get_magnitude(list):
     for element in list:
         sum += element**2
     return np.sqrt(sum)
+
+def magneto_acoustic_velocity(b, prs, rho, gamma):
+    term1 = 1/(2*rho)
+    term2 = gamma * prs
+    root_term = term2**2 + b**4 - 2*term2*(b**2)
+
+    slow = term1 * (term2 + b**2 - np.sqrt(root_term))
+    fast = term1 * (term2 + b**2 + np.sqrt(root_term))
+
+    return [slow, fast]

@@ -1,11 +1,13 @@
 #%%
+from array import array
+from operator import le
 from re import S
 from h5py._hl import selections
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Colormap
 from numpy.lib.arraypad import pad
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
-from pluto_python.calculator import get_magnitude, alfven_velocity
+from pluto_python.calculator import get_magnitude, alfven_velocity, magneto_acoustic_velocity
 import pandas
 import numpy as np
 import h5py
@@ -232,6 +234,7 @@ class PlutoPython:
         ### loops through everything to find limits for the data
         for step in range(-1, self.time_step):
             # read files in here
+            print(f'Reading file number {step}')
             data = self.classifier(output_selector='all', delta_time=step)
             keys = list(data.keys())
             # set step to a valid value when its -1 for the classifier
@@ -519,7 +522,7 @@ class PlutoPython:
         levels = levels = self.set_levels(self.pressure)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='hot', levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -1172,7 +1175,7 @@ class PlutoPython:
 
         return figure
 
-    def magnetic_streamlines(self,close=False,save=False):
+    def magnetic_streamlines(self,close=False,save=False,levels=None,levels2=None):
         """
         Plots a vector plot of the magnetic field lines in the axial-radial plane,
         while plots the true magnitude of the magnetic field accounted in all 3 directions.
@@ -1217,6 +1220,22 @@ class PlutoPython:
         x3_comp = np.asarray(data3)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
         magnitude = np.asarray(b_mag)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
 
+        if self.global_limits_bool == True:
+            bx1_levels = self.set_levels(self.b_radial)
+            bx2_levels = self.set_levels(self.b_azimuthal)
+            bx3_levels = self.set_levels(self.b_axial)
+
+            magnitude_levels = np.linspace(
+                            0,
+                            np.sqrt(bx1_levels[-1]**2 + bx2_levels[-1]**2 + bx3_levels[-1]**2),
+                            128)
+
+        if type(levels) == None :
+            levels = np.linspace(0,2,128)
+        
+        if type(levels2) == None:
+            levels2 = np.linspace(-2,2,128)
+
         X, Y = np.meshgrid(self.axial_grid[:subgrid_x_res],
                             self.radial_grid[subgrid_y_start:subgrid_y_end])
 
@@ -1230,7 +1249,7 @@ class PlutoPython:
                     magnitude,
                     cmap=cmp,
                     alpha=0.95,
-                    levels=128)
+                    levels=levels)
 
         axes.streamplot(X2, 
                         Y2,
@@ -1243,13 +1262,15 @@ class PlutoPython:
                         maxlength=20,
                         arrowsize=1.25,
                         arrowstyle='->',
-                        linewidth=0.5,
+                        linewidth=0.75,
+                        norm=matplotlib.colors.Normalize(vmin=np.min(x2_comp), vmax=np.max(x2_comp)),
                         )
-        norm = matplotlib.colors.Normalize(vmin=np.min(magnitude), vmax=np.max(magnitude))
-        linenorm = matplotlib.colors.Normalize(vmin=np.min(x2_comp), vmax=np.max(x2_comp))
+        norm = matplotlib.colors.Normalize(vmin=np.min(levels), vmax=np.max(levels))
+        linenorm = matplotlib.colors.Normalize(vmin=np.min(levels2), vmax=np.max(levels2))
         plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field Strength',  location='bottom', pad=0.01)
         plt.colorbar(matplotlib.cm.ScalarMappable(norm=linenorm, cmap=scmap), ax=axes, format='%.2f', label='Magnetic Field in direction x2',  location='bottom', pad=0.05)
-        
+        plt.ylim(-subgrid_y, subgrid_y)
+        plt.xlim(subgrid_x_low, subgrid_x)
         plt.title(f'Magnetic field with field line direction at {self.time_step}')
         
 
@@ -1822,3 +1843,126 @@ class PlutoPython:
             self.mirrored = True
 
         return
+
+
+    def plot_magnetoacoustics(self,close=False,save=False,density_contour=False,levels=None):
+        """
+        This method shows the fast and slow magneto acoustic waves and their components
+        """
+        if levels == None:
+            cms_levels = 128
+        elif type(levels) == int:
+            cms_levels = levels
+        elif type(levels) == float:
+            cms_levels = int(levels)
+        elif type(levels) == list or type(levels) == tuple:
+            if len(levels) == 1:
+                cms_levels = np.linspace(0, levels[0], 128)
+            elif len(levels) == 2:
+                if levels[0] == levels[1]:
+                    raise ValueError('The given values for levels are the same, thus cannot equally space them.')
+                else:
+                    cms_levels = np.linspace(np.min(levels), np.max(levels), 128)
+            elif len(levels) == 3:
+                if levels[0] == levels[1]:
+                    raise ValueError(f'The min() and max() values for levels are the same, thus cannot equally space them to {levels[2]} steps.')
+                else:
+                    cms_levels = np.linspace(levels[0], levels[1], levels[2])
+
+        data = self.classifier(delta_time=self.time_step ,output_selector='all')
+        bx1 = np.reshape(data[self.b_radial], self.XZ_shape).T
+        bx2 = np.reshape(data[self.b_azimuthal], self.XZ_shape).T
+        bx3 = np.reshape(data[self.b_axial], self.XZ_shape).T
+        prs = np.reshape(data[self.pressure], self.XZ_shape).T
+        rho = np.reshape(data[self.density], self.XZ_shape).T
+        gamma = 5/3
+
+        slow1, fast1 = magneto_acoustic_velocity(bx1, prs, rho, gamma)
+        slow2, fast2 = magneto_acoustic_velocity(bx2, prs, rho, gamma)
+        slow3, fast3 = magneto_acoustic_velocity(bx3, prs, rho, gamma)
+
+        figure, axes = plt.subplots(3,2,figsize=(self.image_size[0]*2, self.image_size[0]*3), dpi=self.dpi)
+        
+        divider = mal(axes[0][0])
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        pls1 = axes[0][0].contourf(self.axial_grid, self.radial_grid, slow1, cmap='jet', levels=cms_levels, alpha=0.95)
+        plt.colorbar(pls1,cax,ticks=np.linspace(np.min(slow1),np.max(slow1), 6))
+        axes[0][0].set_title(f'Slow wave velocity in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0][0].set_ylim(self.ylim[0], self.ylim[1])
+        axes[0][0].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[0][0].set_xlabel(r'Axial distance [$R_{jet}$]')
+        
+        divider = mal(axes[1][0])
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        pls2 = axes[1][0].contourf(self.axial_grid, self.radial_grid, slow2, cmap='jet', levels=cms_levels, alpha=0.95)
+        plt.colorbar(pls2,cax,ticks=np.linspace(np.min(slow2),np.max(slow2), 6))
+        axes[1][0].set_title(f'Slow wave velocity in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1][0].set_ylim(self.ylim[0], self.ylim[1])
+        axes[1][0].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[1][0].set_xlabel(r'Axial distance [$R_{jet}$]')
+        
+        divider = mal(axes[2][0])
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        pls3 = axes[2][0].contourf(self.axial_grid, self.radial_grid, slow3, cmap='jet', levels=cms_levels, alpha=0.95)
+        plt.colorbar(pls3,cax,ticks=np.linspace(np.min(slow3),np.max(slow3), 6))
+        axes[2][0].set_title(f'Slow wave velocity in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[2][0].set_xlim(self.xlim[0], self.xlim[1])
+        axes[2][0].set_ylim(self.ylim[0], self.ylim[1])
+        axes[2][0].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[2][0].set_xlabel(r'Axial distance [$R_{jet}$]')
+        
+        divider = mal(axes[0][1])
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        plf1 = axes[0][1].contourf(self.axial_grid, self.radial_grid, fast1, cmap='jet', levels=cms_levels, alpha=0.95)
+        plt.colorbar(plf1,cax,ticks=np.linspace(np.min(fast1),np.max(fast1), 6))
+        axes[0][1].set_title(f'Fast wave velocity in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[0][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[0][1].set_ylim(self.ylim[0], self.ylim[1])
+        axes[0][1].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[0][1].set_xlabel(r'Axial distance [$R_{jet}$]')
+        
+        divider = mal(axes[1][1])
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        plf2 = axes[1][1].contourf(self.axial_grid, self.radial_grid, fast2, cmap='jet', levels=cms_levels, alpha=0.95)
+        plt.colorbar(plf2,cax,ticks=np.linspace(np.min(fast2),np.max(fast2), 6))
+        axes[1][1].set_title(f'Fast wave velocity in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[1][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[1][1].set_ylim(self.ylim[0], self.ylim[1])
+        axes[1][1].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[1][1].set_xlabel(r'Axial distance [$R_{jet}$]')
+        
+        divider = mal(axes[2][1])
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        plf3 = axes[2][1].contourf(self.axial_grid, self.radial_grid, fast3, cmap='jet', levels=cms_levels, alpha=0.95)
+        plt.colorbar(plf3,cax,ticks=np.linspace(np.min(fast3),np.max(fast3), 6))
+        axes[2][1].set_title(f'Fast wave velocity in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f}')
+        axes[2][1].set_xlim(self.xlim[0], self.xlim[1])
+        axes[2][1].set_ylim(self.ylim[0], self.ylim[1])
+        axes[2][1].set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes[2][1].set_xlabel(r'Axial distance [$R_{jet}$]')
+
+        if density_contour == True:
+            axes[0][0].contour(self.axial_grid, self.radial_grid, rho, cmap='Greys', levels=64, alpha=0.4)
+            axes[1][0].contour(self.axial_grid, self.radial_grid, rho, cmap='Greys', levels=64, alpha=0.4)
+            axes[2][0].contour(self.axial_grid, self.radial_grid, rho, cmap='Greys', levels=64, alpha=0.4)
+            axes[0][1].contour(self.axial_grid, self.radial_grid, rho, cmap='Greys', levels=64, alpha=0.4)
+            axes[1][1].contour(self.axial_grid, self.radial_grid, rho, cmap='Greys', levels=64, alpha=0.4)
+            axes[2][1].contour(self.axial_grid, self.radial_grid, rho, cmap='Greys', levels=64, alpha=0.4)
+        #norm = matplotlib.colors.Normalize(vmin=0, vmax=20)
+        #plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=self.cmap), cax=cax, format='%.2f', label='Magnetic Field')
+        
+
+        if close==True:
+            plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}cms_plots'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}cms_plots/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
+
