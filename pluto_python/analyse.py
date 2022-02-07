@@ -3,7 +3,7 @@ from posixpath import split
 from turtle import color
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
 from pluto_python.calculator import get_magnitude, alfven_velocity
-from pluto_python.calculator import magneto_acoustic_velocity, mach_number
+from pluto_python.calculator import magneto_acoustic_velocity, mach_number, energy_density
 
 import numpy as np
 import h5py
@@ -2093,7 +2093,7 @@ class PlutoPython:
                 if (i+1 == len(row)) or (j+1 == len(zero_array)):
                     pass
                 else:
-                    ### Super Fast to Sub Alfvénic, Super Slow
+                    ### Super Fast to Sub Alfvénic, Super Slow (1-3)
                     # perpendicular shocks
                     if (mach_fast[j,i] > 1) and (mach_alfv[j,i+1] < 1) and (mach_slow[j,i+1] > 1):
                         inter_shock_ax1.append(self.axial_grid[i])
@@ -2107,7 +2107,7 @@ class PlutoPython:
                         inter_shock_ax1.append(self.axial_grid[i])
                         inter_shock_ra1.append(self.radial_grid[j])
                     
-                    ## Sub Fast, Super Alfvénic to Sub Alfvénic, Super Slow
+                    ## Sub Fast, Super Alfvénic to Sub Alfvénic, Super Slow (2-3)
                     # perpendicular shocks
                     if (mach_alfv[j,i] > 1) and (mach_fast[j,i] < 1) and (mach_alfv[j,i+1] < 1) and (mach_slow[j,i+1] > 1):
                         inter_shock_ax2.append(self.axial_grid[i])
@@ -2121,7 +2121,7 @@ class PlutoPython:
                         inter_shock_ax2.append(self.axial_grid[i])
                         inter_shock_ra2.append(self.radial_grid[j])
                    
-                    ### Sub Fast, Super Alfvénic to Sub Slow
+                    ### Sub Fast, Super Alfvénic to Sub Slow (2-4)
                     # perpendicular shocks
                     if (mach_alfv[j,i] > 1) and (mach_fast[j,i] < 1) and (mach_slow[j,i+1] < 1):
                         inter_shock_ax3.append(self.axial_grid[i])
@@ -2135,7 +2135,7 @@ class PlutoPython:
                         inter_shock_ax3.append(self.axial_grid[i])
                         inter_shock_ra3.append(self.radial_grid[j])
 
-                    ### Hydrodynamic
+                    ### Hydrodynamic (1-4)
                     # perpendicular shocks
                     if (mach_fast[j,i] > 1) and (mach_slow[j,i+1] < 1):
                         inter_shock_ax4.append(self.axial_grid[i])
@@ -2168,25 +2168,27 @@ class PlutoPython:
                         slow_shock_ax.append(self.axial_grid[i])
                         slow_shock_ra.append(self.radial_grid[j])
         
+        ### Plots ###
+
         if plot_shock != None:
             figureS, axesS = plt.subplots(figsize=(self.image_size[0]*1.25, self.image_size[1]*1.25), dpi=self.dpi*2)
             if plot_shock == True:
-                axesS.plot(fast_shock_ax, fast_shock_ra, '+', lw=0.25, color='red', markersize=5, label='Fast 1-2 Shocks', alpha=0.25)
-                axesS.plot(inter_shock_ax1, inter_shock_ra1, '+', lw=0.25, color='yellow', markersize=5, label='Inter 1-3 Shocks', alpha=0.25)
-                axesS.plot(inter_shock_ax2, inter_shock_ra2, '+', lw=0.25, color='green', markersize=5, label='Inter 2-3 Shocks', alpha=0.25)
-                axesS.plot(inter_shock_ax3, inter_shock_ra3, '+', lw=0.25, color='orange', markersize=5, label='Inter 2-4 Shocks', alpha=0.25)
-                axesS.plot(inter_shock_ax4, inter_shock_ra4, '+', lw=0.25, color='cyan', markersize=5, label='Hydro 1-4 Shocks', alpha=0.25)
-                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=5, label='Slow 3-4 Shocks', alpha=0.25)
+                axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label='Fast 1-2 Shocks', alpha=0.5)
+                axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label='Inter 1-3 Shocks', alpha=0.5)
+                axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label='Inter 2-3 Shocks', alpha=0.5)
+                axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label='Inter 2-4 Shocks', alpha=0.5)
+                axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label='Hydro 1-4 Shocks', alpha=0.5)
+                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label='Slow 3-4 Shocks', alpha=0.5)
 
             elif plot_shock == 'slow':
-                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=5, label='Slow 3-4 Shocks', alpha=0.25)
+                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label='Slow 3-4 Shocks', alpha=0.5)
             elif plot_shock == 'inter':
-                axesS.plot(inter_shock_ax1, inter_shock_ra1, '+', lw=0.25, color='yellow', markersize=5, label='Inter 1-3 Shocks', alpha=0.25)
-                axesS.plot(inter_shock_ax2, inter_shock_ra2, '+', lw=0.25, color='green', markersize=5, label='Inter 2-3 Shocks', alpha=0.25)
-                axesS.plot(inter_shock_ax3, inter_shock_ra3, '+', lw=0.25, color='orange', markersize=5, label='Inter 2-4 Shocks', alpha=0.25)
-                axesS.plot(inter_shock_ax4, inter_shock_ra4, '+', lw=0.25, color='cyan', markersize=5, label='Hydro 1-4 Shocks', alpha=0.25)
+                axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label='Inter 1-3 Shocks', alpha=0.5)
+                axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label='Inter 2-3 Shocks', alpha=0.5)
+                axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label='Inter 2-4 Shocks', alpha=0.5)
+                axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label='Hydro 1-4 Shocks', alpha=0.5)
             elif plot_shock == 'fast':
-                axesS.plot(fast_shock_ax, fast_shock_ra, '+', lw=0.25, color='red', markersize=5, label='Fast 1-2 Shocks', alpha=0.25)
+                axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label='Fast 1-2 Shocks', alpha=0.5)
 
             axesS.legend()
             axesS.set_xlim(self.xlim[0], self.xlim[1])
@@ -2230,3 +2232,43 @@ class PlutoPython:
 
 
         return [np.log(mach_slow), np.log(mach_alfv), np.log(mach_fast)]
+
+
+    def plot_jet_power(self, save=False, plot=False):
+        
+        time = 0.2 #pluto units
+        gamma = 5/3
+
+        prs = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.pressure], self.XZ_shape).T
+        rho = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.density], self.XZ_shape).T
+        vx1 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.radial_velocity], self.XZ_shape).T
+        bx1 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_radial], self.XZ_shape).T
+        vx2 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.azimuthal_velocity], self.XZ_shape).T
+        bx2 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_azimuthal], self.XZ_shape).T
+        vx3 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.axial_velocity], self.XZ_shape).T
+        bx3 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_axial], self.XZ_shape).T
+
+        vxs = np.sqrt(vx1**2 + vx2**2 + vx3**2)
+        bxs = np.sqrt(bx1**2 + bx2**2 + bx3**2)
+
+        kin_e, pot_e, mag_e = energy_density(prs, vxs, bxs, gamma)
+        e_dens = kin_e + pot_e + mag_e
+
+        power = np.asarray([np.sum(x) for x in e_dens.T]) / time
+        kin_p = np.asarray([np.sum(x) for x in kin_e.T]) / time
+        mag_p = np.asarray([np.sum(x) for x in mag_e.T]) / time
+        pot_p = np.asarray([np.sum(x) for x in pot_e.T]) / time
+
+        if plot == True:
+            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
+
+            plt1 = axes.plot(self.axial_grid, power, '-', ms=2.5, label='Total power')
+            plt2 = axes.plot(self.axial_grid, kin_p, '-.', ms=2.5, label='Kinetic power')
+            plt3 = axes.plot(self.axial_grid, pot_p, ':', ms=1.5, label='Thermal power')
+            plt4 = axes.plot(self.axial_grid, mag_p, '--', ms=1.5, label='Magnetic power')
+            axes.set_title(f'Jet power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
+            axes.set_ylabel(r'Jet power')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+            axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
+        return power

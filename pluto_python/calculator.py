@@ -36,3 +36,9 @@ def magneto_acoustic_velocity(b, prs, rho, gamma):
 
 def mach_number(fluid_velocity, wave_velocity):
     return fluid_velocity/wave_velocity
+
+def energy_density(pressure, velocity, magnetic_field, gamma):
+    pot = pressure / (gamma - 1)
+    kin = 0.5 * velocity
+    mag = 0.5 * (magnetic_field**2)
+    return [pot, kin, mag]
