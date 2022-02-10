@@ -1,6 +1,5 @@
 #%%
-from posixpath import split
-from turtle import color
+import enum
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
 from pluto_python.calculator import get_magnitude, alfven_velocity
 from pluto_python.calculator import magneto_acoustic_velocity, mach_number, energy_density
@@ -23,7 +22,7 @@ class PlutoPython:
     def __init__(
         self,
         data_path,
-        time_step,
+        time_step = 0,
         ini_path = None,
         select_variable = None,
         dpi = 300,
@@ -61,8 +60,8 @@ class PlutoPython:
         self.azimuthal_velocity = None
         self.axial_velocity = None
 
-        self.reader()
-        self.shape_limits = self.read_ini()
+        self._reader()
+        self.shape_limits = self._read_ini()
         self.XZ_shape = (self.shape_limits['X3-grid'], self.shape_limits['X1-grid'])
 
         ### Define axes limits from defaults from the ini file if not given. To see max grid,
@@ -81,9 +80,9 @@ class PlutoPython:
             self.ylim = ylim
         ### If global limit bool is set to False, the limits are not run
         if self.global_limits_bool == True:
-            self.global_limits = self.get_limits()
+            self.global_limits = self._get_limits()
 
-    def read_ini(self):
+    def _read_ini(self):
         """
         Method reads in data from the .ini file currently works for cylindrical polar coords
         """
@@ -162,7 +161,7 @@ class PlutoPython:
         self.grid_size = grid_size
         return grid_size
 
-    def reader(self):
+    def _reader(self):
         path = os.getcwd()
         files  = os.listdir(self.data_path)
         extension = '.h5'
@@ -174,7 +173,7 @@ class PlutoPython:
         delta_time: is the time step of which is number of the file by pluto
         output_selector: None or 'all' <- will be removed soon
         """
-        self.reader()
+        self._reader()
         data_file = self.data_list[delta_time]
         h5_read = h5py.File(self.data_path + data_file, 'r')
 
@@ -226,7 +225,7 @@ class PlutoPython:
         return new_array
 
 
-    def get_limits(self,log=False):
+    def _get_limits(self,log=False):
         """
         This method runs through all available data to set the colour limits up
         for each variable globally, across all time steps.
@@ -698,7 +697,7 @@ class PlutoPython:
         levels = self.set_levels(self.tracer1)
         
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap=self.cmap, levels=levels)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='jet_r', levels=levels)
         
         figure.colorbar(pl, 
             location='right', 
@@ -2247,28 +2246,40 @@ class PlutoPython:
         bx2 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_azimuthal], self.XZ_shape).T
         vx3 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.axial_velocity], self.XZ_shape).T
         bx3 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_axial], self.XZ_shape).T
-
+        tr1 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.tracer1], self.XZ_shape).T
         vxs = np.sqrt(vx1**2 + vx2**2 + vx3**2)
         bxs = np.sqrt(bx1**2 + bx2**2 + bx3**2)
 
-        kin_e, pot_e, mag_e = energy_density(prs, vxs, bxs, gamma)
-        e_dens = kin_e + pot_e + mag_e
+        ax_dif = []
+        for i, val in enumerate(self.axial_grid):
+            if i == 0:
+                diff = val
+            else:
+                diff = self.axial_grid[i] - self.axial_grid[i-1]
+            ax_dif.append(diff)
 
-        power = np.asarray([np.sum(x) for x in e_dens.T]) / time
-        kin_p = np.asarray([np.sum(x) for x in kin_e.T]) / time
-        mag_p = np.asarray([np.sum(x) for x in mag_e.T]) / time
-        pot_p = np.asarray([np.sum(x) for x in pot_e.T]) / time
+        print(self.axial_grid)
+        print(self.radial_grid)
+        
+        kin_ed, pot_ed, mag_ed = energy_density(prs, rho, vxs, bxs, gamma)
+        e_dens = kin_ed + pot_ed + mag_ed
+
+        tot_en = np.asarray([np.sum(x) for x in (tr1 * e_dens).T]) * self.radial_grid[-1] * 2 * np.pi
+        kin_en = np.asarray([np.sum(x) for x in (tr1 * kin_ed).T]) * self.radial_grid[-1] * 2 * np.pi
+        mag_en = np.asarray([np.sum(x) for x in (tr1 * mag_ed).T]) * self.radial_grid[-1] * 2 * np.pi
+        pot_en = np.asarray([np.sum(x) for x in (tr1 * pot_ed).T]) * self.radial_grid[-1] * 2 * np.pi
 
         if plot == True:
-            figure, axes = plt.subplots(figsize=(self.image_size[1], self.image_size[1]), dpi=self.dpi)
+            figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
 
-            plt1 = axes.plot(self.axial_grid, power, '-', ms=2.5, label='Total power')
-            plt2 = axes.plot(self.axial_grid, kin_p, '-.', ms=2.5, label='Kinetic power')
-            plt3 = axes.plot(self.axial_grid, pot_p, ':', ms=1.5, label='Thermal power')
-            plt4 = axes.plot(self.axial_grid, mag_p, '--', ms=1.5, label='Magnetic power')
-            axes.set_title(f'Jet power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+            plt1 = axes.plot(self.axial_grid, tot_en, '-', ms=2.5, label='Total Energy Density')
+            plt2 = axes.plot(self.axial_grid, kin_en, '-.', ms=2.5, label='Kinetic Energy Density')
+            plt3 = axes.plot(self.axial_grid, pot_en, ':', ms=1.5, label='Thermal Energy Density')
+            plt4 = axes.plot(self.axial_grid, mag_en, '--', ms=1.5, label='Magnetic Energy Density')
+            axes.set_title(f'Jet energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Jet power')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
             axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
-        return power
+        
+        return []
