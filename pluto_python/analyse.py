@@ -1,8 +1,8 @@
 #%%
-import enum
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
 from pluto_python.calculator import get_magnitude, alfven_velocity
 from pluto_python.calculator import magneto_acoustic_velocity, mach_number, energy_density
+from pluto_python.tools import rearrange_axial_grid as rag
 
 import numpy as np
 import h5py
@@ -1131,7 +1131,7 @@ class PlutoPython:
             plt.close()
         return figure
 
-    def alfven_velocity(self,close=False,save=False):
+    def alfven_velocity(self,close=False,save=False,axis='all'):
         """
         Method calculates the alfven velocity components and plots them side by side.
         """
@@ -1163,37 +1163,89 @@ class PlutoPython:
         else:
             levels = np.concatenate([negative_levels, positive_levels[1:]])
         
-        figure, axes = plt.subplots(2,2,figsize=(self.image_size[0]*1.2, self.image_size[1]*1.8), dpi=self.dpi)
-        cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
+        if axis == 'all':
+            figure, axes = plt.subplots(2,2,figsize=(self.image_size[0]*1.2, self.image_size[1]*1.8), dpi=self.dpi)
+            cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
+            
+            axes[0][0].contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
+            axes[0][0].set_title(f'Alfvén Velocity field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes[0][0].set_xlim(self.xlim[0], self.xlim[1])
+            axes[0][0].set_ylim(self.ylim[0], self.ylim[1])
+            axes[0][0].set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes[0][0].set_xlabel(r'Axial distance [$R_{jet}$]')
         
-        axes[0][0].contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
-        axes[0][0].set_title(f'Alfvén Velocity field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
-        axes[0][0].set_xlim(self.xlim[0], self.xlim[1])
-        axes[0][0].set_ylim(self.ylim[0], self.ylim[1])
-        axes[0][0].set_ylabel(r'Radial distance [$R_{jet}$]')
-        axes[0][0].set_xlabel(r'Axial distance [$R_{jet}$]')
-       
-        axes[0][1].contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
-        axes[0][1].set_title(f'Alfvén Velocity field in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
-        axes[0][1].set_xlim(self.xlim[0], self.xlim[1])
-        axes[0][1].set_ylim(self.ylim[0], self.ylim[1])
-        axes[0][1].set_ylabel(r'Radial distance [$R_{jet}$]')
-        axes[0][1].set_xlabel(r'Axial distance [$R_{jet}$]')
+            axes[0][1].contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
+            axes[0][1].set_title(f'Alfvén Velocity field in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes[0][1].set_xlim(self.xlim[0], self.xlim[1])
+            axes[0][1].set_ylim(self.ylim[0], self.ylim[1])
+            axes[0][1].set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes[0][1].set_xlabel(r'Axial distance [$R_{jet}$]')
 
-        axes[1][0].contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
-        axes[1][0].set_title(f'Alfvén Velocity field in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
-        axes[1][0].set_xlim(self.xlim[0], self.xlim[1])
-        axes[1][0].set_ylim(self.ylim[0], self.ylim[1])
-        axes[1][0].set_ylabel(r'Radial distance [$R_{jet}$]')
-        axes[1][0].set_xlabel(r'Axial distance [$R_{jet}$]')
-        
-        axes[1][1].contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
-        axes[1][1].set_title(f'Alfvén Velocity field magnitude at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
-        axes[1][1].set_xlim(self.xlim[0], self.xlim[1])
-        axes[1][1].set_ylim(self.ylim[0], self.ylim[1])
-        axes[1][1].set_ylabel(r'Radial distance [$R_{jet}$]')
-        axes[1][1].set_xlabel(r'Axial distance [$R_{jet}$]')
-        
+            axes[1][0].contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
+            axes[1][0].set_title(f'Alfvén Velocity field in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes[1][0].set_xlim(self.xlim[0], self.xlim[1])
+            axes[1][0].set_ylim(self.ylim[0], self.ylim[1])
+            axes[1][0].set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes[1][0].set_xlabel(r'Axial distance [$R_{jet}$]')
+            
+            axes[1][1].contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
+            axes[1][1].set_title(f'Alfvén Velocity field magnitude at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes[1][1].set_xlim(self.xlim[0], self.xlim[1])
+            axes[1][1].set_ylim(self.ylim[0], self.ylim[1])
+            axes[1][1].set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes[1][1].set_xlabel(r'Axial distance [$R_{jet}$]')
+            
+        elif axis == 'x1':
+            figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
+            cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
+            
+            axes.contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
+            axes.set_title(f'Alfvén Velocity field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
+            axes.set_ylim(self.ylim[0], self.ylim[1])
+            axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        elif axis == 'x1':
+            figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
+            cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
+            
+            axes.contourf(self.axial_grid, self.radial_grid, data1, cmap=self.cmap, levels=levels)
+            axes.set_title(f'Alfvén Velocity field in x1 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
+            axes.set_ylim(self.ylim[0], self.ylim[1])
+            axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        elif axis == 'x2':
+            figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
+            cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
+            
+            axes.contourf(self.axial_grid, self.radial_grid, data2, cmap=self.cmap, levels=levels)
+            axes.set_title(f'Alfvén Velocity field in x2 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
+            axes.set_ylim(self.ylim[0], self.ylim[1])
+            axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        elif axis == 'x3':
+            figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
+            cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
+            
+            axes.contourf(self.axial_grid, self.radial_grid, data3, cmap=self.cmap, levels=levels)
+            axes.set_title(f'Alfvén Velocity field in x3 direction at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
+            axes.set_ylim(self.ylim[0], self.ylim[1])
+            axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        elif axis == 'mag':
+            figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
+            cax = plt.axes([1, 0.05, 0.05, 0.9], label='Alfvén Velocity field')
+            
+            axes.contourf(self.axial_grid, self.radial_grid, data4, cmap=self.cmap, levels=levels)
+            axes.set_title(f'Alfvén Velocity field magnitude at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} {self.simulation_title}')
+            axes.set_xlim(self.xlim[0], self.xlim[1])
+            axes.set_ylim(self.ylim[0], self.ylim[1])
+            axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+            axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
         plt.subplots_adjust(left=0.0,
                             right=0.95,
                             bottom=0.1,
@@ -2172,22 +2224,22 @@ class PlutoPython:
         if plot_shock != None:
             figureS, axesS = plt.subplots(figsize=(self.image_size[0]*1.25, self.image_size[1]*1.25), dpi=self.dpi*2)
             if plot_shock == True:
-                axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label='Fast 1-2 Shocks', alpha=0.5)
-                axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label='Inter 1-3 Shocks', alpha=0.5)
-                axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label='Inter 2-3 Shocks', alpha=0.5)
-                axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label='Inter 2-4 Shocks', alpha=0.5)
-                axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label='Hydro 1-4 Shocks', alpha=0.5)
-                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label='Slow 3-4 Shocks', alpha=0.5)
+                axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(fast_shock_ax))})', alpha=0.5)
+                axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(inter_shock_ax1))})', alpha=0.5)
+                axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(inter_shock_ax2))})', alpha=0.5)
+                axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(inter_shock_ax3))})', alpha=0.5)
+                axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(inter_shock_ax4))})', alpha=0.5)
+                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
 
             elif plot_shock == 'slow':
-                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label='Slow 3-4 Shocks', alpha=0.5)
+                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
             elif plot_shock == 'inter':
-                axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label='Inter 1-3 Shocks', alpha=0.5)
-                axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label='Inter 2-3 Shocks', alpha=0.5)
-                axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label='Inter 2-4 Shocks', alpha=0.5)
-                axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label='Hydro 1-4 Shocks', alpha=0.5)
+                axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(inter_shock_ax1))})', alpha=0.5)
+                axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(inter_shock_ax2))})', alpha=0.5)
+                axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(inter_shock_ax3))})', alpha=0.5)
+                axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(inter_shock_ax4))})', alpha=0.5)
             elif plot_shock == 'fast':
-                axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label='Fast 1-2 Shocks', alpha=0.5)
+                axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(fast_shock_ax))})', alpha=0.5)
 
             axesS.legend()
             axesS.set_xlim(self.xlim[0], self.xlim[1])
@@ -2233,11 +2285,8 @@ class PlutoPython:
         return [np.log(mach_slow), np.log(mach_alfv), np.log(mach_fast)]
 
 
-    def plot_jet_power(self, save=False, plot=False):
-        
-        time = 0.2 #pluto units
-        gamma = 5/3
-
+    def plot_jet_power(self, gamma=5/3, save=False, plot=False):
+        ### Variables ###
         prs = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.pressure], self.XZ_shape).T
         rho = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.density], self.XZ_shape).T
         vx1 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.radial_velocity], self.XZ_shape).T
@@ -2247,39 +2296,77 @@ class PlutoPython:
         vx3 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.axial_velocity], self.XZ_shape).T
         bx3 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_axial], self.XZ_shape).T
         tr1 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.tracer1], self.XZ_shape).T
+        ### Velocity and Magnetic Field magnitudes ###
         vxs = np.sqrt(vx1**2 + vx2**2 + vx3**2)
         bxs = np.sqrt(bx1**2 + bx2**2 + bx3**2)
-
-        ax_dif = []
-        for i, val in enumerate(self.axial_grid):
-            if i == 0:
-                diff = val
-            else:
-                diff = self.axial_grid[i] - self.axial_grid[i-1]
-            ax_dif.append(diff)
-
-        print(self.axial_grid)
-        print(self.radial_grid)
+        ### Energy densities ###
+        kin_ed, thermal_ed, mag_ed = energy_density(prs, rho, vxs, bxs, gamma)
+        e_dens = kin_ed + thermal_ed + mag_ed
+        ### weight all with tracer for Jet ###
+        kinetic_ed_jet = kin_ed * tr1
+        thermal_ed_jet = thermal_ed * tr1
+        magnetic_ed_jet = mag_ed * tr1
+        ### Jet Powers per unit area ###
+        kinetic_jet_pow = kinetic_ed_jet * vx3
+        thermal_jet_pow = thermal_ed_jet * vx3
+        magnetic_jet_pow = magnetic_ed_jet * vx3
         
-        kin_ed, pot_ed, mag_ed = energy_density(prs, rho, vxs, bxs, gamma)
-        e_dens = kin_ed + pot_ed + mag_ed
+        scaler = []
+        for index, rad in enumerate(self.radial_grid):
+            if index == 0:
+                dsurf = np.pi*rad**2
+            else:
+                dsurf = np.pi * ((rad)**2 - (self.radial_grid[index-1])**2)
+            scaler.append(dsurf)
 
-        tot_en = np.asarray([np.sum(x) for x in (tr1 * e_dens).T]) * self.radial_grid[-1] * 2 * np.pi
-        kin_en = np.asarray([np.sum(x) for x in (tr1 * kin_ed).T]) * self.radial_grid[-1] * 2 * np.pi
-        mag_en = np.asarray([np.sum(x) for x in (tr1 * mag_ed).T]) * self.radial_grid[-1] * 2 * np.pi
-        pot_en = np.asarray([np.sum(x) for x in (tr1 * pot_ed).T]) * self.radial_grid[-1] * 2 * np.pi
-
+        jet_ke_to_plot = np.asarray([np.sum(col * scaler) for col in np.asarray(kinetic_jet_pow).T])
+        jet_te_to_plot = np.asarray([np.sum(col * scaler) for col in np.asarray(thermal_jet_pow).T])
+        jet_me_to_plot = np.asarray([np.sum(col * scaler) for col in np.asarray(magnetic_jet_pow).T])
+        total_power = jet_ke_to_plot + jet_te_to_plot + jet_me_to_plot
+        #new_grid_x3 = np.arange(self.ini_content['[Grid]']['X3-grid']['Lower limit'], len(jet_ke_to_plot), 1)
         if plot == True:
             figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
 
-            plt1 = axes.plot(self.axial_grid, tot_en, '-', ms=2.5, label='Total Energy Density')
-            plt2 = axes.plot(self.axial_grid, kin_en, '-.', ms=2.5, label='Kinetic Energy Density')
-            plt3 = axes.plot(self.axial_grid, pot_en, ':', ms=1.5, label='Thermal Energy Density')
-            plt4 = axes.plot(self.axial_grid, mag_en, '--', ms=1.5, label='Magnetic Energy Density')
-            axes.set_title(f'Jet energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+            plt1 = axes.plot(self.axial_grid, total_power, '-', ms=2.5, label='Total Power')
+            plt2 = axes.plot(self.axial_grid, jet_ke_to_plot, '-.', ms=2.5, label='Kinetic Power')
+            plt3 = axes.plot(self.axial_grid, jet_te_to_plot, ':', ms=1.5, label='Thermal Power')
+            plt4 = axes.plot(self.axial_grid, jet_me_to_plot, '--', ms=1.5, label='Magnetic Power')
+            axes.set_title(f'Jet Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Jet power')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
             axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
         
-        return []
+        return total_power
+
+    def plot_beta(self, save=False, close=False, axis='all'):
+        ### Variables ###
+        prs = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.pressure], self.XZ_shape).T
+        bx1 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_radial], self.XZ_shape).T
+        bx2 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_azimuthal], self.XZ_shape).T
+        bx3 = np.reshape(self.classifier(delta_time=self.time_step, output_selector='all')[self.b_axial], self.XZ_shape).T
+        bmx = bx1**2 + bx2**2 + bx3**2
+        data2plot = np.log(prs/bmx)
+
+        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+
+        divider = mal(axes)
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, data2plot, cmap='jet', levels=128, alpha=0.95)
+        plt.colorbar(pl,cax,ticks=np.linspace(np.min(data2plot),np.max(data2plot), 6))
+        axes.set_title(f'Log of Plasma Beta {self.simulation_title}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
+        axes.set_ylabel(r'Radial distnace [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+        if close==True:
+            plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}spacetime/vx1'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}spacetime/vx1/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
