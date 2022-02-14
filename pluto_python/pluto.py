@@ -17,7 +17,11 @@ import matplotlib
 import os
 
 class py3Pluto:
-
+    """
+    This class makes an object from reading in the file at the selected timestep
+    with all its simulated and calculated subsidary data ready formated for plotting
+    using the subclasses like mhd_jet.
+    """
     def __init__(
         self,
         data_path,

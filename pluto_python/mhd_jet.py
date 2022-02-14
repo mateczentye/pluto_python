@@ -1,14 +1,14 @@
 #%%
-"""
-This module contains the subclass for Pluto class, and contains all the plotting methods
-"""
 from .pluto import py3Pluto
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
 import numpy as np
 import matplotlib.pyplot as plt
 
 class mhd_jet(py3Pluto):
-    
+    """
+    This class is a sub-class of py3Pluto, which stores all information from the simulations
+    and claculations, which can be plotted using the plot or hist methods within this class.
+    """
     def __init__(self,
         data_path,
         time_step = 0,
@@ -271,8 +271,12 @@ class mhd_jet(py3Pluto):
         self.title = f'{prefix} {variable_name}'
 
     def plot(self, data2plot=None, log=False, close=False, save=False):
+        """
+        This method plots the simulated data sets output by PLUTO, contained within the h5 file
+        while additionally also plots the wave velocities, machnumbers and other calculated values.
+        Focuses on spatial distributon of the data.
+        """
         self._data(data2plot=data2plot, log=log, close=close, save=save)
-
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
 
         divider = mal(axes)
@@ -297,7 +301,7 @@ class mhd_jet(py3Pluto):
             plt.savefig(f'{self.data_path}plot/{folder}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
     
-    def histogram(self,  data2plot=None, data2log=False, close=False, save=False, bins=None, log=False):
+    def hist(self,  data2plot=None, data2log=False, close=False, save=False, bins=None, log=False):
         """
         Method to plot histogram of the data which is passed in as the argument
         """
@@ -309,7 +313,7 @@ class mhd_jet(py3Pluto):
         data_plot = np.reshape(self.data, new_shape)
         plt.rc('font', size=8)
         fig, axes = plt.subplots(1,1,figsize=self.image_size, dpi=self.dpi)
-        axes.set_title(f'Histogram data for {title} value (normalised) at {self.time_step} {self.simulation_title}')
+        axes.set_title(f'Histogram data for {title} at {self.time_step} {self.simulation_title}')
         hist = axes.hist(data_plot, bins=bins, align='mid', edgecolor='white')
         axes.set_xlabel('Value')
         axes.set_ylabel('Frequency')
@@ -322,6 +326,16 @@ class mhd_jet(py3Pluto):
     
         if log==True:
             plt.semilogy()
-    
-        plt.show()
+        
+        if close==True:
+            plt.close()
+
+        if save==True:
+            folder = title.replace(' ', '_')
+            check_dir = f'{self.data_path}hist/{folder}'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}hist/{folder}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
         
