@@ -27,7 +27,6 @@ class py3Pluto:
         data_path,
         time_step = 0,
         ini_path = None,
-        select_variable = None,
         dpi = 300,
         image_size = (10,5),
         ylim = None,
@@ -42,7 +41,6 @@ class py3Pluto:
         self.data_path = data_path
         self.dpi = dpi
         self.image_size = image_size
-        self.selector = select_variable
         self.time_step = time_step
         self.global_limits_bool = global_limits
         self.cmap = cmap
@@ -67,10 +65,7 @@ class py3Pluto:
 
         self._reader()
         self.shape_limits = self._read_ini()
-        self.XZ_shape = (self.shape_limits['X3-grid'], self.shape_limits['X1-grid'])
-        self._calculate_data()
 
-        ### Define axes limits from defaults from the ini file if not given. To see max grid,
         if xlim == None:
             self.xlim = (
                     float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][0]),
@@ -84,6 +79,12 @@ class py3Pluto:
                     float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][1][0]))
         else:
             self.ylim = ylim
+            
+        
+        self.XZ_shape = (self.shape_limits['X3-grid'], self.shape_limits['X1-grid'])
+        self._calculate_data()
+
+        ### Define axes limits from defaults from the ini file if not given. To see max grid,
         ### If global limit bool is set to False, the limits are not run
         if self.global_limits_bool == True:
             self.global_limits = self._get_limits()
@@ -206,13 +207,7 @@ class py3Pluto:
         self.axial_grid = np.reshape(self.grid['Z'], self.XZ_shape).T[0]
         self.initial_radial_grid = self.radial_grid
 
-        if output_selector == None:
-            self.data = data[self.variables[self.selector]] # data[z][phi][rad]
-            self.data_reshape = np.reshape(self.data, self.XZ_shape).T
-            return [self.data_reshape, self.axial_grid, self.axial_grid]
-
-        elif output_selector == 'all':
-            return data
+        return data
 
     def _flip_multiply(self, array):
         """
@@ -385,3 +380,36 @@ class py3Pluto:
         ### Plasma Beta ###
         self.beta = (self.prs / self.magnetic_field_magnitude)
         self.log_beta = np.log(self.prs / self.magnetic_field_magnitude)
+
+        if self.mirrored == True:
+            self.bx1 = self._flip_multiply(self.bx1)
+            self.bx2 = self._flip_multiply(self.bx2)
+            self.bx3 = self._flip_multiply(self.bx3)
+            self.magnetic_field_magnitude = self._flip_multiply(self.magnetic_field_magnitude)
+            self.vx1 = self._flip_multiply(self.vx1)
+            self.vx2 = self._flip_multiply(self.vx2)
+            self.vx3 = self._flip_multiply(self.vx3)
+            self.velocity_magnitude = self._flip_multiply(self.velocity_magnitude)
+            self.prs = self._flip_multiply(self.prs)
+            self.rho = self._flip_multiply(self.rho)
+            self.tr1 = self._flip_multiply(self.tr1)
+            self.log_prs = self._flip_multiply(self.log_prs)
+            self.log_rho = self._flip_multiply(self.log_rho)
+            self.glm = self._flip_multiply(self.glm)
+            self.avx1 = self._flip_multiply(self.avx1)
+            self.avx2 = self._flip_multiply(self.avx2)
+            self.avx3 = self._flip_multiply(self.avx3)
+            self.alfvén_velocity_magnitude = self._flip_multiply(self.alfvén_velocity_magnitude)
+            self.slow_ms_x1 = self._flip_multiply(self.slow_ms_x1)
+            self.fast_ms_x1 = self._flip_multiply(self.fast_ms_x1)
+            self.slow_ms_x2 = self._flip_multiply(self.slow_ms_x2)
+            self.fast_ms_x2 = self._flip_multiply(self.fast_ms_x2)
+            self.slow_ms_x3 = self._flip_multiply(self.slow_ms_x3)
+            self.fast_ms_x3 = self._flip_multiply(self.fast_ms_x3)
+            self.fast_ms_velocity_magnitude = self._flip_multiply(self.fast_ms_velocity_magnitude)
+            self.slow_ms_velocity_magnitude = self._flip_multiply(self.slow_ms_velocity_magnitude)
+            self.mach_fast = self._flip_multiply(self.mach_fast)
+            self.mach_slow = self._flip_multiply(self.mach_slow)
+            self.mach_alfvén = self._flip_multiply(self.mach_alfvén)
+            self.beta = self._flip_multiply(self.beta)
+            self.log_beta = self._flip_multiply(self.log_beta)

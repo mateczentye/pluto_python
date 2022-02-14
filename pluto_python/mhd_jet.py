@@ -13,7 +13,6 @@ class mhd_jet(py3Pluto):
         data_path,
         time_step = 0,
         ini_path = None,
-        select_variable = None,
         dpi = 300,
         image_size = (10,5),
         ylim = None,
@@ -29,7 +28,6 @@ class mhd_jet(py3Pluto):
             data_path = data_path,
             time_step = time_step,
             ini_path = ini_path,
-            select_variable = select_variable,
             dpi = dpi,
             image_size = image_size,
             ylim = ylim,
@@ -37,7 +35,7 @@ class mhd_jet(py3Pluto):
             cmap = cmap,
             global_limits = global_limits,
             mirrored = mirrored,
-            gamma = gamma,
+            gamma = gamma
         )
 
     def _data(self, data2plot=None, log=False, close=False, save=False):
@@ -278,7 +276,7 @@ class mhd_jet(py3Pluto):
         """
         self._data(data2plot=data2plot, log=log, close=close, save=save)
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-
+        
         divider = mal(axes)
         cax = divider.append_axes('right',size='5%',pad=0.25)
         pl = axes.contourf(self.axial_grid, self.radial_grid, self.data, cmap=self.cmap, levels=128, alpha=0.95)
