@@ -1,5 +1,4 @@
 #%%
-import wave
 import numpy as np
 
 def magnetic_field(sigma_z, sigma_phi):

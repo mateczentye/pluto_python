@@ -2310,7 +2310,8 @@ class PlutoPython:
         kinetic_jet_pow = kinetic_ed_jet * vx3
         thermal_jet_pow = thermal_ed_jet * vx3
         magnetic_jet_pow = magnetic_ed_jet * vx3
-        
+        total_power = e_dens * vx3
+
         scaler = []
         for index, rad in enumerate(self.radial_grid):
             if index == 0:
@@ -2318,7 +2319,7 @@ class PlutoPython:
             else:
                 dsurf = np.pi * ((rad)**2 - (self.radial_grid[index-1])**2)
             scaler.append(dsurf)
-
+        total_sys_power = np.asarray([np.sum(col * scaler) for col in np.asarray(total_power).T])
         jet_ke_to_plot = np.asarray([np.sum(col * scaler) for col in np.asarray(kinetic_jet_pow).T])
         jet_te_to_plot = np.asarray([np.sum(col * scaler) for col in np.asarray(thermal_jet_pow).T])
         jet_me_to_plot = np.asarray([np.sum(col * scaler) for col in np.asarray(magnetic_jet_pow).T])
@@ -2326,7 +2327,7 @@ class PlutoPython:
         #new_grid_x3 = np.arange(self.ini_content['[Grid]']['X3-grid']['Lower limit'], len(jet_ke_to_plot), 1)
         if plot == True:
             figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
-
+            plt0 = axes.plot(self.axial_grid, total_sys_power, '-', ms=2.5, label='Total System Power')
             plt1 = axes.plot(self.axial_grid, total_power, '-', ms=2.5, label='Total Power')
             plt2 = axes.plot(self.axial_grid, jet_ke_to_plot, '-.', ms=2.5, label='Kinetic Power')
             plt3 = axes.plot(self.axial_grid, jet_te_to_plot, ':', ms=1.5, label='Thermal Power')
