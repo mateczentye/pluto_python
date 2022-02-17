@@ -157,9 +157,9 @@ class PlutoPython:
                     x_grid_size += int(subgrid[1])
                 grid_size.update({grid : x_grid_size})
         
-        self.tstop = float(self.ini_content['[Time]']['tstop'][0])
-        self.grid_size = grid_size
-        return grid_size
+            self.tstop = float(self.ini_content['[Time]']['tstop'][0])
+            self.grid_size = grid_size
+            return grid_size
 
     def _reader(self):
         path = os.getcwd()
@@ -195,7 +195,7 @@ class PlutoPython:
         self.axial_velocity = v_axi
 
         self.grid = h5_read[self.cell_coord]
-            
+        
         self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'], self.XZ_shape).T)]
         self.axial_grid = np.reshape(self.grid['Z'], self.XZ_shape).T[0]
         self.initial_radial_grid = self.radial_grid
@@ -1363,13 +1363,13 @@ class PlutoPython:
                         linewidth=0.75,
                         norm=matplotlib.colors.Normalize(vmin=np.min(x2_comp), vmax=np.max(x2_comp)),
                         )
-        norm = matplotlib.colors.Normalize(vmin=np.min(levels), vmax=np.max(levels))
-        linenorm = matplotlib.colors.Normalize(vmin=np.min(levels2), vmax=np.max(levels2))
+        norm = matplotlib.colors.Normalize(vmin=0, vmax=2) #fix this line
+        linenorm = matplotlib.colors.Normalize(vmin=-2, vmax=2) #fix this line
         plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field Strength',  location='bottom', pad=0.01)
         plt.colorbar(matplotlib.cm.ScalarMappable(norm=linenorm, cmap=scmap), ax=axes, format='%.2f', label='Magnetic Field in direction x2',  location='bottom', pad=0.05)
         
         plt.xlim(subgrid_x_low, subgrid_x)
-        plt.title(f'Magnetic field with field line direction at {self.time_step} {self.simulation_title}')
+        #plt.title(f'Magnetic field with field line direction at {self.time_step} {self.simulation_title}')
         
         if self.mirrored == False:
             plt.ylim(subgrid_y_low, subgrid_y)
@@ -1469,7 +1469,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Magnetic field in x1 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Magnetic field in x1 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time-step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1509,7 +1509,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Magnetic field in x2 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Magnetic field in x2 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1549,7 +1549,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Magnetic field in x3 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Magnetic field in x3 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1589,7 +1589,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the GLM along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the GLM along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1629,7 +1629,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the log(Pressure) along Jet axis {self.simulation_title}')
+            ##axes.set_title(f'Space-Time diagram of the log(Pressure) along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1639,7 +1639,7 @@ class PlutoPython:
 
             if save==True:
                 check_dir = f'{self.data_path}spacetime/prs'
-                if os.path.exists(check_dir) is False:
+                if not os.path.exists(check_dir):# is False:
                     os.mkdir(check_dir)
                 bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
                 plt.savefig(f'{self.data_path}spacetime/prs/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
@@ -1669,7 +1669,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Density along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Density along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1709,7 +1709,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity in x1 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Velocity in x1 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time-step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1749,7 +1749,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity in x2 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Velocity in x2 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1789,7 +1789,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Velocity in x3 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Velocity in x3 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1834,7 +1834,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x1 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x1 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1879,7 +1879,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x2 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x2 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1924,7 +1924,7 @@ class PlutoPython:
                 format='%.2f'
                 )
             
-            axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x3 direction along Jet axis {self.simulation_title}')
+            #axes.set_title(f'Space-Time diagram of the Alfvén Velocity in x3 direction along Jet axis {self.simulation_title}')
             axes.set_xlim(self.xlim[0], self.xlim[1])
             axes.set_ylabel(r'Time [$time step$]')
             axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -2076,7 +2076,7 @@ class PlutoPython:
         
         return [slow1, slow2, slow3, fast1, fast2, fast3]
 
-    def find_shocks(self, plot_mach=False, plot_shock=None):
+    def find_shocks(self, plot_mach=False, plot_shock=None, save=False, close=False):
         """
         This method loops through the spatial grid, and finds MHD shocks
 
@@ -2281,6 +2281,17 @@ class PlutoPython:
             axes[2].set_ylabel(r'Radial distance [$R_{jet}$]')
             axes[2].set_xlabel(r'Axial distance [$R_{jet}$]')
 
+        if close==True:
+            plt.close()
+
+        if save==True:
+            
+            check_dir = f'{self.data_path}shock'
+            if not os.path.exists(check_dir):
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}shock/{self.time_step}_{self.simulation_title}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
 
         return [np.log(mach_slow), np.log(mach_alfv), np.log(mach_fast)]
 
@@ -2365,9 +2376,9 @@ class PlutoPython:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}spacetime/vx1'
+            check_dir = f'{self.data_path}beta'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}spacetime/vx1/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}beta/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()

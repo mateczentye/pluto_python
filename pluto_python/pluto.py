@@ -7,6 +7,7 @@ This module contains the super class for the package:
 from pluto_python.calculator import alfven_velocity
 from pluto_python.calculator import magneto_acoustic_velocity
 from pluto_python.calculator import mach_number
+from pluto_python.calculator import magnetic_pressure
 
 import numpy as np
 import h5py
@@ -82,7 +83,7 @@ class py3Pluto:
             
         
         self.XZ_shape = (self.shape_limits['X3-grid'], self.shape_limits['X1-grid'])
-        self._calculate_data()
+        self.calculate_data(self.time_step)
 
         ### Define axes limits from defaults from the ini file if not given. To see max grid,
         ### If global limit bool is set to False, the limits are not run
@@ -175,10 +176,10 @@ class py3Pluto:
         self.data_list = [file for file in files if extension in file and 'out' not in file]
         return self.data_list
         
-    def classifier(self, delta_time, output_selector=None):
+    def classifier(self, delta_time):
         """
         delta_time: is the time step of which is number of the file by pluto
-        output_selector: None or 'all' <- will be removed soon
+        or 'all' <- will be removed soon
         """
         self._reader()
         data_file = self.data_list[delta_time]
@@ -238,7 +239,7 @@ class py3Pluto:
         for step in range(-1, self.time_step):
             # read files in here
             print(f'Reading file number {step}')
-            data = self.classifier(output_selector='all', delta_time=step)
+            data = self.classifier(delta_time=step)
             keys = list(data.keys())
             # set step to a valid value when its -1 for the classifier
             if step == -1:
@@ -291,7 +292,7 @@ class py3Pluto:
 
         return levels
 
-    def _calculate_data(self):
+    def calculate_data(self, time):
         """
         This method is to calculate all subsidary data sets from the simulation data.
         sets global variables that are accessible by sub classes to use
@@ -299,68 +300,58 @@ class py3Pluto:
         ### Magnetic fields ###
         self.bx1 = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.b_radial],
+                        delta_time=time,
+                        )[self.b_radial],
                         self.XZ_shape).T
         self.bx2 = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.b_azimuthal],
+                        delta_time=time,
+                        )[self.b_azimuthal],
                         self.XZ_shape).T
         self.bx3 = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.b_axial],
+                        delta_time=time,
+                        )[self.b_axial],
                         self.XZ_shape).T
         self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
         ### Velocities ###
         self.vx1 = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.radial_velocity],
+                        delta_time=time,
+                        )[self.radial_velocity],
                         self.XZ_shape).T
         self.vx2 = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.azimuthal_velocity],
+                        delta_time=time,
+                        )[self.azimuthal_velocity],
                         self.XZ_shape).T
         self.vx3 = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.axial_velocity],
+                        delta_time=time,
+                        )[self.axial_velocity],
                         self.XZ_shape).T
         self.velocity_magnitude = np.sqrt(self.vx1**2 + self.vx2**2 + self.vx3**2)
         ### Pressure, Density and Tracer ###
         self.prs = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.pressure],
+                        delta_time=time,
+                        )[self.pressure],
                         self.XZ_shape).T
         self.rho = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.density],
+                        delta_time=time,
+                        )[self.density],
                         self.XZ_shape).T
         self.tr1 = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.tracer1],
+                        delta_time=time,
+                        )[self.tracer1],
                         self.XZ_shape).T
-        self.log_prs = np.log(np.reshape(
-                    self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.pressure],
-                        self.XZ_shape).T)
-        self.log_rho = np.log(np.reshape(
-                    self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.density],
-                        self.XZ_shape).T)
         ### General Lagrangian Multiplier ###
         self.glm = np.reshape(
                     self.classifier(
-                        delta_time=self.time_step,
-                        output_selector='all')[self.psi_glm],
+                        delta_time=time,
+                        )[self.psi_glm],
                         self.XZ_shape).T
         ### Alfvén Velocities ###
         self.avx1 = alfven_velocity(self.bx1, self.rho)
@@ -379,7 +370,9 @@ class py3Pluto:
         self.mach_alfvén = mach_number(self.velocity_magnitude, self.alfvén_velocity_magnitude)
         ### Plasma Beta ###
         self.beta = (self.prs / self.magnetic_field_magnitude)
-        self.log_beta = np.log(self.prs / self.magnetic_field_magnitude)
+        ### Magnetic pressure ###
+        self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
+        
 
         if self.mirrored == True:
             self.bx1 = self._flip_multiply(self.bx1)
@@ -393,8 +386,6 @@ class py3Pluto:
             self.prs = self._flip_multiply(self.prs)
             self.rho = self._flip_multiply(self.rho)
             self.tr1 = self._flip_multiply(self.tr1)
-            self.log_prs = self._flip_multiply(self.log_prs)
-            self.log_rho = self._flip_multiply(self.log_rho)
             self.glm = self._flip_multiply(self.glm)
             self.avx1 = self._flip_multiply(self.avx1)
             self.avx2 = self._flip_multiply(self.avx2)
@@ -412,4 +403,6 @@ class py3Pluto:
             self.mach_slow = self._flip_multiply(self.mach_slow)
             self.mach_alfvén = self._flip_multiply(self.mach_alfvén)
             self.beta = self._flip_multiply(self.beta)
-            self.log_beta = self._flip_multiply(self.log_beta)
+            self.magnetic_prs = self._flip_multiply(self.magnetic_prs)
+            
+            

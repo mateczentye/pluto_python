@@ -41,3 +41,6 @@ def energy_density(pressure, density, velocity, magnetic_field, gamma):
     kin = 0.5 * density * (velocity**2)
     mag = 0.5 * (magnetic_field**2)
     return [pot, kin, mag]
+
+def magnetic_pressure(mag_field):
+    return 0.5*(mag_field**2)
