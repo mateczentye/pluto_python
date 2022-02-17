@@ -595,7 +595,7 @@ class mhd_jet(py3Pluto):
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Power')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Power')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Power')
-        axes.set_title(f'Jet Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        axes.set_title(f'Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Power')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -603,7 +603,7 @@ class mhd_jet(py3Pluto):
 
     def plot_energy(self, save=False, close=False):
         """
-        Plots the power curves for the jet
+        Plots the energy curves for the jet
         """
         self.calculate_data(self.time_step)
         total_sys = [np.sum(x) for x in np.transpose(self.total_energy_sys)]
@@ -627,7 +627,7 @@ class mhd_jet(py3Pluto):
 
     def plot_energy_density(self, save=False, close=False):
         """
-        Plots the power curves for the jet
+        Plots the energy density curves for the jet
         """
         self.calculate_data(self.time_step)
         total_jet = [np.sum(x) for x in np.transpose(self.total_energy_density)]
