@@ -16,7 +16,6 @@ class mhd_jet(py3Pluto):
     def __init__(self,
         data_path,
         time_step = 0,
-        ini_path = None,
         dpi = 300,
         image_size = (10,5),
         ylim = None,
@@ -25,12 +24,12 @@ class mhd_jet(py3Pluto):
         global_limits = False,
         mirrored = False,
         gamma = 5/3,
+        title=''
     ):
 
         super().__init__(
             data_path = data_path,
             time_step = time_step,
-            ini_path = ini_path,
             dpi = dpi,
             image_size = image_size,
             ylim = ylim,
@@ -40,6 +39,9 @@ class mhd_jet(py3Pluto):
             mirrored = mirrored,
             gamma = gamma
         )
+        self.data = None
+        self.figure = None
+        self.simulation_title = title
 
     def _data(self, data2plot=None, log=False, close=False, save=False):
         """
@@ -316,6 +318,8 @@ class mhd_jet(py3Pluto):
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}plot/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
+
+        
     
     def hist(self,  data2plot=None, data2log=False, close=False, save=False, bins=None, log=False):
         """
@@ -329,7 +333,7 @@ class mhd_jet(py3Pluto):
         data_plot = np.reshape(self.data, new_shape)
         plt.rc('font', size=8)
         fig, axes = plt.subplots(1,1,figsize=self.image_size, dpi=self.dpi)
-        axes.set_title(f'Histogram data for {title} at {self.time_step} {self.simulation_title}')
+        axes.set_title(f'Histogram data for {title} at {self.time_step}')
         hist = axes.hist(data_plot, bins=bins, align='mid', edgecolor='white')
         axes.set_xlabel('Value')
         axes.set_ylabel('Frequency')
@@ -476,6 +480,15 @@ class mhd_jet(py3Pluto):
                         slow_shock_ax.append(self.axial_grid[i])
                         slow_shock_ra.append(self.radial_grid[j])
         
+
+        self.shocks = [
+            [slow_shock_ax, slow_shock_ra],
+            [fast_shock_ax, fast_shock_ra],
+            [inter_shock_ax1,inter_shock_ra1],
+            [inter_shock_ax2, inter_shock_ra2],
+            [inter_shock_ax3, inter_shock_ra3],
+            [inter_shock_ax4, inter_shock_ra4]
+        ]
         ### Plots ###
 
         if plot_shock != None:
@@ -606,6 +619,13 @@ class mhd_jet(py3Pluto):
         enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_power_jet)]
         magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_power_jet)]
 
+        self.list_power = [
+            total_sys,
+            total_jet,
+            kinetic_jet,
+            enthalpy_jet,
+            magnetic_jet
+            ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
         plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Power')
@@ -646,6 +666,13 @@ class mhd_jet(py3Pluto):
         enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_energy_jet)]
         magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_energy_jet)]
 
+        self.list_energy = [
+            total_sys,
+            total_jet,
+            kinetic_jet,
+            enthalpy_jet,
+            magnetic_jet,
+        ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
         #plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Energy')
@@ -685,6 +712,12 @@ class mhd_jet(py3Pluto):
         enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_energy_density)]
         magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_energy_density)]
 
+        self.list_E_dens = [
+            total_jet,
+            kinetic_jet,
+            enthalpy_jet,
+            magnetic_jet,
+        ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
         plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total System Energy Density')

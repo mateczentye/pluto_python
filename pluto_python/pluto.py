@@ -27,7 +27,6 @@ class py3Pluto:
         self,
         data_path,
         time_step = 0,
-        ini_path = None,
         dpi = 300,
         image_size = (10,5),
         ylim = None,
@@ -45,7 +44,6 @@ class py3Pluto:
         self.time_step = time_step
         self.global_limits_bool = global_limits
         self.cmap = cmap
-        self.ini_path = ini_path
         self.mirrored = mirrored
         self.closure = False
         self.gamma = gamma
@@ -56,22 +54,15 @@ class py3Pluto:
             data_path += '/'
         if type(time_step) != int:
             raise TypeError('Time-step argument must be an integer!')
-        if ini_path != None:
-            if os.path.exists(ini_path) == False:
-                raise IsADirectoryError('ini file path does not exist!')
-            else:
-                inis = [ini for ini in os.listdir(ini_path) if '.ini' in ini]
-                if len(inis) != 1:
-                    raise FileExistsError('There are too many ini files in folder')
         if type(dpi) != int:
             raise TypeError('DPI must be an int!')
         if type(image_size) != tuple:
             raise TypeError('Image size, must be a tuple!')
         if len(image_size) != 2:
             raise ValueError('Image size must be a 2 element tuple!')
-        if (type(xlim) != None) and (type(xlim) != tuple) and (type(xlim) != list):
+        if (xlim != None) and (type(xlim) != tuple) and (type(xlim) != list):
             raise ValueError('X Limits must be given value either as a 2 element tuple/list or None!')
-        if type(ylim) != None and type(ylim) != tuple and type(ylim) != list:
+        if (ylim != None) and (type(ylim) != tuple) and (type(ylim) != list):
             raise ValueError('Y Limits must be given value either as a 2 element tuple/list or None!')
         if type(global_limits) != bool:
             raise TypeError('Global limits must be a boolean')
@@ -139,7 +130,7 @@ class py3Pluto:
         self.magnetic_power_jet = None
         self.total_power_jet = None
         ### Utility Variables
-        self.simulation_title = self.data_path.split('/')[-2]
+        #self.simulation_title = self.data_path.split('/')[-2]
         
 
 
@@ -188,63 +179,54 @@ class py3Pluto:
             '[Chombo HDF5 output]' : {},
         }
 
-        if len(ini_file) == 0:
-            print('*.ini file is not present in given directory, please specify location directory')
-        elif len(ini_file) > 1:
-            print('There are multiple ".ini" files contained in the working directory, please select the apropriate file!')
-        else:
-            ### Chose the right ini file
-            if self.ini_path != None:
-                print(f'.ini file is given as:\n{self.ini_path}')
-                ini_data = list(open(self.ini_path))
-            else:
-                ini_data = list(open(self.data_path + ini_file[0], 'r'))
-            ### tidy up the file read in
-            filtr_data = [line for line in ini_data if line != '\n'] # removed empty lines
-            filtr2_data = [line.replace('\n', '') for line in filtr_data]# remove unwanted new line operators
-            split_data = [element.split(' ') for element in filtr2_data]
-            
-            no_whitespace_elements = [[y for y in x if y != ''] for x in split_data if x != '']
-            with_headers_tidy = []
-            for line in no_whitespace_elements:
-                if '[' in line[0]:
-                    with_headers_tidy.append(' '.join(line))
-                else:
-                    with_headers_tidy.append(line)
-
-            block = None
-
-            for line in with_headers_tidy:
-                if type(line) is not list:
-                    block = line
-                
-                elif block == '[Grid]':
-                    sub_grid_num = {'Subgrids' : int(line[1])}
-                    low_lim = {'Lower limit' : float(line[2])}
-                    high_lim = {'Upper limit' : float(line[-1])}
-                    # split subgrid into 3 element blocks while adding to dict
-                    sub_grid_data = {'Subgrids Data' : np.reshape(line[2:-1], (sub_grid_num['Subgrids'], 3))}
-                    new_dict = {line[0] : {}}
-                    new_dict[line[0]].update(sub_grid_num)
-                    new_dict[line[0]].update(low_lim)
-                    new_dict[line[0]].update(high_lim)
-                    new_dict[line[0]].update(sub_grid_data)
-                    self.ini_content['[Grid]'].update(new_dict)
-
-                else:
-                    self.ini_content[block].update({line[0] : line[1:]})
-
-
-
-            ### Define axis grid size via subgrids 2nd element values
-            grid_size = {}
-            keys = self.ini_content['[Grid]'].keys()
-            for grid in keys:
-                x_grid_size = 0
-                for subgrid in self.ini_content['[Grid]'][grid]['Subgrids Data']:
-                    x_grid_size += int(subgrid[1])
-                grid_size.update({grid : x_grid_size})
+        ### Chose the right ini file
+        ini_data = list(open(self.data_path + ini_file[0], 'r'))
+        ### tidy up the file read in
+        filtr_data = [line for line in ini_data if line != '\n'] # removed empty lines
+        filtr2_data = [line.replace('\n', '') for line in filtr_data]# remove unwanted new line operators
+        split_data = [element.split(' ') for element in filtr2_data]
         
+        no_whitespace_elements = [[y for y in x if y != ''] for x in split_data if x != '']
+        with_headers_tidy = []
+        for line in no_whitespace_elements:
+            if '[' in line[0]:
+                with_headers_tidy.append(' '.join(line))
+            else:
+                with_headers_tidy.append(line)
+
+        block = None
+
+        for line in with_headers_tidy:
+            if type(line) is not list:
+                block = line
+            
+            elif block == '[Grid]':
+                sub_grid_num = {'Subgrids' : int(line[1])}
+                low_lim = {'Lower limit' : float(line[2])}
+                high_lim = {'Upper limit' : float(line[-1])}
+                # split subgrid into 3 element blocks while adding to dict
+                sub_grid_data = {'Subgrids Data' : np.reshape(line[2:-1], (sub_grid_num['Subgrids'], 3))}
+                new_dict = {line[0] : {}}
+                new_dict[line[0]].update(sub_grid_num)
+                new_dict[line[0]].update(low_lim)
+                new_dict[line[0]].update(high_lim)
+                new_dict[line[0]].update(sub_grid_data)
+                self.ini_content['[Grid]'].update(new_dict)
+
+            else:
+                self.ini_content[block].update({line[0] : line[1:]})
+
+
+
+        ### Define axis grid size via subgrids 2nd element values
+        grid_size = {}
+        keys = self.ini_content['[Grid]'].keys()
+        for grid in keys:
+            x_grid_size = 0
+            for subgrid in self.ini_content['[Grid]'][grid]['Subgrids Data']:
+                x_grid_size += int(subgrid[1])
+            grid_size.update({grid : x_grid_size})
+    
         self.tstop = float(self.ini_content['[Time]']['tstop'][0])
         self.grid_size = grid_size
         return grid_size

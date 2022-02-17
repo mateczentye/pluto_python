@@ -17,12 +17,6 @@ def magnetosonic_speed(eta, kappa, b):
 def alfven_velocity(B, density):
     return B / np.sqrt(density)
 
-def get_magnitude(list):
-    sum = 0
-    for element in list:
-        sum += element**2
-    return np.sqrt(sum)
-
 def magneto_acoustic_velocity(b, prs, rho, gamma):
     term1 = 1/(2*rho)
     term2 = gamma * prs
@@ -31,7 +25,7 @@ def magneto_acoustic_velocity(b, prs, rho, gamma):
     slow = term1 * (term2 + b**2 - np.sqrt(root_term))
     fast = term1 * (term2 + b**2 + np.sqrt(root_term))
    
-    return [slow, fast]
+    return [np.sqrt(slow), np.sqrt(fast)]
 
 def mach_number(fluid_velocity, wave_velocity):
     return fluid_velocity/wave_velocity
@@ -44,3 +38,5 @@ def energy_density(pressure, density, velocity, magnetic_field, gamma):
 
 def magnetic_pressure(mag_field):
     return 0.5*(mag_field**2)
+
+
