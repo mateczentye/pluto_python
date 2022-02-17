@@ -4,7 +4,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import time
+import os
 
 class mhd_jet(py3Pluto):
     """
@@ -297,17 +299,22 @@ class mhd_jet(py3Pluto):
         axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distnace [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        
 
         if close==True:
             plt.close()
 
         if save==True:
+            title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
-            check_dir = f'{self.data_path}plot/{folder}'
+            check_dir = f'{self.data_path}plot'
             if os.path.exists(check_dir) is False:
-                os.mkdir(check_dir)
+                os.mkdir(check_dir, 755)
+                chck_subdir = check_dir + f'/{data2plot}'
+                if os.path.exists(chck_subdir) is False:
+                    os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}plot/{folder}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}plot/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
     
     def hist(self,  data2plot=None, data2log=False, close=False, save=False, bins=None, log=False):
@@ -340,12 +347,16 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
+            title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
-            check_dir = f'{self.data_path}hist/{folder}'
+            check_dir = f'{self.data_path}hist'
             if os.path.exists(check_dir) is False:
-                os.mkdir(check_dir)
+                os.mkdir(check_dir, 755)
+                chck_subdir = check_dir + f'/{data2plot}'
+                if os.path.exists(chck_subdir) is False:
+                    os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}hist/{folder}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}hist/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
         
     def shocks(self, plot_shock=True, save=False, close=False):
@@ -498,12 +509,16 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
+            title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
-            check_dir = f'{self.data_path}shock/{folder}'
+            check_dir = f'{self.data_path}shocks'
             if os.path.exists(check_dir) is False:
-                os.mkdir(check_dir)
+                os.mkdir(check_dir, 755)
+                chck_subdir = check_dir + f'/{data2plot}'
+                if os.path.exists(chck_subdir) is False:
+                    os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}shock/{folder}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}shocks/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def plot_spacetime(self, data2plot=None, begin=0, end=-1, radial_step=0, log=False, close=False, save=False):
@@ -564,17 +579,20 @@ class mhd_jet(py3Pluto):
         axes.set_ylabel(r'Time [$time-step$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
-        
-
         if close==True:
             plt.close()
 
         if save==True:
-            check_dir = f'{self.data_path}spacetime/{data2plot}'
+            title = self.data_path.split('/')[-2]
+            folder = title.replace(' ', '_')
+            check_dir = f'{self.data_path}space_time'
             if os.path.exists(check_dir) is False:
-                os.mkdir(check_dir)
+                os.mkdir(check_dir, 755)
+                chck_subdir = check_dir + f'/{data2plot}'
+                if os.path.exists(chck_subdir) is False:
+                    os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}spacetime/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}space_time/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def plot_power(self, save=False, close=False):
@@ -601,6 +619,22 @@ class mhd_jet(py3Pluto):
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
         axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
 
+        if close==True:
+            plt.close()
+
+        if save==True:
+            title = self.data_path.split('/')[-2]
+            folder = title.replace(' ', '_')
+            check_dir = f'{self.data_path}power'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir, 755)
+                chck_subdir = check_dir + f'/{data2plot}'
+                if os.path.exists(chck_subdir) is False:
+                    os.mkdir(chck_subdir, 755)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}power/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
     def plot_energy(self, save=False, close=False):
         """
         Plots the energy curves for the jet
@@ -625,6 +659,22 @@ class mhd_jet(py3Pluto):
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
         axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
 
+        if close==True:
+            plt.close()
+
+        if save==True:
+            title = self.data_path.split('/')[-2]
+            folder = title.replace(' ', '_')
+            check_dir = f'{self.data_path}energy'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir, 755)
+                chck_subdir = check_dir + f'/{data2plot}'
+                if os.path.exists(chck_subdir) is False:
+                    os.mkdir(chck_subdir, 755)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}energy/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
     def plot_energy_density(self, save=False, close=False):
         """
         Plots the energy density curves for the jet
@@ -646,3 +696,19 @@ class mhd_jet(py3Pluto):
         axes.set_ylabel(r'Energy density')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
         axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
+
+        if close==True:
+            plt.close()
+
+        if save==True:
+            title = self.data_path.split('/')[-2]
+            folder = title.replace(' ', '_')
+            check_dir = f'{self.data_path}energy_density'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir, 755)
+                chck_subdir = check_dir + f'/{data2plot}'
+                if os.path.exists(chck_subdir) is False:
+                    os.mkdir(chck_subdir, 755)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}energy_density/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
