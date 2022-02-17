@@ -8,7 +8,7 @@ from pluto_python.calculator import alfven_velocity
 from pluto_python.calculator import magneto_acoustic_velocity
 from pluto_python.calculator import mach_number
 from pluto_python.calculator import magnetic_pressure
-
+from pluto_python.calculator import energy_density
 import numpy as np
 import h5py
 import os
@@ -297,7 +297,7 @@ class py3Pluto:
         This method is to calculate all subsidary data sets from the simulation data.
         sets global variables that are accessible by sub classes to use
         """
-        ### Magnetic fields ###
+        ############################## Magnetic fields ##############################
         self.bx1 = np.reshape(
                     self.classifier(
                         delta_time=time,
@@ -314,7 +314,7 @@ class py3Pluto:
                         )[self.b_axial],
                         self.XZ_shape).T
         self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
-        ### Velocities ###
+        ############################## Velocities ##############################
         self.vx1 = np.reshape(
                     self.classifier(
                         delta_time=time,
@@ -331,7 +331,7 @@ class py3Pluto:
                         )[self.axial_velocity],
                         self.XZ_shape).T
         self.velocity_magnitude = np.sqrt(self.vx1**2 + self.vx2**2 + self.vx3**2)
-        ### Pressure, Density and Tracer ###
+        ############################## Pressure, Density and Tracer ##############################
         self.prs = np.reshape(
                     self.classifier(
                         delta_time=time,
@@ -347,32 +347,82 @@ class py3Pluto:
                         delta_time=time,
                         )[self.tracer1],
                         self.XZ_shape).T
-        ### General Lagrangian Multiplier ###
+        ############################## General Lagrangian Multiplier ##############################
         self.glm = np.reshape(
                     self.classifier(
                         delta_time=time,
                         )[self.psi_glm],
                         self.XZ_shape).T
-        ### Alfvén Velocities ###
+        ############################## Alfvén Velocities ##############################
         self.avx1 = alfven_velocity(self.bx1, self.rho)
         self.avx2 = alfven_velocity(self.bx2, self.rho)
         self.avx3 = alfven_velocity(self.bx3, self.rho)
         self.alfvén_velocity_magnitude = np.sqrt(self.avx1**2 + self.avx2**2 + self.avx3**2)
-        ### Magneto acoustic Waves ###
+        ############################## Magneto acoustic Waves ##############################
         self.slow_ms_x1, self.fast_ms_x1 = magneto_acoustic_velocity(self.bx1, self.prs, self.rho, self.gamma)
         self.slow_ms_x2, self.fast_ms_x2 = magneto_acoustic_velocity(self.bx2, self.prs, self.rho, self.gamma)
         self.slow_ms_x3, self.fast_ms_x3 = magneto_acoustic_velocity(self.bx3, self.prs, self.rho, self.gamma)
         self.fast_ms_velocity_magnitude = np.sqrt(self.fast_ms_x1**2 + self.fast_ms_x2**2 + self.fast_ms_x3**2)
         self.slow_ms_velocity_magnitude = np.sqrt(self.slow_ms_x1**2 + self.slow_ms_x2**2 + self.slow_ms_x3**2)
-        ### Mach numbers ###
+        ############################## Mach numbers ##############################
         self.mach_fast = mach_number(self.velocity_magnitude, self.fast_ms_velocity_magnitude)
         self.mach_slow = mach_number(self.velocity_magnitude, self.slow_ms_velocity_magnitude)
         self.mach_alfvén = mach_number(self.velocity_magnitude, self.alfvén_velocity_magnitude)
-        ### Plasma Beta ###
+        ############################## Plasma Beta ##############################
         self.beta = (self.prs / self.magnetic_field_magnitude)
-        ### Magnetic pressure ###
+        ############################## Magnetic pressure ##############################
         self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
-        
+        ############################## Energy density ##############################
+        self.kinetic_energy_density, \
+        self.thermal_energy_density, \
+        self.magnetic_energy_density = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.velocity_magnitude,
+                                                self.magnetic_field_magnitude,
+                                                self.gamma
+        )
+        self.total_energy_density = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        ############################## Energy ##############################
+        # Axial element lengths
+        axial_differences = []
+        for z in self.axial_grid:
+            if len(axial_differences) == 0:
+                axial_differences.append(z)
+            else:
+                axial_differences.append(z-axial_differences[-1])
+        # Radial element area
+        radial_scaler = []
+        for index, rad in enumerate(self.radial_grid):
+            if index == 0:
+                dsurf = np.pi*rad**2
+            else:
+                dsurf = np.pi * ((rad)**2 - (self.radial_grid[index-1])**2)
+            radial_scaler.append(dsurf)
+        # Volume elements
+        volumes = np.transpose([x*np.asarray(radial_scaler) for x in axial_differences])
+        # System energies
+        self.kinetic_energy_sys = self.kinetic_energy_density * volumes
+        self.thermal_energy_sys = self.thermal_energy_density * volumes
+        self.magnetic_energy_sys = self.magnetic_energy_density * volumes
+        self.total_energy_sys = self.kinetic_energy_sys + self.thermal_energy_sys + self.magnetic_energy_sys 
+        # Jet energies
+        self.kinetic_energy_jet = self.kinetic_energy_sys * self.tr1
+        self.thermal_energy_jet = self.thermal_energy_sys * self.tr1
+        self.magnetic_energy_jet = self.magnetic_energy_sys * self.tr1
+        self.total_energy_jet = self.total_energy_sys * self.tr1
+        ############################## Power ##############################
+        # System power
+        self.kinetic_power_sys = np.asarray([x/axial_differences for x in self.kinetic_energy_sys]) * self.vx3
+        self.thermal_power_sys = np.asarray([x/axial_differences for x in self.thermal_energy_sys]) * self.vx3
+        self.magnetic_power_sys = np.asarray([x/axial_differences for x in self.magnetic_energy_sys]) * self.vx3
+        self.total_power_sys = self.kinetic_power_sys + self.thermal_power_sys + self.magnetic_power_sys
+        # Jet power
+        self.kinetic_power_jet = self.kinetic_power_sys * self.tr1
+        self.thermal_power_jet = self.thermal_power_sys * self.tr1
+        self.magnetic_power_jet = self.magnetic_power_sys * self.tr1
+        self.total_power_jet = self.kinetic_power_jet + self.thermal_power_jet + self.magnetic_power_jet
+
 
         if self.mirrored == True:
             self.bx1 = self._flip_multiply(self.bx1)

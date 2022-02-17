@@ -25,7 +25,6 @@ class mhd_jet(py3Pluto):
         gamma = 5/3,
     ):
 
-        
         super().__init__(
             data_path = data_path,
             time_step = time_step,
@@ -577,3 +576,73 @@ class mhd_jet(py3Pluto):
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}spacetime/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
+
+    def plot_power(self, save=False, close=False):
+        """
+        Plots the power curves for the jet
+        """
+        self.calculate_data(self.time_step)
+        total_sys = [np.sum(x) for x in np.transpose(self.total_power_sys)]
+        total_jet = [np.sum(x) for x in np.transpose(self.total_power_jet)]
+        kinetic_jet = [np.sum(x) for x in np.transpose(self.kinetic_power_jet)]
+        enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_power_jet)]
+        magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_power_jet)]
+
+
+        figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
+        plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Power')
+        plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Power')
+        plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Power')
+        plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Power')
+        plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Power')
+        axes.set_title(f'Jet Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylabel(r'Power')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
+
+    def plot_energy(self, save=False, close=False):
+        """
+        Plots the power curves for the jet
+        """
+        self.calculate_data(self.time_step)
+        total_sys = [np.sum(x) for x in np.transpose(self.total_energy_sys)]
+        total_jet = [np.sum(x) for x in np.transpose(self.total_energy_jet)]
+        kinetic_jet = [np.sum(x) for x in np.transpose(self.kinetic_energy_jet)]
+        enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_energy_jet)]
+        magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_energy_jet)]
+
+
+        figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
+        #plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Energy')
+        plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Energy')
+        plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Energy')
+        plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Energy')
+        plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Energy')
+        axes.set_title(f'Energy at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylabel(r'Energy')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
+
+    def plot_energy_density(self, save=False, close=False):
+        """
+        Plots the power curves for the jet
+        """
+        self.calculate_data(self.time_step)
+        total_jet = [np.sum(x) for x in np.transpose(self.total_energy_density)]
+        kinetic_jet = [np.sum(x) for x in np.transpose(self.kinetic_energy_density)]
+        enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_energy_density)]
+        magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_energy_density)]
+
+
+        figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
+        plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total System Energy Density')
+        plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic System Energy Density')
+        plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal System Energy Density')
+        plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic System Energy Density')
+        axes.set_title(f'Energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylabel(r'Energy density')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
