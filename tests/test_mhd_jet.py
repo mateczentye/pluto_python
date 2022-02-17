@@ -17,39 +17,45 @@ test_object = mj(
     ylim=(0,15),
     mirrored=False,
 )
-
+@pytest.mark.util
 def test_init_dat():
     assert test_object.data == None
-    
+
+@pytest.mark.util    
 def test_init_fig():
     assert test_object.figure == None
 
+@pytest.mark.util
 def test_plot():
     test_object.plot('vx1')
     assert type(test_object.data) == np.ndarray
 
+@pytest.mark.util
 def test_test_hist():
     test_object.hist('vx1')
     assert type(test_object.data) == np.ndarray
 
+@pytest.mark.util
 def test_shocks():
     test_object.shocks()
     assert type(test_object.shocks) == list
 
+@pytest.mark.util
 def test_spacetime():
     test_object.plot_spacetime('prs')
     assert type(test_object.list2plot) == list
 
+@pytest.mark.util
 def test_power():
     test_object.plot_power()
     assert type(test_object.list_power) == list
 
-
+@pytest.mark.util
 def test_energy():
     test_object.plot_energy()
     assert type(test_object.list_energy) == list
 
-
+@pytest.mark.util
 def test_E_dens():
     test_object.plot_energy_density()
     assert type(test_object.list_E_dens) == list
