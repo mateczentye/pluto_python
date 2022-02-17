@@ -38,7 +38,7 @@ class py3Pluto:
         gamma = 5/3,
         
     ):
-
+        ### Arguments
         self.data_path = data_path
         self.dpi = dpi
         self.image_size = image_size
@@ -48,8 +48,38 @@ class py3Pluto:
         self.ini_path = ini_path
         self.mirrored = mirrored
         self.closure = False
-        self.simulation_title = self.data_path.split('/')[-2]
         self.gamma = gamma
+        ### Argument conditions
+        if type(data_path) != str:
+            raise TypeError('Given path must be a string!')
+        if data_path[-1] != '/':
+            data_path += '/'
+        if type(time_step) != int:
+            raise TypeError('Time-step argument must be an integer!')
+        if ini_path != None:
+            if os.path.exists(ini_path) == False:
+                raise IsADirectoryError('ini file path does not exist!')
+            else:
+                inis = [ini for ini in os.listdir(ini_path) if '.ini' in ini]
+                if len(inis) != 1:
+                    raise FileExistsError('There are too many ini files in folder')
+        if type(dpi) != int:
+            raise TypeError('DPI must be an int!')
+        if type(image_size) != tuple:
+            raise TypeError('Image size, must be a tuple!')
+        if len(image_size) != 2:
+            raise ValueError('Image size must be a 2 element tuple!')
+        if (type(xlim) != None) and (type(xlim) != tuple) and (type(xlim) != list):
+            raise ValueError('X Limits must be given value either as a 2 element tuple/list or None!')
+        if type(ylim) != None and type(ylim) != tuple and type(ylim) != list:
+            raise ValueError('Y Limits must be given value either as a 2 element tuple/list or None!')
+        if type(global_limits) != bool:
+            raise TypeError('Global limits must be a boolean')
+        if type(mirrored) != bool:
+            raise TypeError('Mirrored must be a boolean')
+        if type(gamma) != float and type(gamma) != int:
+            raise TypeError('Gamma must be a number!')
+
 
         ### Classifier variables
         self.variables = None
@@ -63,6 +93,56 @@ class py3Pluto:
         self.radial_velocity = None
         self.azimuthal_velocity = None
         self.axial_velocity = None
+        ### Data Variables
+        self.bx1 = None
+        self.bx2 = None
+        self.bx3 = None
+        self.magnetic_field_magnitude = None
+        self.vx1 = None
+        self.vx2 = None
+        self.vx3 = None
+        self.velocity_magnitude = None
+        self.prs = None
+        self.rho = None
+        self.tr1 = None
+        self.glm = None
+        self.avx1 = None
+        self.avx2 = None
+        self.avx3 = None
+        self.alfvén_velocity_magnitude = None
+        self.fast_ms_x1 = None
+        self.fast_ms_x2 = None
+        self.fast_ms_x3 = None
+        self.fast_ms_velocity_magnitude = None
+        self.slow_ms_velocity_magnitude = None
+        self.mach_fast = None
+        self.mach_slow = None
+        self.mach_alfvén = None
+        self.beta = None
+        self.magnetic_prs = None
+        self.magnetic_energy_density = None
+        self.total_energy_density = None
+        self.kinetic_energy_sys = None
+        self.thermal_energy_sys = None
+        self.magnetic_energy_sys = None
+        self.total_energy_sys = None
+        self.kinetic_energy_jet = None
+        self.thermal_energy_jet = None
+        self.magnetic_energy_jet = None
+        self.total_energy_jet = None
+        self.kinetic_power_sys = None
+        self.thermal_power_sys = None
+        self.magnetic_power_sys = None
+        self.total_power_sys = None
+        self.kinetic_power_jet = None
+        self.thermal_power_jet = None
+        self.magnetic_power_jet = None
+        self.total_power_jet = None
+        ### Utility Variables
+        self.simulation_title = self.data_path.split('/')[-2]
+        
+
+
 
         self._reader()
         self.shape_limits = self._read_ini()
