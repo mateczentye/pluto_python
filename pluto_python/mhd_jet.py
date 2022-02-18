@@ -533,11 +533,11 @@ class mhd_jet(py3Pluto):
             check_dir = f'{self.data_path}shocks'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
+                chck_subdir = check_dir + f'/{self.plot_shock}'
                 if os.path.exists(chck_subdir) is False:
                     os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}shocks/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}shocks/{self.plot_shock}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def plot_spacetime(self, data2plot=None, begin=0, end=-1, radial_step=0, log=False, close=False, save=False):
