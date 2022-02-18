@@ -277,6 +277,7 @@ class mhd_jet(py3Pluto):
 
 
         self.data = data
+        self.variable_name = variable_name
 
         prefix = ''
         if log == True:
@@ -361,7 +362,7 @@ class mhd_jet(py3Pluto):
             plt.savefig(f'{self.data_path}hist/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
         
-    def shocks(self, plot_shock=[12,13,14,23,24,34], save=False, close=False):
+    def shocks(self, plot_shock='12, 13, 14, 23, 24, 34', save=False, close=False):
         """
         method to plot MHD shocks
         """
@@ -574,7 +575,7 @@ class mhd_jet(py3Pluto):
             shrink=0.95, 
             aspect=20,
             pad=0.02, 
-            label='Magnetic Field magnitude', 
+            label=f'{self.variable_name} magnitude', 
             format='%.2f'
             )
         
@@ -634,7 +635,7 @@ class mhd_jet(py3Pluto):
             ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
-        plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Power')
+        #plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Power')
         plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Power')
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Power')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Power')

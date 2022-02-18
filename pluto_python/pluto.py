@@ -435,8 +435,8 @@ class py3Pluto:
         ############################## Magnetic pressure ##############################
         self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
         ############################## Energy density ##############################
-        self.kinetic_energy_density, \
         self.thermal_energy_density, \
+        self.kinetic_energy_density, \
         self.magnetic_energy_density = energy_density(
                                                 self.prs,
                                                 self.rho,
