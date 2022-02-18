@@ -283,7 +283,7 @@ class mhd_jet(py3Pluto):
             prefix = 'Log of'
         self.title = f'{prefix} {variable_name}'
 
-    def plot(self, data2plot=None, log=False, close=False, save=False):
+    def plot(self, data2plot=None, log=False, close=False, save=False, title=''):
         """
         This method plots the simulated data sets output by PLUTO, contained within the h5 file
         while additionally also plots the wave velocities, machnumbers and other calculated values.
@@ -291,12 +291,12 @@ class mhd_jet(py3Pluto):
         """
         self._data(data2plot=data2plot, log=log, close=close, save=save)
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        
+        plt.tight_layout()
         divider = mal(axes)
         cax = divider.append_axes('right',size='5%',pad=0.25)
         pl = axes.contourf(self.axial_grid, self.radial_grid, self.data, cmap=self.cmap, levels=128, alpha=0.95)
         plt.colorbar(pl,cax,ticks=np.linspace(np.min(self.data),np.max(self.data), 9))
-        axes.set_title(self.title)
+        #axes.set_title(self.title)
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distnace [$R_{jet}$]')
@@ -307,7 +307,7 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            title = self.data_path.split('/')[-2]
+            #title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}plot'
             if os.path.exists(check_dir) is False:
@@ -316,11 +316,9 @@ class mhd_jet(py3Pluto):
                 if os.path.exists(chck_subdir) is False:
                     os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}plot/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}plot/{data2plot}/{self.time_step}_{data2plot}_{title}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
-        
-    
     def hist(self,  data2plot=None, data2log=False, close=False, save=False, bins=None, log=False):
         """
         Method to plot histogram of the data which is passed in as the argument
@@ -363,12 +361,13 @@ class mhd_jet(py3Pluto):
             plt.savefig(f'{self.data_path}hist/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
         
-    def shocks(self, plot_shock=True, save=False, close=False):
+    def shocks(self, plot_shock=[12,13,14,23,24,34], save=False, close=False):
         """
         method to plot MHD shocks
         """
+        self.plot_shock = plot_shock
+
         #### Super fast MS to Super Alfvénic ####
-        
         zero_array = np.zeros_like(self.mach_fast)
         fast_shock_ax = []
         fast_shock_ra = []
@@ -388,7 +387,6 @@ class mhd_jet(py3Pluto):
                         fast_shock_ra.append(self.radial_grid[j])
                 
         #### Intermed. Shocks #####
-
         inter_shock_ax1 = []
         inter_shock_ra1 = []
         inter_shock_ax2 = []
@@ -397,8 +395,6 @@ class mhd_jet(py3Pluto):
         inter_shock_ra3 = []
         inter_shock_ax4 = []
         inter_shock_ra4 = []
-        
-
         
         for j, row in enumerate(zero_array):
             for i, val in enumerate(row):
@@ -462,7 +458,6 @@ class mhd_jet(py3Pluto):
                         inter_shock_ra4.append(self.radial_grid[j])
 
         #### Slow shocks #####
-
         slow_shock_ax = []
         slow_shock_ra = []
         for j, row in enumerate(zero_array):
@@ -480,7 +475,7 @@ class mhd_jet(py3Pluto):
                         slow_shock_ax.append(self.axial_grid[i])
                         slow_shock_ra.append(self.radial_grid[j])
         
-
+        ### Check array for unit tests
         self.shocks = [
             [slow_shock_ax, slow_shock_ra],
             [fast_shock_ax, fast_shock_ra],
@@ -489,34 +484,45 @@ class mhd_jet(py3Pluto):
             [inter_shock_ax3, inter_shock_ra3],
             [inter_shock_ax4, inter_shock_ra4]
         ]
+
         ### Plots ###
+        figureS, axesS = plt.subplots(figsize=(self.image_size[0]*1.25, self.image_size[1]*1.25), dpi=self.dpi*2)
+        
+        if self.plot_shock == 'slow':
+            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
+        if self.plot_shock == 'inter':
+            axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(inter_shock_ax1))})', alpha=0.5)
+            axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(inter_shock_ax2))})', alpha=0.5)
+            axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(inter_shock_ax3))})', alpha=0.5)
+            axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(inter_shock_ax4))})', alpha=0.5)
+        if self.plot_shock == 'fast':
+            axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(fast_shock_ax))})', alpha=0.5)
 
-        if plot_shock != None:
-            figureS, axesS = plt.subplots(figsize=(self.image_size[0]*1.25, self.image_size[1]*1.25), dpi=self.dpi*2)
-            if plot_shock == True:
-                axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(fast_shock_ax))})', alpha=0.5)
-                axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(inter_shock_ax1))})', alpha=0.5)
-                axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(inter_shock_ax2))})', alpha=0.5)
-                axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(inter_shock_ax3))})', alpha=0.5)
-                axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(inter_shock_ax4))})', alpha=0.5)
-                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
+        if '12' in self.plot_shock:
+            axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(fast_shock_ax))})', alpha=0.5)
+        
+        if '13' in self.plot_shock:
+            axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(inter_shock_ax1))})', alpha=0.5)
+        
+        if '14' in self.plot_shock:
+            axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(inter_shock_ax4))})', alpha=0.5)
 
-            elif plot_shock == 'slow':
-                axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
-            elif plot_shock == 'inter':
-                axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(inter_shock_ax1))})', alpha=0.5)
-                axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(inter_shock_ax2))})', alpha=0.5)
-                axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(inter_shock_ax3))})', alpha=0.5)
-                axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(inter_shock_ax4))})', alpha=0.5)
-            elif plot_shock == 'fast':
-                axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(fast_shock_ax))})', alpha=0.5)
+        if '23' in self.plot_shock:
+            axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(inter_shock_ax2))})', alpha=0.5)
 
-            axesS.legend()
-            axesS.set_title(f'MHD Shocks from plasma-state transition at {self.time_step}')
-            axesS.set_xlim(self.xlim[0], self.xlim[1])
-            axesS.set_ylim(self.ylim[0], self.ylim[1])
-            axesS.set_ylabel(r'Radial distance [$R_{jet}$]')
-            axesS.set_xlabel(r'Axial distance [$R_{jet}$]')
+        if '24' in self.plot_shock:
+            axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(inter_shock_ax3))})', alpha=0.5)
+
+        if '34' in self.plot_shock:
+            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
+        
+
+        axesS.legend()
+        axesS.set_title(f'MHD Shocks from plasma-state transition at {self.time_step}')
+        axesS.set_xlim(self.xlim[0], self.xlim[1])
+        axesS.set_ylim(self.ylim[0], self.ylim[1])
+        axesS.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axesS.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         if close==True:
             plt.close()
