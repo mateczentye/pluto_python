@@ -654,11 +654,9 @@ class mhd_jet(py3Pluto):
             check_dir = f'{self.data_path}power'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+                chck_subdir = check_dir
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}power/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}power/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def plot_energy(self, save=False, close=False):
@@ -701,11 +699,9 @@ class mhd_jet(py3Pluto):
             check_dir = f'{self.data_path}energy'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+                chck_subdir = check_dir
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}energy/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}energy/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
     def plot_energy_density(self, save=False, close=False):
@@ -745,9 +741,7 @@ class mhd_jet(py3Pluto):
             check_dir = f'{self.data_path}energy_density'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+                chck_subdir = check_dir
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}energy_density/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}energy_density/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
