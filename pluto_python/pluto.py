@@ -9,6 +9,8 @@ from pluto_python.calculator import magneto_acoustic_velocity
 from pluto_python.calculator import mach_number
 from pluto_python.calculator import magnetic_pressure
 from pluto_python.calculator import energy_density
+from pluto_python.calculator import sound_speed
+
 import numpy as np
 import h5py
 import os
@@ -129,6 +131,7 @@ class py3Pluto:
         self.thermal_power_jet = None
         self.magnetic_power_jet = None
         self.total_power_jet = None
+        self.sound_speed = None
         ### Utility Variables
         #self.simulation_title = self.data_path.split('/')[-2]
         
@@ -359,6 +362,7 @@ class py3Pluto:
         This method is to calculate all subsidary data sets from the simulation data.
         sets global variables that are accessible by sub classes to use
         """
+        self.time_step = time
         ############################## Magnetic fields ##############################
         self.bx1 = np.reshape(
                     self.classifier(
@@ -484,6 +488,8 @@ class py3Pluto:
         self.thermal_power_jet = self.thermal_power_sys * self.tr1
         self.magnetic_power_jet = self.magnetic_power_sys * self.tr1
         self.total_power_jet = self.kinetic_power_jet + self.thermal_power_jet + self.magnetic_power_jet
+        ############################## Sound Speed ##############################
+        self.sound_speed = sound_speed(self.gamma, self.prs, self.rho)
 
 
         if self.mirrored == True:
@@ -516,5 +522,6 @@ class py3Pluto:
             self.mach_alfvén = self._flip_multiply(self.mach_alfvén)
             self.beta = self._flip_multiply(self.beta)
             self.magnetic_prs = self._flip_multiply(self.magnetic_prs)
+            self.sound_speed = self._flip_multiply(self.sound_speed)
             
             

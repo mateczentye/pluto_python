@@ -185,7 +185,7 @@ class mhd_jet(py3Pluto):
             else:
                 data = self.avx3
         elif data2plot == 'avxs':
-            variable_name = 'Alfvén velocity Magnitude'
+            variable_name = 'Alfvén speed'
             if log == True:
                 data = np.log(self.alfvén_velocity_magnitude)
             else:
@@ -211,7 +211,7 @@ class mhd_jet(py3Pluto):
             else:
                 data = self.fast_ms_x3
         elif data2plot == 'msfs':
-            variable_name = 'Fast Magneto-acoustic Wave velocity magnitude'
+            variable_name = 'Fast Magneto-acoustic speed'
             if log == True:
                 data = np.log(self.fast_m)
             else:
@@ -236,7 +236,7 @@ class mhd_jet(py3Pluto):
             else:
                 data = self.slow_ms_x3
         elif data2plot == 'msss':
-            variable_name = 'Slow Magneto-acoustic Wave velocity magnitude'
+            variable_name = 'Slow Magneto-acoustic speed'
             if log == True:
                 data = np.log(self.slow_m)
             else:
@@ -274,6 +274,14 @@ class mhd_jet(py3Pluto):
                 data = np.log(self.magnetic_prs)
             else:
                 data = self.magnetic_prs
+        ### Sound Speed ###
+        elif data2plot == 'cs':
+            variable_name = 'Ideal Sound Speed'
+            if log == True:
+                data = np.log(self.sound_speed)
+            else:
+                data = self.sound_speed
+        
 
 
         self.data = data
@@ -367,35 +375,34 @@ class mhd_jet(py3Pluto):
         method to plot MHD shocks
         """
         self.plot_shock = plot_shock
-
         #### Super fast MS to Super Alfvénic ####
         zero_array = np.zeros_like(self.mach_fast)
-        fast_shock_ax = []
-        fast_shock_ra = []
+        self.fast_shock_ax = []
+        self.fast_shock_ra = []
         for j, row in enumerate(zero_array):
             for i, val in enumerate(row):
                 if (i+1 == len(row)) or (j+1 == len(zero_array)):
                     pass
                 else:
                     if (self.mach_fast[j,i] > 1) and (self.mach_fast[j,i+1] < 1) and (self.mach_alfvén[j,i+1] > 1):
-                        fast_shock_ax.append(self.axial_grid[i])
-                        fast_shock_ra.append(self.radial_grid[j])
+                        self.fast_shock_ax.append(self.axial_grid[i])
+                        self.fast_shock_ra.append(self.radial_grid[j])
                     if (self.mach_fast[j,i] > 1) and (self.mach_fast[j+1,i] < 1) and (self.mach_alfvén[j+1,i] > 1):
-                        fast_shock_ax.append(self.axial_grid[i])
-                        fast_shock_ra.append(self.radial_grid[j])
+                        self.fast_shock_ax.append(self.axial_grid[i])
+                        self.fast_shock_ra.append(self.radial_grid[j])
                     if (self.mach_fast[j,i] > 1) and (self.mach_fast[j+1,i+1] < 1) and (self.mach_alfvén[j+1,i+1] > 1):
-                        fast_shock_ax.append(self.axial_grid[i])
-                        fast_shock_ra.append(self.radial_grid[j])
+                        self.fast_shock_ax.append(self.axial_grid[i])
+                        self.fast_shock_ra.append(self.radial_grid[j])
                 
         #### Intermed. Shocks #####
-        inter_shock_ax1 = []
-        inter_shock_ra1 = []
-        inter_shock_ax2 = []
-        inter_shock_ra2 = []
-        inter_shock_ax3 = []
-        inter_shock_ra3 = []
-        inter_shock_ax4 = []
-        inter_shock_ra4 = []
+        self.inter_shock_ax1 = []
+        self.inter_shock_ra1 = []
+        self.inter_shock_ax2 = []
+        self.inter_shock_ra2 = []
+        self.inter_shock_ax3 = []
+        self.inter_shock_ra3 = []
+        self.inter_shock_ax4 = []
+        self.inter_shock_ra4 = []
         
         for j, row in enumerate(zero_array):
             for i, val in enumerate(row):
@@ -405,58 +412,58 @@ class mhd_jet(py3Pluto):
                     ### Super Fast to Sub Alfvénic, Super Slow (1-3)
                     # perpendicular shocks
                     if (self.mach_fast[j,i] > 1) and (self.mach_alfvén[j,i+1] < 1) and (self.mach_slow[j,i+1] > 1):
-                        inter_shock_ax1.append(self.axial_grid[i])
-                        inter_shock_ra1.append(self.radial_grid[j])
+                        self.inter_shock_ax1.append(self.axial_grid[i])
+                        self.inter_shock_ra1.append(self.radial_grid[j])
                     # parallel shocks
                     if (self.mach_fast[j,i] > 1) and (self.mach_alfvén[j+1,i] < 1) and (self.mach_slow[j+1,i] > 1):
-                        inter_shock_ax1.append(self.axial_grid[i])
-                        inter_shock_ra1.append(self.radial_grid[j])
+                        self.inter_shock_ax1.append(self.axial_grid[i])
+                        self.inter_shock_ra1.append(self.radial_grid[j])
                     # oblique shocks
                     if (self.mach_fast[j,i] > 1) and (self.mach_alfvén[j+1,i+1] < 1) and (self.mach_slow[j+1,i+1] > 1):
-                        inter_shock_ax1.append(self.axial_grid[i])
-                        inter_shock_ra1.append(self.radial_grid[j])
+                        self.inter_shock_ax1.append(self.axial_grid[i])
+                        self.inter_shock_ra1.append(self.radial_grid[j])
                     
                     ## Sub Fast, Super Alfvénic to Sub Alfvénic, Super Slow (2-3)
                     # perpendicular shocks
                     if (self.mach_alfvén[j,i] > 1) and (self.mach_fast[j,i] < 1) and (self.mach_alfvén[j,i+1] < 1) and (self.mach_slow[j,i+1] > 1):
-                        inter_shock_ax2.append(self.axial_grid[i])
-                        inter_shock_ra2.append(self.radial_grid[j])
+                        self.inter_shock_ax2.append(self.axial_grid[i])
+                        self.inter_shock_ra2.append(self.radial_grid[j])
                     # parallel shocks
                     if (self.mach_alfvén[j,i] > 1) and (self.mach_fast[j,i] < 1) and (self.mach_alfvén[j+1,i] < 1) and (self.mach_slow[j+1,i] > 1):
-                        inter_shock_ax2.append(self.axial_grid[i])
-                        inter_shock_ra2.append(self.radial_grid[j])
+                        self.inter_shock_ax2.append(self.axial_grid[i])
+                        self.inter_shock_ra2.append(self.radial_grid[j])
                     # oblique shocks
                     if (self.mach_alfvén[j,i] > 1) and (self.mach_fast[j,i] < 1) and (self.mach_alfvén[j+1,i+1] < 1) and (self.mach_slow[j+1,i+1] > 1):
-                        inter_shock_ax2.append(self.axial_grid[i])
-                        inter_shock_ra2.append(self.radial_grid[j])
+                        self.inter_shock_ax2.append(self.axial_grid[i])
+                        self.inter_shock_ra2.append(self.radial_grid[j])
                    
                     ### Sub Fast, Super Alfvénic to Sub Slow (2-4)
                     # perpendicular shocks
                     if (self.mach_alfvén[j,i] > 1) and (self.mach_fast[j,i] < 1) and (self.mach_slow[j,i+1] < 1):
-                        inter_shock_ax3.append(self.axial_grid[i])
-                        inter_shock_ra3.append(self.radial_grid[j])
+                        self.inter_shock_ax3.append(self.axial_grid[i])
+                        self.inter_shock_ra3.append(self.radial_grid[j])
                     # parallel shocks
                     if (self.mach_alfvén[j,i] > 1) and (self.mach_fast[j,i] < 1) and (self.mach_slow[j+1,i] < 1):
-                        inter_shock_ax3.append(self.axial_grid[i])
-                        inter_shock_ra3.append(self.radial_grid[j])
+                        self.inter_shock_ax3.append(self.axial_grid[i])
+                        self.inter_shock_ra3.append(self.radial_grid[j])
                     # oblique shocks
                     if (self.mach_alfvén[j,i] > 1) and (self.mach_fast[j,i] < 1) and (self.mach_slow[j+1,i+1] < 1):
-                        inter_shock_ax3.append(self.axial_grid[i])
-                        inter_shock_ra3.append(self.radial_grid[j])
+                        self.inter_shock_ax3.append(self.axial_grid[i])
+                        self.inter_shock_ra3.append(self.radial_grid[j])
 
                     ### Hydrodynamic (1-4)
                     # perpendicular shocks
                     if (self.mach_fast[j,i] > 1) and (self.mach_slow[j,i+1] < 1):
-                        inter_shock_ax4.append(self.axial_grid[i])
-                        inter_shock_ra4.append(self.radial_grid[j])
+                        self.inter_shock_ax4.append(self.axial_grid[i])
+                        self.inter_shock_ra4.append(self.radial_grid[j])
                     # parallel shocks
                     if (self.mach_fast[j,i] > 1) and (self.mach_slow[j+1,i] < 1):
-                        inter_shock_ax4.append(self.axial_grid[i])
-                        inter_shock_ra4.append(self.radial_grid[j])
+                        self.inter_shock_ax4.append(self.axial_grid[i])
+                        self.inter_shock_ra4.append(self.radial_grid[j])
                     # oblique shocks
                     if (self.mach_fast[j,i] > 1) and (self.mach_slow[j+1,i+1] < 1):
-                        inter_shock_ax4.append(self.axial_grid[i])
-                        inter_shock_ra4.append(self.radial_grid[j])
+                        self.inter_shock_ax4.append(self.axial_grid[i])
+                        self.inter_shock_ra4.append(self.radial_grid[j])
 
         #### Slow shocks #####
         slow_shock_ax = []
@@ -477,42 +484,42 @@ class mhd_jet(py3Pluto):
                         slow_shock_ra.append(self.radial_grid[j])
         
         ### Check array for unit tests
-        self.shocks = [
-            [slow_shock_ax, slow_shock_ra],
-            [fast_shock_ax, fast_shock_ra],
-            [inter_shock_ax1,inter_shock_ra1],
-            [inter_shock_ax2, inter_shock_ra2],
-            [inter_shock_ax3, inter_shock_ra3],
-            [inter_shock_ax4, inter_shock_ra4]
-        ]
+        #self.shocks = [
+        #    [slow_shock_ax, slow_shock_ra],
+        #    [self.fast_shock_ax, self.fast_shock_ra],
+        #    [self.inter_shock_ax1,self.inter_shock_ra1],
+        #    [self.inter_shock_ax2, self.inter_shock_ra2],
+        #    [self.inter_shock_ax3, self.inter_shock_ra3],
+        #    [self.inter_shock_ax4, self.inter_shock_ra4]
+        #]
 
         ### Plots ###
         figureS, axesS = plt.subplots(figsize=(self.image_size[0]*1.25, self.image_size[1]*1.25), dpi=self.dpi*2)
         
-        if self.plot_shock == 'slow':
+        if 'slow' in self.plot_shock:
             axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
-        if self.plot_shock == 'inter':
-            axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(inter_shock_ax1))})', alpha=0.5)
-            axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(inter_shock_ax2))})', alpha=0.5)
-            axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(inter_shock_ax3))})', alpha=0.5)
-            axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(inter_shock_ax4))})', alpha=0.5)
-        if self.plot_shock == 'fast':
-            axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(fast_shock_ax))})', alpha=0.5)
+        if 'inter' in self.plot_shock:
+            axesS.plot(self.inter_shock_ax1, self.inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(self.inter_shock_ax1))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax2, self.inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(self.inter_shock_ax2))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax3, self.inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(self.inter_shock_ax3))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax4, self.inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(self.inter_shock_ax4))})', alpha=0.5)
+        if 'fast' in self.plot_shock:
+            axesS.plot(self.fast_shock_ax, self.fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(self.fast_shock_ax))})', alpha=0.5)
 
         if '12' in self.plot_shock:
-            axesS.plot(fast_shock_ax, fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(fast_shock_ax))})', alpha=0.5)
+            axesS.plot(self.fast_shock_ax, self.fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(self.fast_shock_ax))})', alpha=0.5)
         
         if '13' in self.plot_shock:
-            axesS.plot(inter_shock_ax1, inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(inter_shock_ax1))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax1, self.inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(self.inter_shock_ax1))})', alpha=0.5)
         
         if '14' in self.plot_shock:
-            axesS.plot(inter_shock_ax4, inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(inter_shock_ax4))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax4, self.inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(self.inter_shock_ax4))})', alpha=0.5)
 
         if '23' in self.plot_shock:
-            axesS.plot(inter_shock_ax2, inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(inter_shock_ax2))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax2, self.inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(self.inter_shock_ax2))})', alpha=0.5)
 
         if '24' in self.plot_shock:
-            axesS.plot(inter_shock_ax3, inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(inter_shock_ax3))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax3, self.inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(self.inter_shock_ax3))})', alpha=0.5)
 
         if '34' in self.plot_shock:
             axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)

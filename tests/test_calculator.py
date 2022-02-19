@@ -42,3 +42,7 @@ def test_energy_density():
 @pytest.mark.phys
 def test_magnetic_pressure():
     assert c.magnetic_pressure(5) == 12.5
+
+@pytest.mark.phys
+def test_soundspeed():
+    assert c.sound_speed(5/3, 0.6, 1) == 1

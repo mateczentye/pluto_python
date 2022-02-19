@@ -39,4 +39,5 @@ def energy_density(pressure, density, velocity, magnetic_field, gamma):
 def magnetic_pressure(mag_field):
     return 0.5*(mag_field**2)
 
-
+def sound_speed(gamma, prs, rho):
+    return np.sqrt((gamma * prs) / rho)
