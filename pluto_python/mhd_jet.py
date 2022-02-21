@@ -833,11 +833,7 @@ class mhd_jet(py3Pluto):
         plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field Strength',  location='bottom', pad=0.01), 
         plt.colorbar(matplotlib.cm.ScalarMappable(norm=linenorm, cmap=scmap), ax=axes, format='%.2f', label='Magnetic Field in direction x2',  location='bottom', pad=0.05)
         
-        ### set up limits
-        #if subgrid_x_low > self.xlim[0]
-
         plt.xlim(self.xlim[0], self.xlim[1])
-        #plt.title(f'Magnetic field with field line direction at {self.time_step} {self.simulation_title}')
         
         if self.mirrored == False:
             plt.ylim(self.ylim[0], self.ylim[1])
@@ -854,3 +850,5 @@ class mhd_jet(py3Pluto):
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}field_line/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
+
+        self.streamline_check = magnitude
