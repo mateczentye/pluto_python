@@ -37,6 +37,9 @@ jobs:
       - name: Test with pytest
         run: |
           pytest --junitxml=tests.xml
-      - name: Upload to CodeCov
-        run: |
-          curl -Os https://uploader.codecov.io/latest/linux/codecov chmod +x codecov ./codecov
+
+      - uses: codecov/codecov-action@v2
+        with:
+          files: ./tests.xml
+          name: codecov-umbrella
+          verbose: true
