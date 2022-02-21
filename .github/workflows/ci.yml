@@ -37,6 +37,6 @@ jobs:
       - name: Test with pytest
         run: |
           pytest --cov-report xml
-      -name: Upload to CodeCov
+      - name: Upload to CodeCov
         run: |
           curl -Os https://uploader.codecov.io/latest/linux/codecov chmod +x codecov ./codecov
