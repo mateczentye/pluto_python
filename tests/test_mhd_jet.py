@@ -59,3 +59,8 @@ def test_energy():
 def test_E_dens():
     test_object.plot_energy_density()
     assert type(test_object.list_E_dens) == list
+
+@pytest.mark.util
+def test_streamlines():
+    test_object.plot_fieldlines()
+    assert type(test_object.streamline_check) == np.ndarray
