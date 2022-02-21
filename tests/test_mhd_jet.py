@@ -38,7 +38,7 @@ def test_test_hist():
 @pytest.mark.util
 def test_shocks():
     test_object.shocks()
-    assert type(test_object.shocks) == list
+    assert type(test_object.shocks_list) == list
 
 @pytest.mark.util
 def test_spacetime():

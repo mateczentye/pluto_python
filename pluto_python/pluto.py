@@ -275,18 +275,21 @@ class py3Pluto:
 
         return data
 
-    def _flip_multiply(self, array):
+    def _flip_multiply(self, array, sign_change=False):
         """
         This method makes a single quadrant mirrored along the axial direction
         """
-        x = self.axial_grid
         y = self.radial_grid
-        xi = np.flip(x, 0)
         yi = np.flip(y, 0)
 
         if np.shape(self.initial_radial_grid) == np.shape(self.radial_grid):
             self.radial_grid = np.concatenate((-yi[:-1], y), axis=0)
-        array_inverse = np.flip(array, 0)
+        ### Correct the direction of vector component with change of sign    
+        if sign_change == True:
+            array_inverse = -np.flip(array, 0)
+        elif sign_change == False:
+            array_inverse = np.flip(array, 0)
+    
         new_array = np.concatenate((array_inverse[:-1], array),axis=0)
         self.ylim = (-self.ylim[1], self.ylim[1])
         return new_array
@@ -434,10 +437,10 @@ class py3Pluto:
         self.mach_fast = mach_number(self.velocity_magnitude, self.fast_ms_velocity_magnitude)
         self.mach_slow = mach_number(self.velocity_magnitude, self.slow_ms_velocity_magnitude)
         self.mach_alfvén = mach_number(self.velocity_magnitude, self.alfvén_velocity_magnitude)
-        ############################## Plasma Beta ##############################
-        self.beta = (self.prs / self.magnetic_field_magnitude)
         ############################## Magnetic pressure ##############################
         self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
+        ############################## Plasma Beta ##############################
+        self.beta = (self.prs / self.magnetic_prs)
         ############################## Energy density ##############################
         self.thermal_energy_density, \
         self.kinetic_energy_density, \
@@ -494,11 +497,11 @@ class py3Pluto:
 
         if self.mirrored == True:
             self.bx1 = self._flip_multiply(self.bx1)
-            self.bx2 = self._flip_multiply(self.bx2)
+            self.bx2 = self._flip_multiply(self.bx2, sign_change=True)
             self.bx3 = self._flip_multiply(self.bx3)
             self.magnetic_field_magnitude = self._flip_multiply(self.magnetic_field_magnitude)
             self.vx1 = self._flip_multiply(self.vx1)
-            self.vx2 = self._flip_multiply(self.vx2)
+            self.vx2 = self._flip_multiply(self.vx2, sign_change=True)
             self.vx3 = self._flip_multiply(self.vx3)
             self.velocity_magnitude = self._flip_multiply(self.velocity_magnitude)
             self.prs = self._flip_multiply(self.prs)
@@ -506,13 +509,13 @@ class py3Pluto:
             self.tr1 = self._flip_multiply(self.tr1)
             self.glm = self._flip_multiply(self.glm)
             self.avx1 = self._flip_multiply(self.avx1)
-            self.avx2 = self._flip_multiply(self.avx2)
+            self.avx2 = self._flip_multiply(self.avx2, sign_change=True)
             self.avx3 = self._flip_multiply(self.avx3)
             self.alfvén_velocity_magnitude = self._flip_multiply(self.alfvén_velocity_magnitude)
             self.slow_ms_x1 = self._flip_multiply(self.slow_ms_x1)
             self.fast_ms_x1 = self._flip_multiply(self.fast_ms_x1)
-            self.slow_ms_x2 = self._flip_multiply(self.slow_ms_x2)
-            self.fast_ms_x2 = self._flip_multiply(self.fast_ms_x2)
+            self.slow_ms_x2 = self._flip_multiply(self.slow_ms_x2, sign_change=True)
+            self.fast_ms_x2 = self._flip_multiply(self.fast_ms_x2, sign_change=True)
             self.slow_ms_x3 = self._flip_multiply(self.slow_ms_x3)
             self.fast_ms_x3 = self._flip_multiply(self.fast_ms_x3)
             self.fast_ms_velocity_magnitude = self._flip_multiply(self.fast_ms_velocity_magnitude)

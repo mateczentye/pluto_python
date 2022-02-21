@@ -90,6 +90,7 @@ class mhd_jet(py3Pluto):
                 Magnetic Pressure:      'b_prs'  
             """
             print(text)
+            raise StopIteration('Please give a variable to plot!')
         ### Magnetic Fields ###
         elif data2plot == 'bx1':
             variable_name = 'Magnetic Field in x1 direction'
@@ -484,45 +485,45 @@ class mhd_jet(py3Pluto):
                         slow_shock_ra.append(self.radial_grid[j])
         
         ### Check array for unit tests
-        #self.shocks = [
-        #    [slow_shock_ax, slow_shock_ra],
-        #    [self.fast_shock_ax, self.fast_shock_ra],
-        #    [self.inter_shock_ax1,self.inter_shock_ra1],
-        #    [self.inter_shock_ax2, self.inter_shock_ra2],
-        #    [self.inter_shock_ax3, self.inter_shock_ra3],
-        #    [self.inter_shock_ax4, self.inter_shock_ra4]
-        #]
+        self.shocks_list = [
+            [slow_shock_ax, slow_shock_ra],
+            [self.fast_shock_ax, self.fast_shock_ra],
+            [self.inter_shock_ax1,self.inter_shock_ra1],
+            [self.inter_shock_ax2, self.inter_shock_ra2],
+            [self.inter_shock_ax3, self.inter_shock_ra3],
+            [self.inter_shock_ax4, self.inter_shock_ra4]
+        ]
 
         ### Plots ###
         figureS, axesS = plt.subplots(figsize=(self.image_size[0]*1.25, self.image_size[1]*1.25), dpi=self.dpi*2)
         
         if 'slow' in self.plot_shock:
-            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
+            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((slow_shock_ax))})', alpha=0.5)
         if 'inter' in self.plot_shock:
-            axesS.plot(self.inter_shock_ax1, self.inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(self.inter_shock_ax1))})', alpha=0.5)
-            axesS.plot(self.inter_shock_ax2, self.inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(self.inter_shock_ax2))})', alpha=0.5)
-            axesS.plot(self.inter_shock_ax3, self.inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(self.inter_shock_ax3))})', alpha=0.5)
-            axesS.plot(self.inter_shock_ax4, self.inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(self.inter_shock_ax4))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax1, self.inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len((self.inter_shock_ax1))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax2, self.inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len((self.inter_shock_ax2))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax3, self.inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len((self.inter_shock_ax3))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax4, self.inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len((self.inter_shock_ax4))})', alpha=0.5)
         if 'fast' in self.plot_shock:
-            axesS.plot(self.fast_shock_ax, self.fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(self.fast_shock_ax))})', alpha=0.5)
+            axesS.plot(self.fast_shock_ax, self.fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len((self.fast_shock_ax))})', alpha=0.5)
 
         if '12' in self.plot_shock:
-            axesS.plot(self.fast_shock_ax, self.fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len(set(self.fast_shock_ax))})', alpha=0.5)
+            axesS.plot(self.fast_shock_ax, self.fast_shock_ra, '^', lw=0.25, color='red', markersize=3.5, label=f'Fast 1-2 Shocks ({len((self.fast_shock_ax))})', alpha=0.5)
         
         if '13' in self.plot_shock:
-            axesS.plot(self.inter_shock_ax1, self.inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len(set(self.inter_shock_ax1))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax1, self.inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len((self.inter_shock_ax1))})', alpha=0.5)
         
         if '14' in self.plot_shock:
-            axesS.plot(self.inter_shock_ax4, self.inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len(set(self.inter_shock_ax4))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax4, self.inter_shock_ra4, 'D', lw=0.25, color='cyan', markersize=3.5, label=f'Hydro 1-4 Shocks ({len((self.inter_shock_ax4))})', alpha=0.5)
 
         if '23' in self.plot_shock:
-            axesS.plot(self.inter_shock_ax2, self.inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len(set(self.inter_shock_ax2))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax2, self.inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len((self.inter_shock_ax2))})', alpha=0.5)
 
         if '24' in self.plot_shock:
-            axesS.plot(self.inter_shock_ax3, self.inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len(set(self.inter_shock_ax3))})', alpha=0.5)
+            axesS.plot(self.inter_shock_ax3, self.inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len((self.inter_shock_ax3))})', alpha=0.5)
 
         if '34' in self.plot_shock:
-            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len(set(slow_shock_ax))})', alpha=0.5)
+            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((slow_shock_ax))})', alpha=0.5)
         
 
         axesS.legend()
@@ -622,6 +623,9 @@ class mhd_jet(py3Pluto):
             plt.savefig(f'{self.data_path}space_time/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
 
+        if check_mirr == True:
+            self.mirrored = True
+
     def plot_power(self, save=False, close=False):
         """
         Plots the power curves for the jet
@@ -666,6 +670,8 @@ class mhd_jet(py3Pluto):
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}power/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
+        
+
 
     def plot_energy(self, save=False, close=False):
         """
@@ -752,4 +758,99 @@ class mhd_jet(py3Pluto):
                 chck_subdir = check_dir
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}energy_density/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
+    def plot_fieldlines(self, save=False, close=False, levels=128, min_bxs=None, max_bxs=None, min_bx2=None, max_bx2=None):
+        """
+        Plots a vector plot of the magnetic field lines in the axial-radial plane,
+        while plots the true magnitude of the magnetic field accounted in all 3 directions.
+        """
+        b_mag = self.magnetic_field_magnitude
+        cmp='jet'
+        scmap = 'seismic'
+        density=4
+
+        subgrid_x_low = float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][0])
+        subgrid_y_low = float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][0])
+        subgrid_x = float(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][1][0])
+        subgrid_y = float(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][1][0])
+        subgrid_x_res = int(self.ini_content['[Grid]']['X3-grid']['Subgrids Data'][0][1])
+        subgrid_y_res = int(self.ini_content['[Grid]']['X1-grid']['Subgrids Data'][0][1])
+
+        subgrid_y_start = 0
+        subgrid_y_end = subgrid_y_res
+
+        x1_comp = np.asarray(self.bx1)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+        x2_comp = np.asarray(self.bx2)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+        x3_comp = np.asarray(self.bx3)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+        magnitude = np.asarray(b_mag)[subgrid_y_start:subgrid_y_end,:subgrid_x_res]
+
+        X, Y = np.meshgrid(self.axial_grid[:subgrid_x_res],
+                            self.radial_grid[subgrid_y_start:subgrid_y_end])
+
+        X2, Y2 = np.meshgrid(np.linspace(subgrid_x_low, subgrid_x, subgrid_x_res), 
+                                 np.linspace(subgrid_y_low, subgrid_y, subgrid_y_res))
+
+        ### Colourbar scaling
+
+        if min_bxs == None:
+            min_bxs = 0
+        if max_bxs == None:
+            max_bxs = np.max(magnitude)
+        if min_bx2 == None:
+            min_bx2 = np.min(x2_comp)
+        if max_bxs == None:
+            max_bx2 = np.max(x2_comp)
+
+        figure, axes = plt.subplots(1,1,figsize=(self.image_size[0], self.image_size[0]),dpi=self.dpi)
+        plt.tight_layout()
+        norm = matplotlib.colors.Normalize(vmin=min_bxs, vmax=max_bxs)
+        linenorm = matplotlib.colors.Normalize(vmin=min_bx2, vmax=max_bx2)
+        
+        axes.contourf(
+                    X,
+                    Y,
+                    magnitude,
+                    cmap=cmp,
+                    alpha=0.95,
+                    levels=levels)
+        
+        axes.streamplot(X2, 
+                        Y2,
+                        x3_comp,
+                        x1_comp,
+                        density=density,
+                        color=x2_comp,
+                        cmap=scmap,
+                        integration_direction='both',
+                        maxlength=20,
+                        arrowsize=1.25,
+                        arrowstyle='->',
+                        linewidth=0.75,
+                        norm=linenorm,
+                        )
+        
+        plt.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmp), ax=axes, format='%.2f', label='Magnetic Field Strength',  location='bottom', pad=0.01), 
+        plt.colorbar(matplotlib.cm.ScalarMappable(norm=linenorm, cmap=scmap), ax=axes, format='%.2f', label='Magnetic Field in direction x2',  location='bottom', pad=0.05)
+        
+        ### set up limits
+        #if subgrid_x_low > self.xlim[0]
+
+        plt.xlim(self.xlim[0], self.xlim[1])
+        #plt.title(f'Magnetic field with field line direction at {self.time_step} {self.simulation_title}')
+        
+        if self.mirrored == False:
+            plt.ylim(self.ylim[0], self.ylim[1])
+        else:
+            plt.ylim(-self.ylim[1], self.ylim[1])
+
+        if close==True:
+            plt.close()
+
+        if save==True:
+            check_dir = f'{self.data_path}field_line'
+            if os.path.exists(check_dir) is False:
+                os.mkdir(check_dir)
+            bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
+            plt.savefig(f'{self.data_path}field_line/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
