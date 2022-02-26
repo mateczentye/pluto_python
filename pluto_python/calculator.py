@@ -1,17 +1,16 @@
 #%%
 import numpy as np
 
-def magnetic_field(sigma_z, sigma_phi):
+def magnetic_field(sigma_z, sigma_phi, kappa=2):
     a = 0.8
     Pa = 0.6
 
     b2_z = 2 * sigma_z * Pa
-    b2_m = (2 * sigma_phi * Pa) / (a**2 * (0.5 - 2*np.log(a)))
-    print(f'B = {np.sqrt(b2_z + b2_m)}')
+    b2_m = (2 * sigma_phi * Pa)*kappa / (a**2 * (0.5 - 2*np.log(a)))
+    
     return np.sqrt(b2_z + b2_m)
 
 def magnetosonic_speed(eta, kappa, b):
-
     return np.sqrt((kappa + b**2)/eta)
 
 def alfven_velocity(B, density):
@@ -41,3 +40,6 @@ def magnetic_pressure(mag_field):
 
 def sound_speed(gamma, prs, rho):
     return np.sqrt((gamma * prs) / rho)
+
+def effective_kappa(therma_prs, magnetic_prs, ambient_prs):
+    return (therma_prs + magnetic_prs)/ambient_prs

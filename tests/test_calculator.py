@@ -46,3 +46,7 @@ def test_magnetic_pressure():
 @pytest.mark.phys
 def test_soundspeed():
     assert c.sound_speed(5/3, 0.6, 1) == 1
+
+@pytest.mark.phys
+def test_effective_over_pressure():
+    assert c.effective_kappa(2,2.5,1) == 4.5
