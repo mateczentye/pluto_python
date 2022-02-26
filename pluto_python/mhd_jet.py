@@ -88,6 +88,9 @@ class mhd_jet(py3Pluto):
                 Plasma Beta:    'beta'
 
                 Magnetic Pressure:      'b_prs'  
+
+                Sysytem Kinetic Energy:     'SKE'
+                Jet Kinetic Energy:         'JKE'
             """
             print(text)
             raise StopIteration('Please give a variable to plot!')
@@ -196,25 +199,25 @@ class mhd_jet(py3Pluto):
         elif data2plot == 'msfx1':
             variable_name = 'Fast Magneto-acoustic Wave velocity in x1 direction'
             if log == True:
-                data = np.log(self.fast_m)
+                data = np.log(self.fast_ms_x1)
             else:
                 data = self.fast_ms_x1
         elif data2plot == 'msfx2':
             variable_name = 'Fast Magneto-acoustic Wave velocity in x2 direction'
             if log == True:
-                data = np.log(self.fast_m)
+                data = np.log(self.fast_ms_x2)
             else:
                 data = self.fast_ms_x2
         elif data2plot == 'msfx3':
             variable_name = 'Fast Magneto-acoustic Wave velocity in x3 direction'
             if log == True:
-                data = np.log(self.fast_m)
+                data = np.log(self.fast_ms_x3)
             else:
                 data = self.fast_ms_x3
         elif data2plot == 'msfs':
             variable_name = 'Fast Magneto-acoustic speed'
             if log == True:
-                data = np.log(self.fast_m)
+                data = np.log(self.fast_ms_velocity_magnitude)
             else:
                 data = self.fast_ms_velocity_magnitude
         ### Slow ###
@@ -282,9 +285,20 @@ class mhd_jet(py3Pluto):
                 data = np.log(self.sound_speed)
             else:
                 data = self.sound_speed
-        
-
-
+        ### Energies ###
+        elif data2plot == 'SKE':
+            variable_name = 'System Kinetic Energy'
+            if log == True:
+                data = np.log(self.kinetic_energy_sys)
+            else:
+                data = self.kinetic_energy_sys
+        elif data2plot == 'JKE':
+            variable_name = 'Jet Kinetic Energy'
+            if log == True:
+                data = np.log(self.kinetic_energy_jet)
+            else:
+                data = self.kinetic_energy_jet
+                
         self.data = data
         self.variable_name = variable_name
 
@@ -467,26 +481,26 @@ class mhd_jet(py3Pluto):
                         self.inter_shock_ra4.append(self.radial_grid[j])
 
         #### Slow shocks #####
-        slow_shock_ax = []
-        slow_shock_ra = []
+        self.slow_shock_ax = []
+        self.slow_shock_ra = []
         for j, row in enumerate(zero_array):
             for i, val in enumerate(row):
                 if (i+1 == len(row)) or (j+1 == len(zero_array)):
                     pass
                 else:
                     if (self.mach_slow[j,i] > 1) and (self.mach_alfvén[j,i+1] < 1) and (self.mach_slow[j,i+1] < 1):
-                        slow_shock_ax.append(self.axial_grid[i])
-                        slow_shock_ra.append(self.radial_grid[j])
+                        self.slow_shock_ax.append(self.axial_grid[i])
+                        self.slow_shock_ra.append(self.radial_grid[j])
                     if (self.mach_slow[j,i] > 1) and (self.mach_alfvén[j+1,i] < 1) and (self.mach_slow[j+1,i] < 1):
-                        slow_shock_ax.append(self.axial_grid[i])
-                        slow_shock_ra.append(self.radial_grid[j])
+                        self.slow_shock_ax.append(self.axial_grid[i])
+                        self.slow_shock_ra.append(self.radial_grid[j])
                     if (self.mach_slow[j,i] > 1) and (self.mach_alfvén[j+1,i+1] < 1) and (self.mach_slow[j+1,i+1] < 1):
-                        slow_shock_ax.append(self.axial_grid[i])
-                        slow_shock_ra.append(self.radial_grid[j])
+                        self.slow_shock_ax.append(self.axial_grid[i])
+                        self.slow_shock_ra.append(self.radial_grid[j])
         
         ### Check array for unit tests
         self.shocks_list = [
-            [slow_shock_ax, slow_shock_ra],
+            [self.slow_shock_ax, self.slow_shock_ra],
             [self.fast_shock_ax, self.fast_shock_ra],
             [self.inter_shock_ax1,self.inter_shock_ra1],
             [self.inter_shock_ax2, self.inter_shock_ra2],
@@ -498,7 +512,7 @@ class mhd_jet(py3Pluto):
         figureS, axesS = plt.subplots(figsize=(self.image_size[0]*1.25, self.image_size[1]*1.25), dpi=self.dpi*2)
         
         if 'slow' in self.plot_shock:
-            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((slow_shock_ax))})', alpha=0.5)
+            axesS.plot(self.slow_shock_ax, self.slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((self.slow_shock_ax))})', alpha=0.5)
         if 'inter' in self.plot_shock:
             axesS.plot(self.inter_shock_ax1, self.inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len((self.inter_shock_ax1))})', alpha=0.5)
             axesS.plot(self.inter_shock_ax2, self.inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len((self.inter_shock_ax2))})', alpha=0.5)
@@ -523,7 +537,7 @@ class mhd_jet(py3Pluto):
             axesS.plot(self.inter_shock_ax3, self.inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len((self.inter_shock_ax3))})', alpha=0.5)
 
         if '34' in self.plot_shock:
-            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((slow_shock_ax))})', alpha=0.5)
+            axesS.plot(self.slow_shock_ax, self.slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((self.slow_shock_ax))})', alpha=0.5)
         
 
         axesS.legend()
@@ -668,7 +682,7 @@ class mhd_jet(py3Pluto):
                 os.mkdir(check_dir, 755)
                 chck_subdir = check_dir
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}power/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}power/{self.time_step}_pwr.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
         
 
