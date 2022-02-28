@@ -90,7 +90,25 @@ class mhd_jet(py3Pluto):
                 Magnetic Pressure:      'b_prs'  
 
                 Sysytem Kinetic Energy:     'SKE'
+                System Enthalpy:            'SEN'
+                System Magnetic Energy:     'SME'
+                System Total Energy:        'STE'
+                
                 Jet Kinetic Energy:         'JKE'
+                Jet Enthalpy:               'JEN'
+                Jet Magnetic Energy:        'JME'
+                Jet Total Energy:           'JTE'
+
+                Sysytem Kinetic power:      'SKP'
+                System Thermal power:       'SEP'
+                System Magnetic power:      'SMP'
+                System Total power:         'STP'
+                
+                Jet Kinetic power:          'JKP'
+                Jet Thermal power:          'JEP'
+                Jet Magnetic power:         'JMP'
+                Jet Total power:            'JTP'
+                
             """
             print(text)
             raise StopIteration('Please give a variable to plot!')
@@ -292,12 +310,98 @@ class mhd_jet(py3Pluto):
                 data = np.log(self.kinetic_energy_sys)
             else:
                 data = self.kinetic_energy_sys
+        elif data2plot == 'SEN':
+            variable_name = 'System Enthalpy'
+            if log == True:
+                data = np.log(self.thermal_energy_sys)
+            else:
+                data = self.thermal_energy_sys
+        elif data2plot == 'SME':
+            variable_name = 'System Magnetic Energy'
+            if log == True:
+                data = np.log(self.magnetic_energy_sys)
+            else:
+                data = self.magnetic_energy_sys
+        elif data2plot == 'STE':
+            variable_name = 'System Total Energy'
+            if log == True:
+                data = np.log(self.total_energy_sys)
+            else:
+                data = self.total_energy_sys
         elif data2plot == 'JKE':
             variable_name = 'Jet Kinetic Energy'
             if log == True:
                 data = np.log(self.kinetic_energy_jet)
             else:
                 data = self.kinetic_energy_jet
+        elif data2plot == 'JEN':
+            variable_name = 'Jet Enthalpy'
+            if log == True:
+                data = np.log(self.thermal_energy_sys)
+            else:
+                data = self.thermal_energy_sys
+        elif data2plot == 'JME':
+            variable_name = 'Jet Magnetic Energy'
+            if log == True:
+                data = np.log(self.magnetic_energy_sys)
+            else:
+                data = self.magnetic_energy_sys
+        elif data2plot == 'JTE':
+            variable_name = 'Jet Total Energy'
+            if log == True:
+                data = np.log(self.total_energy_sys)
+            else:
+                data = self.total_energy_sys
+        ### Powers ###
+        elif data2plot == 'SKP':
+            variable_name = 'System Kinetic power'
+            if log == True:
+                data = np.log(self.kinetic_power_sys)
+            else:
+                data = self.kinetic_power_sys
+        elif data2plot == 'SEP':
+            variable_name = 'System Thermal power'
+            if log == True:
+                data = np.log(self.thermal_power_sys)
+            else:
+                data = self.thermal_power_sys
+        elif data2plot == 'SMP':
+            variable_name = 'System Magnetic power'
+            if log == True:
+                data = np.log(self.magnetic_power_sys)
+            else:
+                data = self.magnetic_power_sys
+        elif data2plot == 'STP':
+            variable_name = 'System Total power'
+            if log == True:
+                data = np.log(self.total_power_sys)
+            else:
+                data = self.total_power_sys
+        elif data2plot == 'JKP':
+            variable_name = 'Jet Kinetic power'
+            if log == True:
+                data = np.log(self.kinetic_power_jet)
+            else:
+                data = self.kinetic_power_jet
+        elif data2plot == 'JEP':
+            variable_name = 'Jet Thermal power'
+            if log == True:
+                data = np.log(self.thermal_power_sys)
+            else:
+                data = self.thermal_power_sys
+        elif data2plot == 'JMP':
+            variable_name = 'Jet Magnetic power'
+            if log == True:
+                data = np.log(self.magnetic_power_sys)
+            else:
+                data = self.magnetic_power_sys
+        elif data2plot == 'JTP':
+            variable_name = 'Jet Total power'
+            if log == True:
+                data = np.log(self.total_power_sys)
+            else:
+                data = self.total_power_sys
+        
                 
         self.data = data
         self.variable_name = variable_name
@@ -331,14 +435,13 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            #title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}plot'
+            chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+            if os.path.exists(chck_subdir) is False:
+                os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}plot/{data2plot}/{self.time_step}_{data2plot}_{title}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
@@ -376,11 +479,11 @@ class mhd_jet(py3Pluto):
             title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}hist'
+            chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+            if os.path.exists(chck_subdir) is False:
+                os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}hist/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
@@ -554,11 +657,11 @@ class mhd_jet(py3Pluto):
             title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}shocks'
+            chck_subdir = check_dir + f'/{self.plot_shock}'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{self.plot_shock}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+            if os.path.exists(chck_subdir) is False:
+                os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}shocks/{self.plot_shock}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
@@ -597,7 +700,7 @@ class mhd_jet(py3Pluto):
             shrink=0.95, 
             aspect=20,
             pad=0.02, 
-            label=f'{self.variable_name} magnitude', 
+            label=f'{self.variable_name}', 
             format='%.2f'
             )
         
@@ -628,11 +731,11 @@ class mhd_jet(py3Pluto):
             title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}space_time'
+            chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+            if os.path.exists(chck_subdir) is False:
+                os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}space_time/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
@@ -685,8 +788,6 @@ class mhd_jet(py3Pluto):
             plt.savefig(f'{self.data_path}power/{self.time_step}_pwr.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
         
-
-
     def plot_energy(self, save=False, close=False):
         """
         Plots the energy curves for the jet

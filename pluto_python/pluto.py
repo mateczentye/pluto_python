@@ -4,12 +4,12 @@ This module contains the super class for the package:
     - all data is stored here
     - all subsidary data is calculated here
 """
-from pluto_python.calculator import alfven_velocity
-from pluto_python.calculator import magneto_acoustic_velocity
-from pluto_python.calculator import mach_number
-from pluto_python.calculator import magnetic_pressure
-from pluto_python.calculator import energy_density
-from pluto_python.calculator import sound_speed
+from .calculator import alfven_velocity
+from .calculator import magneto_acoustic_velocity
+from .calculator import mach_number
+from .calculator import magnetic_pressure
+from .calculator import energy_density
+from .calculator import sound_speed
 
 import numpy as np
 import h5py
