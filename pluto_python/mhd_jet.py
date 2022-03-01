@@ -108,7 +108,8 @@ class mhd_jet(py3Pluto):
                 Jet Thermal power:          'JEP'
                 Jet Magnetic power:         'JMP'
                 Jet Total power:            'JTP'
-                
+
+                For directional energies:   '###-xN'
             """
             print(text)
             raise StopIteration('Please give a variable to plot!')
@@ -401,6 +402,19 @@ class mhd_jet(py3Pluto):
                 data = np.log(self.total_power_sys)
             else:
                 data = self.total_power_sys
+        ### Directional energies ###
+        elif data2plot == 'JKE-x2':
+            variable_name = 'Jet Kinetic energy in x2'
+            if log == True:
+                data = np.log(self.kinetic_energy_jet_x2)
+            else:
+                data = self.kinetic_energy_jet_x2
+        elif data2plot == 'JME-x2':
+            variable_name = 'Jet Magnetic energy in x2'
+            if log == True:
+                data = np.log(self.magnetic_energy_jet_x2)
+            else:
+                data = self.magnetic_energy_jet_x2
         
                 
         self.data = data
@@ -424,7 +438,7 @@ class mhd_jet(py3Pluto):
         cax = divider.append_axes('right',size='5%',pad=0.25)
         pl = axes.contourf(self.axial_grid, self.radial_grid, self.data, cmap=self.cmap, levels=128, alpha=0.95)
         plt.colorbar(pl,cax,ticks=np.linspace(np.min(self.data),np.max(self.data), 9))
-        #axes.set_title(self.title)
+        ##axes.set_title(self.title)
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distnace [$R_{jet}$]')
@@ -458,7 +472,7 @@ class mhd_jet(py3Pluto):
         data_plot = np.reshape(self.data, new_shape)
         plt.rc('font', size=8)
         fig, axes = plt.subplots(1,1,figsize=self.image_size, dpi=self.dpi)
-        axes.set_title(f'Histogram data for {title} at {self.time_step}')
+        #axes.set_title(f'Histogram data for {title} at {self.time_step}')
         hist = axes.hist(data_plot, bins=bins, align='mid', edgecolor='white')
         axes.set_xlabel('Value')
         axes.set_ylabel('Frequency')
@@ -469,7 +483,7 @@ class mhd_jet(py3Pluto):
             height = col.get_height()
             axes.text(col.get_x() + col.get_width() / 2, height+0.01, label, ha='center', va='bottom')
     
-        if log==True:
+        if data2log==True:
             plt.semilogy()
         
         if close==True:
@@ -644,7 +658,7 @@ class mhd_jet(py3Pluto):
         
 
         axesS.legend()
-        axesS.set_title(f'MHD Shocks from plasma-state transition at {self.time_step}')
+        #axesS.set_title(f'MHD Shocks from plasma-state transition at {self.time_step}')
         axesS.set_xlim(self.xlim[0], self.xlim[1])
         axesS.set_ylim(self.ylim[0], self.ylim[1])
         axesS.set_ylabel(r'Radial distance [$R_{jet}$]')
@@ -768,10 +782,11 @@ class mhd_jet(py3Pluto):
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Power')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Power')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Power')
-        axes.set_title(f'Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        ##axes.set_title(f'Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Power')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        #axes.legend(loc='best', borderaxespad=1, fontsize='small', markerscale=2, bbox_to_anchor=(1, 0.8))
         axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
 
         if close==True:
@@ -813,7 +828,7 @@ class mhd_jet(py3Pluto):
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Energy')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Energy')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Energy')
-        axes.set_title(f'Energy at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        #axes.set_title(f'Energy at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Energy')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -855,7 +870,7 @@ class mhd_jet(py3Pluto):
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic System Energy Density')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal System Energy Density')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic System Energy Density')
-        axes.set_title(f'Energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        #axes.set_title(f'Energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Energy density')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -967,3 +982,26 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         self.streamline_check = magnitude
+
+    def plot_azimuthal_energy(self):
+        """
+        Plots the Kinetic and Magnetic energies as a function of axial distance to compare for stability analysis
+        """
+        KE_int = [np.sum(b) for b in np.transpose(self.kinetic_energy_jet_x2)]
+        BE_int = [np.sum(v) for v in np.transpose(self.magnetic_energy_jet_x2)]
+
+        fig, ax = plt.subplots(figsize=(6,6), dpi=500)
+        ax.plot(self.axial_grid, BE_int, 'b--', ms=3, lw=1.5, label='Magnetic')
+        ax.plot(self.axial_grid, KE_int, 'g-.', ms=3, lw=1.5, label='Kinetic')
+        ax.set_ylabel(r'Energy in x2 direction')
+        ax.set_xlabel(r'Axial distance [$R_{jet}$]')
+        ax.set_xlim(self.xlim)
+        ### setup ylim within range ###
+        filtr = [i for i, x in enumerate(self.axial_grid) if x <= self.xlim[1]]
+        max_ke = KE_int[:int(max(filtr))]
+        max_me = BE_int[:int(max(filtr))]
+        max_e = np.max([max_ke, max_me])
+        ax.set_ylim(0, max_e)
+        ax.legend()
+        
+

@@ -452,6 +452,39 @@ class py3Pluto:
                                                 self.gamma
         )
         self.total_energy_density = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        ############################## Energy density x1 ##############################
+        self.thermal_energy_density_x1, \
+        self.kinetic_energy_density_x1, \
+        self.magnetic_energy_density_x1 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx1,
+                                                self.bx1,
+                                                self.gamma
+        )
+        self.total_energy_density_x1 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        ############################## Energy density x2 ##############################
+        self.thermal_energy_density_x2, \
+        self.kinetic_energy_density_x2, \
+        self.magnetic_energy_density_x2 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx2,
+                                                self.bx2,
+                                                self.gamma
+        )
+        self.total_energy_density_x2 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        ############################## Energy density x3 ##############################
+        self.thermal_energy_density_x3, \
+        self.kinetic_energy_density_x3, \
+        self.magnetic_energy_density_x3 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx3,
+                                                self.bx3,
+                                                self.gamma
+        )
+        self.total_energy_density_x3 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
         ############################## Energy ##############################
         # Axial element lengths
         axial_differences = []
@@ -474,12 +507,42 @@ class py3Pluto:
         self.kinetic_energy_sys = self.kinetic_energy_density * volumes
         self.thermal_energy_sys = self.thermal_energy_density * volumes
         self.magnetic_energy_sys = self.magnetic_energy_density * volumes
-        self.total_energy_sys = self.kinetic_energy_sys + self.thermal_energy_sys + self.magnetic_energy_sys 
+        self.total_energy_sys = self.kinetic_energy_sys + self.thermal_energy_sys + self.magnetic_energy_sys
+        # x1
+        self.kinetic_energy_sys_x1 = self.kinetic_energy_density_x1 * volumes
+        self.thermal_energy_sys_x1 = self.thermal_energy_density_x1 * volumes
+        self.magnetic_energy_sys_x1 = self.magnetic_energy_density_x1 * volumes
+        self.total_energy_sys_x1 = self.kinetic_energy_sys_x1 + self.thermal_energy_sys_x1 + self.magnetic_energy_sys_x1
+        # x2
+        self.kinetic_energy_sys_x2 = self.kinetic_energy_density_x2 * volumes
+        self.thermal_energy_sys_x2 = self.thermal_energy_density_x2 * volumes
+        self.magnetic_energy_sys_x2 = self.magnetic_energy_density_x2 * volumes
+        self.total_energy_sys_x2 = self.kinetic_energy_sys_x2 + self.thermal_energy_sys_x2 + self.magnetic_energy_sys_x2
+        # x3
+        self.kinetic_energy_sys_x3 = self.kinetic_energy_density_x3 * volumes
+        self.thermal_energy_sys_x3 = self.thermal_energy_density_x3 * volumes
+        self.magnetic_energy_sys_x3 = self.magnetic_energy_density_x3 * volumes
+        self.total_energy_sys_x3 = self.kinetic_energy_sys_x3 + self.thermal_energy_sys_x3 + self.magnetic_energy_sys_x3
         # Jet energies
         self.kinetic_energy_jet = self.kinetic_energy_sys * self.tr1
         self.thermal_energy_jet = self.thermal_energy_sys * self.tr1
         self.magnetic_energy_jet = self.magnetic_energy_sys * self.tr1
         self.total_energy_jet = self.total_energy_sys * self.tr1
+        # x1
+        self.kinetic_energy_jet_x1 = self.kinetic_energy_sys_x1 * self.tr1
+        self.thermal_energy_jet_x1 = self.thermal_energy_sys_x1 * self.tr1
+        self.magnetic_energy_jet_x1 = self.magnetic_energy_sys_x1 * self.tr1
+        self.total_energy_jet_x1 = self.total_energy_sys_x1 * self.tr1
+        # x2
+        self.kinetic_energy_jet_x2 = self.kinetic_energy_sys_x2 * self.tr1
+        self.thermal_energy_jet_x2 = self.thermal_energy_sys_x2 * self.tr1
+        self.magnetic_energy_jet_x2 = self.magnetic_energy_sys_x2 * self.tr1
+        self.total_energy_jet_x2 = self.total_energy_sys_x2 * self.tr1
+        # x3
+        self.kinetic_energy_jet_x3 = self.kinetic_energy_sys_x3 * self.tr1
+        self.thermal_energy_jet_x3 = self.thermal_energy_sys_x3 * self.tr1
+        self.magnetic_energy_jet_x3 = self.magnetic_energy_sys_x3 * self.tr1
+        self.total_energy_jet_x3 = self.total_energy_sys_x3 * self.tr1
         ############################## Power ##############################
         # System power
         self.kinetic_power_sys = np.asarray([x/axial_differences for x in self.kinetic_energy_sys]) * self.vx3
