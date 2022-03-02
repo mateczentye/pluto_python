@@ -243,44 +243,44 @@ class mhd_jet(py3Pluto):
         elif data2plot == 'mssx1':
             variable_name = 'Slow Magneto-acoustic Wave velocity in x1 direction'
             if log == True:
-                data = np.log(self.slow_m)
+                data = np.log(self.slow_ms_x1)
             else:
                 data = self.slow_ms_x1
         elif data2plot == 'mssx2':
             variable_name = 'Slow Magneto-acoustic Wave velocity in x2 direction'
             if log == True:
-                data = np.log(self.slow_m)
+                data = np.log(self.slow_ms_x2)
             else:
                 data = self.slow_ms_x2
         elif data2plot == 'mssx3':
             variable_name = 'Slow Magneto-acoustic Wave velocity in x3 direction'
             if log == True:
-                data = np.log(self.slow_m)
+                data = np.log(self.slow_ms_x3)
             else:
                 data = self.slow_ms_x3
         elif data2plot == 'msss':
             variable_name = 'Slow Magneto-acoustic speed'
             if log == True:
-                data = np.log(self.slow_m)
+                data = np.log(self.slow_ms_velocity_magnitude)
             else:
                 data = self.slow_ms_velocity_magnitude
         ### Mach numbers ###
         elif data2plot == 'fmach':
             variable_name = 'Fast wave Mach number'
             if log == True:
-                data = np.log(self.mach_f)
+                data = np.log(self.mach_fast)
             else:
                 data = self.mach_fast
         elif data2plot == 'amach':
             variable_name = 'Alfvén wave Mach number'
             if log == True:
-                data = np.log(self.mach_a)
+                data = np.log(self.mach_alfvén)
             else:
                 data = self.mach_alfvén
         elif data2plot == 'smach':
             variable_name = 'Slow wave Mach number'
             if log == True:
-                data = np.log(self.mach_s)
+                data = np.log(self.mach_slow)
             else:
                 data = self.mach_slow
         ### Plasma Beta ###
