@@ -43,3 +43,11 @@ def sound_speed(gamma, prs, rho):
 
 def effective_kappa(therma_prs, magnetic_prs, ambient_prs):
     return (therma_prs + magnetic_prs)/ambient_prs
+
+def RH_MHD(gamma, beta, mach, prs1, prs2):
+    gm2 = gamma * mach**2
+    y = prs1 / prs2
+
+    x1 = -0.5*beta * (gm2 + (gm2**2 + ((4 * (gm2 + 1 + y)) / beta))**0.5)
+    x2 = (0.5*beta) * (-gm2 + (gm2**2 + ((4 * (gm2 + 1 + y)) / beta))**0.5)
+    return [x1, x2]

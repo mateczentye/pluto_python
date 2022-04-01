@@ -1,6 +1,7 @@
 #%%
 from .pluto import py3Pluto
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
+from .calculator import RH_MHD
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -112,7 +113,7 @@ class mhd_jet(py3Pluto):
                 For directional energies:   '###-xN'
             """
             print(text)
-            raise StopIteration('Please give a variable to plot!')
+            raise ValueError('Please give a variable to plot!')
         ### Magnetic Fields ###
         elif data2plot == 'bx1':
             variable_name = 'Magnetic Field in x1 direction'
@@ -808,8 +809,8 @@ class mhd_jet(py3Pluto):
         Plots the energy curves for the jet
         """
         self.calculate_data(self.time_step)
-        total_sys = [np.sum(x) for x in np.transpose(self.total_energy_sys)]
-        total_jet = [np.sum(x) for x in np.transpose(self.total_energy_jet)]
+        total_sys = np.asarray([np.sum(x) for x in np.transpose(self.total_energy_sys)])
+        total_jet = np.asarray([np.sum(x) for x in np.transpose(self.total_energy_jet)])
         kinetic_jet = [np.sum(x) for x in np.transpose(self.kinetic_energy_jet)]
         enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_energy_jet)]
         magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_energy_jet)]
@@ -823,7 +824,7 @@ class mhd_jet(py3Pluto):
         ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
-        #plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Energy')
+        #plt0 = axes.plot(self.axial_grid, total_sys - total_jet, '-', color='black', ms=2.5, label='Total System Energy')
         plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Energy')
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Energy')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Energy')
@@ -852,6 +853,7 @@ class mhd_jet(py3Pluto):
         """
         Plots the energy density curves for the jet
         """
+        ### Jet should say sys 
         self.calculate_data(self.time_step)
         total_jet = [np.sum(x) for x in np.transpose(self.total_energy_density)]
         kinetic_jet = [np.sum(x) for x in np.transpose(self.kinetic_energy_density)]
@@ -1004,4 +1006,69 @@ class mhd_jet(py3Pluto):
         ax.set_ylim(0, max_e)
         ax.legend()
         
+    def oblique_shocks(self):
+        """
+        Use the Ranking-Hugoniot relation for ideal MHD to find oblique shocks
+        """
+        shock_array = np.zeros_like(self.mach_slow)
+        magneto_sonic_mach_mag = np.sqrt(self.mach_fast**2 + self.mach_alfvén**2 + self.mach_slow**2)
+        
+        RHx1 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHx2 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHy1 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHy2 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHxy1 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHxy2 = np.zeros_like(magneto_sonic_mach_mag) 
 
+        RHx1[:, 0:-1], RHx2[:, 0:-1] = RH_MHD(
+            self.gamma,
+            self.beta[:, 0:-1],
+            magneto_sonic_mach_mag[:, 0:-1],
+            self.prs[:, 0:-1],
+            self.prs[:, 1:],
+            )
+        
+        RHy1[0:-1, :], RHy2[0:-1, :] = RH_MHD(
+            self.gamma,
+            self.beta[0:-1, :],
+            magneto_sonic_mach_mag[0:-1, :],
+            self.prs[0:-1, :],
+            self.prs[1:, :],
+            )
+            
+        RHxy1[0:-1, 0:-1], RHxy2[0:-1, 0:-1] = RH_MHD(
+            self.gamma,
+            self.beta[0:-1, 0:-1],
+            magneto_sonic_mach_mag[0:-1, 0:-1],
+            self.prs[0:-1, 0:-1],
+            self.prs[1:, 1:],
+            )
+
+        shocks_check = np.zeros_like(shock_array)
+        prs_check = 1
+
+
+        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+        #print(np.min([RHx1, RHx2, RHy1, RHy2, RHxy1, RHxy2]), np.max([RHx1, RHx2, RHy1, RHy2, RHxy1, RHxy2]))
+        divider = mal(axes)
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        ##pl = axes.contourf(self.axial_grid, self.radial_grid, self.oblique_shock_array, cmap=self.cmap, levels=128, alpha=0.95)
+        ##pl = axes.contourf(self.axial_grid, self.radial_grid, RHx1, cmap=self.cmap, levels=16, alpha=0.95)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, RHx2, cmap=self.cmap, levels=16, alpha=0.5)
+        ##pl = axes.contourf(self.axial_grid, self.radial_grid, RHy1, cmap=self.cmap, levels=16, alpha=0.95)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, RHy2, cmap=self.cmap, levels=16, alpha=0.5)
+        ##pl = axes.contourf(self.axial_grid, self.radial_grid, RHxy1, cmap=self.cmap, levels=16, alpha=0.95)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, RHxy2, cmap=self.cmap, levels=16, alpha=0.5)
+        plt.colorbar(
+            pl,
+            cax,
+            ticks=np.linspace(
+                0,
+                np.max([RHx1, RHx2, RHy1, RHy2, RHxy1, RHxy2]),
+                10
+                )
+            )
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')

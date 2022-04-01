@@ -74,6 +74,9 @@ class py3Pluto:
             raise TypeError('Gamma must be a number!')
 
 
+        ### Data dict to store all calculated variables for future feature ###
+        self.all_data_container = {}
+
         ### Classifier variables
         self.variables = None
         self.b_radial = None
@@ -306,7 +309,7 @@ class py3Pluto:
         ### loops through everything to find limits for the data
         for step in range(-1, self.time_step):
             # read files in here
-            print(f'Reading file number {step}')
+            print(f'Reading file number {step}', end='\r')
             data = self.classifier(delta_time=step)
             keys = list(data.keys())
             # set step to a valid value when its -1 for the classifier
@@ -330,7 +333,7 @@ class py3Pluto:
                         limits[variable].update({'min' : var_min})
                     if var_max > current_max:
                         limits[variable].update({'max' : var_max})
-        
+        print('End!')
         self.limits = limits
         return limits
 
