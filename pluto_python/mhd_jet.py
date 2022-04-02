@@ -1006,7 +1006,7 @@ class mhd_jet(py3Pluto):
         ax.set_ylim(0, max_e)
         ax.legend()
         
-    def oblique_shocks(self):
+    def oblique_shocks(self, min=0, max=10000):
         """
         Use the Ranking-Hugoniot relation for ideal MHD to find oblique shocks
         """
@@ -1043,32 +1043,40 @@ class mhd_jet(py3Pluto):
             self.prs[0:-1, 0:-1],
             self.prs[1:, 1:],
             )
+        
+        ### Mask shocks ###
+        #RHx2[RHx2 < min] = 0.0
+        #RHx2[RHx2 > max] = 0.0
+        #RHy2[RHy2 < min] = 0.0
+        #RHy2[RHy2 > max] = 0.0
+        #RHxy2[RHxy2 < min] = 0.0
+        #RHxy2[RHxy2 > max] = 0.0
+        
+        ma1 = np.ma.masked_greater(np.ma.masked_less(RHx2, min), max)
+        ma2 = np.ma.masked_greater(np.ma.masked_less(RHy2, min), max)
+        ma3 = np.ma.masked_greater(np.ma.masked_less(RHxy2, min), max)
 
-        shocks_check = np.zeros_like(shock_array)
-        prs_check = 1
-
+        ma4 = np.ma.masked_greater(np.ma.masked_less(RHx1, min), max)
+        ma5 = np.ma.masked_greater(np.ma.masked_less(RHy1, min), max)
+        ma6 = np.ma.masked_greater(np.ma.masked_less(RHxy1, min), max)
 
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
-        #print(np.min([RHx1, RHx2, RHy1, RHy2, RHxy1, RHxy2]), np.max([RHx1, RHx2, RHy1, RHy2, RHxy1, RHxy2]))
         divider = mal(axes)
         cax = divider.append_axes('right',size='5%',pad=0.25)
-        ##pl = axes.contourf(self.axial_grid, self.radial_grid, self.oblique_shock_array, cmap=self.cmap, levels=128, alpha=0.95)
-        ##pl = axes.contourf(self.axial_grid, self.radial_grid, RHx1, cmap=self.cmap, levels=16, alpha=0.95)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, RHx2, cmap=self.cmap, levels=16, alpha=0.5)
-        ##pl = axes.contourf(self.axial_grid, self.radial_grid, RHy1, cmap=self.cmap, levels=16, alpha=0.95)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, RHy2, cmap=self.cmap, levels=16, alpha=0.5)
-        ##pl = axes.contourf(self.axial_grid, self.radial_grid, RHxy1, cmap=self.cmap, levels=16, alpha=0.95)
-        pl = axes.contourf(self.axial_grid, self.radial_grid, RHxy2, cmap=self.cmap, levels=16, alpha=0.5)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma4, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma1, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma5, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma2, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma6, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma3, cmap=self.cmap, levels=16, alpha=0.35)
         plt.colorbar(
             pl,
             cax,
-            ticks=np.linspace(
-                0,
-                np.max([RHx1, RHx2, RHy1, RHy2, RHxy1, RHxy2]),
-                10
-                )
             )
+        axes.set_facecolor('0.85')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+        

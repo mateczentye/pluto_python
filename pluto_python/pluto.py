@@ -592,5 +592,3 @@ class py3Pluto:
             self.beta = self._flip_multiply(self.beta)
             self.magnetic_prs = self._flip_multiply(self.magnetic_prs)
             self.sound_speed = self._flip_multiply(self.sound_speed)
-            
-            
