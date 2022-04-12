@@ -1,4 +1,11 @@
 #%%
+"""
+The module contains the subclass of the package that deals with all the magnetohydrodynamic visualisation.
+It selects the variable to use for each visualisation method when they are called.
+
+Current version has data selection happening in this class to have physics specific data access from superclass.
+"""
+from typing import Tuple
 from .pluto import py3Pluto
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
 from .calculator import RH_MHD
@@ -11,21 +18,41 @@ import os
 
 class mhd_jet(py3Pluto):
     """
-    This class is a sub-class of py3Pluto, which stores all information from the simulations
-    and claculations, which can be plotted using the plot or hist methods within this class.
+    This is a sub-class of py3Pluto, designed to visualise all MHD specific data sets calculated in the superclass.
+    
+        data_path: str - path to .h5 files output by PLUTO
+        time_step: int - the number which is in the name of the file representing time-step
+            Defaults to 0
+        dpi: int - sets the matplotlib.pyplot artist's DPI parameter
+            Defaults to 300,
+        image_size: Tuple[int, int] - sets the matplotlib.pyplot artist's figsize argument
+            Defaults to (10,5),
+        ylim: float - sets the x-axis limit using matplotlib.pyplot xlim method
+            Default to None,
+        xlim: float - sets the y-axis limit using matplotlib.pyplot ylim method
+            Default to None,
+        cmap: str - colourmap used by matplotlib, takes a string and will give error if incorrect. 
+            Default to 'bwr',
+        global_limits: bool - if set True, all data file in directory will be looped through, and all
+        the maximum and minimum values of all calculated variables are selected.
+            Default to False,
+        mirrored:bool = False,
+        gamma: float = 5/3,
+        title: str = ''
+
     """
     def __init__(self,
-        data_path,
-        time_step = 0,
-        dpi = 300,
-        image_size = (10,5),
-        ylim = None,
-        xlim = None,
-        cmap = 'bwr',
-        global_limits = False,
-        mirrored = False,
-        gamma = 5/3,
-        title=''
+        data_path: str,
+        time_step: int = 0,
+        dpi: int = 300,
+        image_size: Tuple[int, int] = (10,5),
+        ylim: float = None,
+        xlim: float = None,
+        cmap: str = 'bwr',
+        global_limits: bool = False,
+        mirrored:bool = False,
+        gamma: float = 5/3,
+        title: str = ''
     ):
 
         super().__init__(

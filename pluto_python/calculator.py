@@ -1,4 +1,11 @@
 #%%
+"""
+Contains physics relevant functions that are called in one or more of the classes within the package.
+
+    - Module specific functions get defined here like magnetic pressure, or plasma beta
+    - Current version contains all used physics equations, may break it into classes to categorise them later.
+    
+"""
 import numpy as np
 
 def magnetic_field(sigma_z, sigma_phi, kappa=2):
