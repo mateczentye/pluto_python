@@ -79,11 +79,11 @@ class py3Pluto:
 
         ### Classifier variables
         self.variables = None
-        self.b_radial = None
-        self.b_azimuthal = None
-        self.b_axial = None
+        self.Bx1 = None
+        self.Bx2 = None
+        self.Bx3 = None
         self.pressure = None
-        self.psi = None
+        self.psi_glm = None
         self.density = None
         self.tracer1 = None
         self.radial_velocity = None
@@ -141,8 +141,9 @@ class py3Pluto:
 
 
 
-        self._reader()
         self.shape_limits = self._read_ini()
+        self._reader()
+        self._read_data_out()
 
         if xlim == None:
             self.xlim = (
@@ -243,6 +244,18 @@ class py3Pluto:
         extension = '.h5'
         self.data_list = [file for file in files if extension in file and 'out' not in file]
         return self.data_list
+
+    def _read_data_out(self):
+        """
+        Reads in the h5.out file to determin number of variables
+        """
+        path = self.data_path + 'dbl.h5.out'
+        file = open(path)
+        line = file.readline().split(' ')
+        start = line.index('little')
+        line = line[start+1:-1]
+        self._value_names = line
+        return None
         
     def classifier(self, delta_time):
         """
@@ -257,18 +270,36 @@ class py3Pluto:
         
         data = h5_read[self.timestep]['vars']
         self.variables = list(data.keys())
-        b_rad, b_azi, b_axi, pressure, psi_glm, density, tracer1, v_rad, v_azi, v_axi = self.variables
         
-        self.b_radial = b_rad
-        self.b_azimuthal = b_azi
-        self.b_axial = b_axi
-        self.pressure = pressure
-        self.psi_glm = psi_glm
-        self.density = density
-        self.tracer1 = tracer1
-        self.radial_velocity = v_rad
-        self.azimuthal_velocity = v_azi
-        self.axial_velocity = v_axi
+        title_dict = {}
+
+        for index, name in enumerate(self._value_names):
+            """
+            Something happens here
+            """
+
+        #print(self.variables)
+        #b_rad, b_azi, b_axi, pressure, psi_glm, density, tracer1, v_rad, v_azi, v_axi = self.variables
+
+
+        ### Resetting all Classifier variables with values
+        self.Bx1 = 'Bx1'
+        self.Bx2 = 'Bx2'
+        self.Bx3 = 'Bx3'
+        self.pressure = 'prs'
+        self.psi_glm = 'psi_glm'
+        self.density = 'rho'
+        self.tracer1 = 'tr1'
+        self.radial_velocity = 'vx1'
+        self.azimuthal_velocity = 'vx2'
+        self.axial_velocity = 'vx3'
+        self.rad_flux1 = 'fr1'
+        self.rad_flux2 = 'fr2'
+        self.rad_flux3 = 'fr3'
+        self.b_stag1 = 'Bx1s'
+        self.b_stag2 = 'Bx2s'
+        self.b_stag3 = 'Bx3s'
+        self.rad_en_dens = 'enr'
 
         self.grid = h5_read[self.cell_coord]
             
@@ -369,23 +400,6 @@ class py3Pluto:
         sets global variables that are accessible by sub classes to use
         """
         self.time_step = time
-        ############################## Magnetic fields ##############################
-        self.bx1 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.b_radial],
-                        self.XZ_shape).T
-        self.bx2 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.b_azimuthal],
-                        self.XZ_shape).T
-        self.bx3 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.b_axial],
-                        self.XZ_shape).T
-        self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
         ############################## Velocities ##############################
         self.vx1 = np.reshape(
                     self.classifier(
@@ -419,74 +433,156 @@ class py3Pluto:
                         delta_time=time,
                         )[self.tracer1],
                         self.XZ_shape).T
-        ############################## General Lagrangian Multiplier ##############################
-        self.glm = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.psi_glm],
-                        self.XZ_shape).T
-        ############################## Alfvén Velocities ##############################
-        self.avx1 = alfven_velocity(self.bx1, self.rho)
-        self.avx2 = alfven_velocity(self.bx2, self.rho)
-        self.avx3 = alfven_velocity(self.bx3, self.rho)
-        self.alfvén_velocity_magnitude = np.sqrt(self.avx1**2 + self.avx2**2 + self.avx3**2)
-        ############################## Magneto acoustic Waves ##############################
-        self.slow_ms_x1, self.fast_ms_x1 = magneto_acoustic_velocity(self.bx1, self.prs, self.rho, self.gamma)
-        self.slow_ms_x2, self.fast_ms_x2 = magneto_acoustic_velocity(self.bx2, self.prs, self.rho, self.gamma)
-        self.slow_ms_x3, self.fast_ms_x3 = magneto_acoustic_velocity(self.bx3, self.prs, self.rho, self.gamma)
-        self.fast_ms_velocity_magnitude = np.sqrt(self.fast_ms_x1**2 + self.fast_ms_x2**2 + self.fast_ms_x3**2)
-        self.slow_ms_velocity_magnitude = np.sqrt(self.slow_ms_x1**2 + self.slow_ms_x2**2 + self.slow_ms_x3**2)
-        ############################## Mach numbers ##############################
-        self.mach_fast = mach_number(self.velocity_magnitude, self.fast_ms_velocity_magnitude)
-        self.mach_slow = mach_number(self.velocity_magnitude, self.slow_ms_velocity_magnitude)
-        self.mach_alfvén = mach_number(self.velocity_magnitude, self.alfvén_velocity_magnitude)
-        ############################## Magnetic pressure ##############################
-        self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
-        ############################## Plasma Beta ##############################
-        self.beta = (self.prs / self.magnetic_prs)
+        ############################## Sound Speed ##############################
+        self.sound_speed = sound_speed(self.gamma, self.prs, self.rho)
+
+        try:
+            ############################## Magnetic fields ##############################
+            self.bx1 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.Bx1],
+                            self.XZ_shape).T
+            self.bx2 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.Bx2],
+                            self.XZ_shape).T
+            self.bx3 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.Bx3],
+                            self.XZ_shape).T
+            self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
+            ############################## Alfvén Velocities ##############################
+            self.avx1 = alfven_velocity(self.bx1, self.rho)
+            self.avx2 = alfven_velocity(self.bx2, self.rho)
+            self.avx3 = alfven_velocity(self.bx3, self.rho)
+            self.alfvén_velocity_magnitude = np.sqrt(self.avx1**2 + self.avx2**2 + self.avx3**2)
+            ############################## Magneto acoustic Waves ##############################
+            self.slow_ms_x1, self.fast_ms_x1 = magneto_acoustic_velocity(self.bx1, self.prs, self.rho, self.gamma)
+            self.slow_ms_x2, self.fast_ms_x2 = magneto_acoustic_velocity(self.bx2, self.prs, self.rho, self.gamma)
+            self.slow_ms_x3, self.fast_ms_x3 = magneto_acoustic_velocity(self.bx3, self.prs, self.rho, self.gamma)
+            self.fast_ms_velocity_magnitude = np.sqrt(self.fast_ms_x1**2 + self.fast_ms_x2**2 + self.fast_ms_x3**2)
+            self.slow_ms_velocity_magnitude = np.sqrt(self.slow_ms_x1**2 + self.slow_ms_x2**2 + self.slow_ms_x3**2)
+            ############################## Mach numbers ##############################
+            self.mach_fast = mach_number(self.velocity_magnitude, self.fast_ms_velocity_magnitude)
+            self.mach_slow = mach_number(self.velocity_magnitude, self.slow_ms_velocity_magnitude)
+            self.mach_alfvén = mach_number(self.velocity_magnitude, self.alfvén_velocity_magnitude)
+            ############################## Magnetic pressure ##############################
+            self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
+            ############################## Plasma Beta ##############################
+            self.beta = (self.prs / self.magnetic_prs)
+            try:
+                ############################## General Lagrangian Multiplier ##############################
+                self.glm = np.reshape(
+                            self.classifier(
+                                delta_time=time,
+                                )[self.psi_glm],
+                                self.XZ_shape).T
+            except:
+                print('Divergence Cleaning is not enabled!')
+        except:
+            print('No Magnetic fields present in data!')
         ############################## Energy density ##############################
-        self.thermal_energy_density, \
-        self.kinetic_energy_density, \
-        self.magnetic_energy_density = energy_density(
+        self.thermal_energy_density = energy_density(
                                                 self.prs,
                                                 self.rho,
                                                 self.velocity_magnitude,
-                                                self.magnetic_field_magnitude,
                                                 self.gamma
-        )
+        )[0]
+        self.kinetic_energy_density = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.velocity_magnitude,
+                                                self.gamma
+        )[1]
+        try:
+            self.magnetic_energy_density = energy_density(
+                                                    self.prs,
+                                                    self.rho,
+                                                    self.velocity_magnitude,
+                                                    self.magnetic_field_magnitude,
+                                                    self.gamma
+            )[2]
+        except:
+            self.magnetic_energy_density = np.zeros_like(self.thermal_energy_density)
+
         self.total_energy_density = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
         ############################## Energy density x1 ##############################
-        self.thermal_energy_density_x1, \
-        self.kinetic_energy_density_x1, \
-        self.magnetic_energy_density_x1 = energy_density(
+        self.thermal_energy_density_x1 = energy_density(
                                                 self.prs,
                                                 self.rho,
                                                 self.vx1,
-                                                self.bx1,
                                                 self.gamma
-        )
+        )[0]
+        self.kinetic_energy_density_x1 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx1,
+                                                self.gamma
+        )[1]
+        try:
+            self.magnetic_energy_density_x1 = energy_density(
+                                                    self.prs,
+                                                    self.rho,
+                                                    self.vx1,
+                                                    self.bx1,
+                                                    self.gamma
+            )[2]
+        except:
+            self.magnetic_energy_density_x1 = np.zeros_like(self.thermal_energy_density)
+
         self.total_energy_density_x1 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
         ############################## Energy density x2 ##############################
-        self.thermal_energy_density_x2, \
-        self.kinetic_energy_density_x2, \
-        self.magnetic_energy_density_x2 = energy_density(
+        self.thermal_energy_density_x2 = energy_density(
                                                 self.prs,
                                                 self.rho,
                                                 self.vx2,
-                                                self.bx2,
                                                 self.gamma
-        )
+        )[0]
+        self.kinetic_energy_density_x2 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx2,
+                                                self.gamma
+        )[1]
+        try:
+            self.magnetic_energy_density_x2 = energy_density(
+                                                    self.prs,
+                                                    self.rho,
+                                                    self.vx2,
+                                                    self.bx2,
+                                                    self.gamma
+            )[2]
+        except:
+            self.magnetic_energy_density_x2 = np.zeros_like(self.thermal_energy_density)
+
         self.total_energy_density_x2 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
         ############################## Energy density x3 ##############################
-        self.thermal_energy_density_x3, \
-        self.kinetic_energy_density_x3, \
-        self.magnetic_energy_density_x3 = energy_density(
+        self.thermal_energy_density_x3 = energy_density(
                                                 self.prs,
                                                 self.rho,
                                                 self.vx3,
-                                                self.bx3,
                                                 self.gamma
-        )
+        )[0]
+        self.kinetic_energy_density_x3 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx3,
+                                                self.gamma
+        )[1]
+        try:
+            self.magnetic_energy_density_x3 = energy_density(
+                                                    self.prs,
+                                                    self.rho,
+                                                    self.vx3,
+                                                    self.bx3,
+                                                    self.gamma
+            )[2]
+        except:
+            self.magnetic_energy_density_x3 = np.zeros_like(self.thermal_energy_density)
+
         self.total_energy_density_x3 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
         ############################## Energy ##############################
         # Axial element lengths
@@ -557,8 +653,6 @@ class py3Pluto:
         self.thermal_power_jet = self.thermal_power_sys * self.tr1
         self.magnetic_power_jet = self.magnetic_power_sys * self.tr1
         self.total_power_jet = self.kinetic_power_jet + self.thermal_power_jet + self.magnetic_power_jet
-        ############################## Sound Speed ##############################
-        self.sound_speed = sound_speed(self.gamma, self.prs, self.rho)
 
 
         if self.mirrored == True:
