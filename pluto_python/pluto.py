@@ -27,16 +27,17 @@ class py3Pluto:
     """
     def __init__(
         self,
-        data_path,
-        time_step = 0,
-        dpi = 300,
-        image_size = (10,5),
-        ylim = None,
-        xlim = None,
-        cmap = 'bwr',
-        global_limits = False,
-        mirrored = False,
-        gamma = 5/3,
+        data_path: str,
+        time_step: int = 0,
+        dpi: int = 300,
+        image_size: tuple = (10,5),
+        ylim: tuple = None,
+        xlim: tuple = None,
+        cmap: str = 'bwr',
+        global_limits: bool = False,
+        mirrored: bool = False,
+        gamma: float = 5/3,
+        cooling: bool = False,
         
     ):
         ### Arguments
@@ -49,6 +50,7 @@ class py3Pluto:
         self.mirrored = mirrored
         self.closure = False
         self.gamma = gamma
+        self.cooling_bool = cooling
         ### Argument conditions
         if type(data_path) != str:
             raise TypeError('Given path must be a string!')
@@ -301,6 +303,45 @@ class py3Pluto:
         self.b_stag3 = 'Bx3s'
         self.rad_en_dens = 'enr'
 
+        ### Cooling Terms ###
+        if 'X_HI' in self.variables:
+            self.cooling_bool = True
+        
+        if self.cooling_bool == True:
+            self.cooling_HI = 'X_HI'
+            self.cooling_HII = 'X_HII'
+            self.cooling_H2 = 'X_H2'
+            self.cooling_HeI = 'X_HeI'
+            self.cooling_HeII = 'X_HeII'
+            self.cooling_CI = 'X_CI'
+            self.cooling_CII = 'X_CII'
+            self.cooling_CIII = 'X_CIII'
+            self.cooling_CIV = 'X_CIV'
+            self.cooling_CV = 'X_CV'
+            self.cooling_NI = 'X_NI'
+            self.cooling_NII = 'X_NII'
+            self.cooling_NIII = 'X_NIII'
+            self.cooling_NIV = 'X_NIV'
+            self.cooling_NV = 'X_NV'
+            self.cooling_OI = 'X_OI'
+            self.cooling_OII = 'X_OII'
+            self.cooling_OIII = 'X_OIII'
+            self.cooling_OIV = 'X_OIV'
+            self.cooling_OV = 'X_OV'
+            self.cooling_NeI = 'X_NeI'
+            self.cooling_NeII = 'X_NeI'
+            self.cooling_NeII = 'X_NeII'
+            self.cooling_NeIII = 'X_NeIII'
+            self.cooling_NeIV = 'X_NeIV'
+            self.cooling_NeV = 'X_NeV'
+            self.cooling_SI = 'X_SI'
+            self.cooling_SII = 'X_SII'
+            self.cooling_SIII = 'X_SIII'
+            self.cooling_SIV = 'X_SIV'
+            self.cooling_SV = 'X_SV'
+            
+            
+
         self.grid = h5_read[self.cell_coord]
             
         self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'], self.XZ_shape).T)]
@@ -399,6 +440,7 @@ class py3Pluto:
         This method is to calculate all subsidary data sets from the simulation data.
         sets global variables that are accessible by sub classes to use
         """
+        self.data_dict = {} # This contains all the calculated data
         self.time_step = time
         ############################## Velocities ##############################
         self.vx1 = np.reshape(
@@ -406,6 +448,8 @@ class py3Pluto:
                         delta_time=time,
                         )[self.radial_velocity],
                         self.XZ_shape).T
+        self.data_dict.update({'vx1' : self.vx1})
+
         self.vx2 = np.reshape(
                     self.classifier(
                         delta_time=time,
@@ -473,6 +517,10 @@ class py3Pluto:
             self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
             ############################## Plasma Beta ##############################
             self.beta = (self.prs / self.magnetic_prs)
+            #self.bx1s = np.reshape(self.classifier(delta_time=time)[self.b_stag1], self.XZ_shape).T
+            #self.bx2s = np.reshape(self.classifier(delta_time=time)[self.b_stag2], self.XZ_shape).T
+            #self.bx3s = np.reshape(self.classifier(delta_time=time)[self.b_stag3], self.XZ_shape).T
+
             try:
                 ############################## General Lagrangian Multiplier ##############################
                 self.glm = np.reshape(

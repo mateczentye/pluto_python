@@ -75,7 +75,7 @@ class mhd_jet(py3Pluto):
         """
         Method plots individual data sets that are given as an argument.
         """
-        if data2plot == None:
+        if data2plot == None: # Size can be reduced by creating a dictionary with data2plot as key and name, data are values
             text = """
             Select one of the following arguments to plot them:
                 Magnetic field at x1 axis: 'bx1'
