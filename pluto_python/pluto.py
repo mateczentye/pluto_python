@@ -265,7 +265,13 @@ class py3Pluto:
         or 'all' <- will be removed soon
         """
         self._reader()
-        data_file = self.data_list[delta_time]
+        time_string = str(delta_time)
+        
+        while len(time_string) != 4:
+            time_string = '0' + time_string    
+        delta_time_str = self.data_list.index('data.' + time_string + '.dbl.h5')
+        
+        data_file = self.data_list[delta_time_str]
         h5_read = h5py.File(self.data_path + data_file, 'r')
 
         self.timestep, self.cell_coord, self.node_coord = h5_read.keys()
