@@ -38,6 +38,7 @@ class py3Pluto:
         mirrored: bool = False,
         gamma: float = 5/3,
         cooling: bool = False,
+        x2_slice_index = 0,
         
     ):
         ### Arguments
@@ -51,6 +52,7 @@ class py3Pluto:
         self.closure = False
         self.gamma = gamma
         self.cooling_bool = cooling
+        self.x2_slice_index = x2_slice_index
         ### Argument conditions
         if type(data_path) != str:
             raise TypeError('Given path must be a string!')
@@ -349,9 +351,9 @@ class py3Pluto:
             
 
         self.grid = h5_read[self.cell_coord]
-            
-        self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'], self.XZ_shape).T)]
-        self.axial_grid = np.reshape(self.grid['Z'], self.XZ_shape).T[0]
+        
+        self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'][::, self.x2_slice_index, ::], self.XZ_shape).T)]
+        self.axial_grid = np.reshape(self.grid['Z'][::, self.x2_slice_index, ::], self.XZ_shape).T[0]
         self.initial_radial_grid = self.radial_grid
 
         return data
@@ -452,36 +454,36 @@ class py3Pluto:
         self.vx1 = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.radial_velocity],
+                        )[self.radial_velocity][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.data_dict.update({'vx1' : self.vx1})
 
         self.vx2 = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.azimuthal_velocity],
+                        )[self.azimuthal_velocity][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.vx3 = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.axial_velocity],
+                        )[self.axial_velocity][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.velocity_magnitude = np.sqrt(self.vx1**2 + self.vx2**2 + self.vx3**2)
         ############################## Pressure, Density and Tracer ##############################
         self.prs = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.pressure],
+                        )[self.pressure][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.rho = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.density],
+                        )[self.density][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.tr1 = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.tracer1],
+                        )[self.tracer1][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         ############################## Sound Speed ##############################
         self.sound_speed = sound_speed(self.gamma, self.prs, self.rho)
@@ -491,17 +493,17 @@ class py3Pluto:
             self.bx1 = np.reshape(
                         self.classifier(
                             delta_time=time,
-                            )[self.Bx1],
+                            )[self.Bx1][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
             self.bx2 = np.reshape(
                         self.classifier(
                             delta_time=time,
-                            )[self.Bx2],
+                            )[self.Bx2][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
             self.bx3 = np.reshape(
                         self.classifier(
                             delta_time=time,
-                            )[self.Bx3],
+                            )[self.Bx3][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
             self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
             ############################## Alfvén Velocities ##############################
