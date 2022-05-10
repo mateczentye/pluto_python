@@ -37,7 +37,7 @@ def test_machnumber():
 
 @pytest.mark.phys
 def test_energy_density():
-    assert c.energy_density(0.6, 1, 16.4586, 2.1845, 5/3) == [pytest.approx(1.5), pytest.approx(135.442757), pytest.approx(2.38602)]
+    assert c.energy_density(0.6, 1, 16.4586, 5/3, 2.1845) == [pytest.approx(1.5), pytest.approx(135.442757), pytest.approx(2.38602)]
 
 @pytest.mark.phys
 def test_magnetic_pressure():

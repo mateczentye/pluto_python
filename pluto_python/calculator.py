@@ -37,7 +37,7 @@ def mach_number(fluid_velocity, wave_velocity):
     return fluid_velocity/wave_velocity
 
 def energy_density(pressure, density, velocity, gamma, magnetic_field=None):
-    pot = pressure*gamma / (gamma - 1)
+    pot = (pressure * gamma) / (gamma - 1)
     kin = 0.5 * density * (velocity**2)
 
     if type(magnetic_field) is type(None):
