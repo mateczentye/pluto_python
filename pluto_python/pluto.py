@@ -56,8 +56,8 @@ class py3Pluto:
         ### Argument conditions
         if type(data_path) != str:
             raise TypeError('Given path must be a string!')
-        if data_path[-1] != '/':
-            data_path += '/'
+        if self.data_path[-1] != '/':
+            self.data_path += '/'
         if type(time_step) != int:
             raise TypeError('Time-step argument must be an integer!')
         if type(dpi) != int:
