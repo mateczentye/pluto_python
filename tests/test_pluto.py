@@ -169,7 +169,7 @@ def test_gamma():
 
 @pytest.mark.util
 def test_classifier():
-    assert type(test_object.classifier(-1)) == h5py._hl.group.Group
+    assert type(test_object.classifier(0)) == h5py._hl.group.Group
 
 @pytest.mark.util
 def test_reader():

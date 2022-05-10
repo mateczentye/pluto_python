@@ -518,7 +518,7 @@ class py3Pluto:
             self.bx1 = np.zeros(self.vx1)
             self.bx2 = np.zeros(self.vx1)
             self.bx3 = np.zeros(self.vx1)
-            
+
         self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
         ############################## Alfvén Velocities ##############################
         self.avx1 = alfven_velocity(self.bx1, self.rho)
@@ -556,16 +556,16 @@ class py3Pluto:
                                                 self.velocity_magnitude,
                                                 self.gamma
         )[1]
-        try:
-            self.magnetic_energy_density = energy_density(
-                                                    self.prs,
-                                                    self.rho,
-                                                    self.velocity_magnitude,
-                                                    self.gamma,
-                                                    magnetic_field=self.magnetic_field_magnitude,
-            )[2]
-        except:
-            self.magnetic_energy_density = np.zeros_like(self.thermal_energy_density)
+        
+        self.magnetic_energy_density = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.velocity_magnitude,
+                                                self.gamma,
+                                                magnetic_field=self.magnetic_field_magnitude,
+        )[2]
+    
+        #self.magnetic_energy_density = np.zeros_like(self.thermal_energy_density)
 
         self.total_energy_density = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
         ############################## Energy density x1 ##############################
