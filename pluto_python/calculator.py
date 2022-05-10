@@ -39,10 +39,12 @@ def mach_number(fluid_velocity, wave_velocity):
 def energy_density(pressure, density, velocity, gamma, magnetic_field=None):
     pot = pressure*gamma / (gamma - 1)
     kin = 0.5 * density * (velocity**2)
-    if magnetic_field != None:
-        mag = 0.5 * (magnetic_field**2)
+
+    if type(magnetic_field) is type(None):
+        mag = np.zeros_like(pot)
     else:
-        mag = 0
+        mag = 0.5 * (magnetic_field**2)
+
     return [pot, kin, mag]
 
 def magnetic_pressure(mag_field):
