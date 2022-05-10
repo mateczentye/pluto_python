@@ -4,12 +4,12 @@ This module contains the super class for the package:
     - all data is stored here
     - all subsidary data is calculated here
 """
-from pluto_python.calculator import alfven_velocity
-from pluto_python.calculator import magneto_acoustic_velocity
-from pluto_python.calculator import mach_number
-from pluto_python.calculator import magnetic_pressure
-from pluto_python.calculator import energy_density
-from pluto_python.calculator import sound_speed
+from .calculator import alfven_velocity
+from .calculator import magneto_acoustic_velocity
+from .calculator import mach_number
+from .calculator import magnetic_pressure
+from .calculator import energy_density
+from .calculator import sound_speed
 
 import numpy as np
 import h5py
@@ -27,16 +27,18 @@ class py3Pluto:
     """
     def __init__(
         self,
-        data_path,
-        time_step = 0,
-        dpi = 300,
-        image_size = (10,5),
-        ylim = None,
-        xlim = None,
-        cmap = 'bwr',
-        global_limits = False,
-        mirrored = False,
-        gamma = 5/3,
+        data_path: str,
+        time_step: int = 0,
+        dpi: int = 300,
+        image_size: tuple = (10,5),
+        ylim: tuple = None,
+        xlim: tuple = None,
+        cmap: str = 'bwr',
+        global_limits: bool = False,
+        mirrored: bool = False,
+        gamma: float = 5/3,
+        cooling: bool = False,
+        x2_slice_index = 0,
         
     ):
         ### Arguments
@@ -49,11 +51,13 @@ class py3Pluto:
         self.mirrored = mirrored
         self.closure = False
         self.gamma = gamma
+        self.cooling_bool = cooling
+        self.x2_slice_index = x2_slice_index
         ### Argument conditions
         if type(data_path) != str:
             raise TypeError('Given path must be a string!')
-        if data_path[-1] != '/':
-            data_path += '/'
+        if self.data_path[-1] != '/':
+            self.data_path += '/'
         if type(time_step) != int:
             raise TypeError('Time-step argument must be an integer!')
         if type(dpi) != int:
@@ -74,13 +78,16 @@ class py3Pluto:
             raise TypeError('Gamma must be a number!')
 
 
+        ### Data dict to store all calculated variables for future feature ###
+        self.all_data_container = {}
+
         ### Classifier variables
         self.variables = None
-        self.b_radial = None
-        self.b_azimuthal = None
-        self.b_axial = None
+        self.Bx1 = None
+        self.Bx2 = None
+        self.Bx3 = None
         self.pressure = None
-        self.psi = None
+        self.psi_glm = None
         self.density = None
         self.tracer1 = None
         self.radial_velocity = None
@@ -138,8 +145,9 @@ class py3Pluto:
 
 
 
-        self._reader()
         self.shape_limits = self._read_ini()
+        self._reader()
+        self._read_data_out()
 
         if xlim == None:
             self.xlim = (
@@ -240,37 +248,111 @@ class py3Pluto:
         extension = '.h5'
         self.data_list = [file for file in files if extension in file and 'out' not in file]
         return self.data_list
+
+    def _read_data_out(self):
+        """
+        Reads in the h5.out file to determin number of variables
+        """
+        path = self.data_path + 'dbl.h5.out'
+        file = open(path)
+        line = file.readline().split(' ')
+        start = line.index('little')
+        line = line[start+1:-1]
+        self._value_names = line
+        return None
         
     def classifier(self, delta_time):
         """
         delta_time: is the time step of which is number of the file by pluto
-        or 'all' <- will be removed soon
         """
         self._reader()
-        data_file = self.data_list[delta_time]
+        time_string = str(delta_time)
+        
+        while len(time_string) != 4:
+            time_string = '0' + time_string    
+        delta_time_str = self.data_list.index('data.' + time_string + '.dbl.h5')
+        
+        data_file = self.data_list[delta_time_str]
         h5_read = h5py.File(self.data_path + data_file, 'r')
 
         self.timestep, self.cell_coord, self.node_coord = h5_read.keys()
         
         data = h5_read[self.timestep]['vars']
         self.variables = list(data.keys())
-        b_rad, b_azi, b_axi, pressure, psi_glm, density, tracer1, v_rad, v_azi, v_axi = self.variables
         
-        self.b_radial = b_rad
-        self.b_azimuthal = b_azi
-        self.b_axial = b_axi
-        self.pressure = pressure
-        self.psi_glm = psi_glm
-        self.density = density
-        self.tracer1 = tracer1
-        self.radial_velocity = v_rad
-        self.azimuthal_velocity = v_azi
-        self.axial_velocity = v_axi
+        title_dict = {}
+
+        for index, name in enumerate(self._value_names):
+            """
+            Something happens here
+            """
+
+        #print(self.variables)
+        #b_rad, b_azi, b_axi, pressure, psi_glm, density, tracer1, v_rad, v_azi, v_axi = self.variables
+
+
+        ### Resetting all Classifier variables with values
+        self.Bx1 = 'Bx1'
+        self.Bx2 = 'Bx2'
+        self.Bx3 = 'Bx3'
+        self.pressure = 'prs'
+        self.psi_glm = 'psi_glm'
+        self.density = 'rho'
+        self.tracer1 = 'tr1'
+        self.radial_velocity = 'vx1'
+        self.azimuthal_velocity = 'vx2'
+        self.axial_velocity = 'vx3'
+        self.rad_flux1 = 'fr1'
+        self.rad_flux2 = 'fr2'
+        self.rad_flux3 = 'fr3'
+        self.b_stag1 = 'Bx1s'
+        self.b_stag2 = 'Bx2s'
+        self.b_stag3 = 'Bx3s'
+        self.rad_en_dens = 'enr'
+
+        ### Cooling Terms ###
+        if 'X_HI' in self.variables:
+            self.cooling_bool = True
+        
+        if self.cooling_bool == True:
+            self.cooling_HI = 'X_HI'
+            self.cooling_HII = 'X_HII'
+            self.cooling_H2 = 'X_H2'
+            self.cooling_HeI = 'X_HeI'
+            self.cooling_HeII = 'X_HeII'
+            self.cooling_CI = 'X_CI'
+            self.cooling_CII = 'X_CII'
+            self.cooling_CIII = 'X_CIII'
+            self.cooling_CIV = 'X_CIV'
+            self.cooling_CV = 'X_CV'
+            self.cooling_NI = 'X_NI'
+            self.cooling_NII = 'X_NII'
+            self.cooling_NIII = 'X_NIII'
+            self.cooling_NIV = 'X_NIV'
+            self.cooling_NV = 'X_NV'
+            self.cooling_OI = 'X_OI'
+            self.cooling_OII = 'X_OII'
+            self.cooling_OIII = 'X_OIII'
+            self.cooling_OIV = 'X_OIV'
+            self.cooling_OV = 'X_OV'
+            self.cooling_NeI = 'X_NeI'
+            self.cooling_NeII = 'X_NeI'
+            self.cooling_NeII = 'X_NeII'
+            self.cooling_NeIII = 'X_NeIII'
+            self.cooling_NeIV = 'X_NeIV'
+            self.cooling_NeV = 'X_NeV'
+            self.cooling_SI = 'X_SI'
+            self.cooling_SII = 'X_SII'
+            self.cooling_SIII = 'X_SIII'
+            self.cooling_SIV = 'X_SIV'
+            self.cooling_SV = 'X_SV'
+            
+            
 
         self.grid = h5_read[self.cell_coord]
-            
-        self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'], self.XZ_shape).T)]
-        self.axial_grid = np.reshape(self.grid['Z'], self.XZ_shape).T[0]
+        
+        self.radial_grid = [r[0] for r in list(np.reshape(self.grid['X'][::, self.x2_slice_index, ::], self.XZ_shape).T)]
+        self.axial_grid = np.reshape(self.grid['Z'][::, self.x2_slice_index, ::], self.XZ_shape).T[0]
         self.initial_radial_grid = self.radial_grid
 
         return data
@@ -306,7 +388,7 @@ class py3Pluto:
         ### loops through everything to find limits for the data
         for step in range(-1, self.time_step):
             # read files in here
-            print(f'Reading file number {step}')
+            print(f'Reading file number {step}', end='\r')
             data = self.classifier(delta_time=step)
             keys = list(data.keys())
             # set step to a valid value when its -1 for the classifier
@@ -330,7 +412,7 @@ class py3Pluto:
                         limits[variable].update({'min' : var_min})
                     if var_max > current_max:
                         limits[variable].update({'max' : var_max})
-        
+        print('End!')
         self.limits = limits
         return limits
 
@@ -365,63 +447,79 @@ class py3Pluto:
         This method is to calculate all subsidary data sets from the simulation data.
         sets global variables that are accessible by sub classes to use
         """
+        self.data_dict = {} # This contains all the calculated data
         self.time_step = time
-        ############################## Magnetic fields ##############################
-        self.bx1 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.b_radial],
-                        self.XZ_shape).T
-        self.bx2 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.b_azimuthal],
-                        self.XZ_shape).T
-        self.bx3 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.b_axial],
-                        self.XZ_shape).T
-        self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
         ############################## Velocities ##############################
         self.vx1 = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.radial_velocity],
+                        )[self.radial_velocity][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
+        self.data_dict.update({'vx1' : self.vx1})
+
         self.vx2 = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.azimuthal_velocity],
+                        )[self.azimuthal_velocity][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.vx3 = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.axial_velocity],
+                        )[self.axial_velocity][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.velocity_magnitude = np.sqrt(self.vx1**2 + self.vx2**2 + self.vx3**2)
         ############################## Pressure, Density and Tracer ##############################
         self.prs = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.pressure],
+                        )[self.pressure][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.rho = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.density],
+                        )[self.density][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
         self.tr1 = np.reshape(
                     self.classifier(
                         delta_time=time,
-                        )[self.tracer1],
+                        )[self.tracer1][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
-        ############################## General Lagrangian Multiplier ##############################
-        self.glm = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.psi_glm],
-                        self.XZ_shape).T
+        ############################## Sound Speed ##############################
+        self.sound_speed = sound_speed(self.gamma, self.prs, self.rho)
+
+        try:
+            ############################## Magnetic fields ##############################
+            self.bx1 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.Bx1][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            self.bx2 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.Bx2][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            self.bx3 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.Bx3][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            try:
+                ############################## General Lagrangian Multiplier ##############################
+                self.glm = np.reshape(
+                            self.classifier(
+                                delta_time=time,
+                                )[self.psi_glm],
+                                self.XZ_shape).T
+            except:
+                print('Divergence Cleaning is not enabled!')
+        except:
+            print('No Magnetic fields present in data!')
+            self.bx1 = np.zeros(self.vx1)
+            self.bx2 = np.zeros(self.vx1)
+            self.bx3 = np.zeros(self.vx1)
+
+        self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
         ############################## Alfvén Velocities ##############################
         self.avx1 = alfven_velocity(self.bx1, self.rho)
         self.avx2 = alfven_velocity(self.bx2, self.rho)
@@ -441,17 +539,110 @@ class py3Pluto:
         self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
         ############################## Plasma Beta ##############################
         self.beta = (self.prs / self.magnetic_prs)
+        #self.bx1s = np.reshape(self.classifier(delta_time=time)[self.b_stag1], self.XZ_shape).T
+        #self.bx2s = np.reshape(self.classifier(delta_time=time)[self.b_stag2], self.XZ_shape).T
+        #self.bx3s = np.reshape(self.classifier(delta_time=time)[self.b_stag3], self.XZ_shape).T
+
         ############################## Energy density ##############################
-        self.thermal_energy_density, \
-        self.kinetic_energy_density, \
+        self.thermal_energy_density = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.velocity_magnitude,
+                                                self.gamma
+        )[0]
+        self.kinetic_energy_density = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.velocity_magnitude,
+                                                self.gamma
+        )[1]
+        
         self.magnetic_energy_density = energy_density(
                                                 self.prs,
                                                 self.rho,
                                                 self.velocity_magnitude,
-                                                self.magnetic_field_magnitude,
-                                                self.gamma
-        )
+                                                self.gamma,
+                                                magnetic_field=self.magnetic_field_magnitude,
+        )[2]
+    
+        #self.magnetic_energy_density = np.zeros_like(self.thermal_energy_density)
+
         self.total_energy_density = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        ############################## Energy density x1 ##############################
+        self.thermal_energy_density_x1 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx1,
+                                                self.gamma
+        )[0]
+        self.kinetic_energy_density_x1 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx1,
+                                                self.gamma
+        )[1]
+        try:
+            self.magnetic_energy_density_x1 = energy_density(
+                                                    self.prs,
+                                                    self.rho,
+                                                    self.vx1,
+                                                    self.gamma,
+                                                    magnetic_field=self.bx1,
+            )[2]
+        except:
+            self.magnetic_energy_density_x1 = np.zeros_like(self.thermal_energy_density)
+
+        self.total_energy_density_x1 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        ############################## Energy density x2 ##############################
+        self.thermal_energy_density_x2 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx2,
+                                                self.gamma
+        )[0]
+        self.kinetic_energy_density_x2 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx2,
+                                                self.gamma
+        )[1]
+        try:
+            self.magnetic_energy_density_x2 = energy_density(
+                                                    self.prs,
+                                                    self.rho,
+                                                    self.vx2,
+                                                    self.gamma,
+                                                    magnetic_field=self.bx2,
+            )[2]
+        except:
+            self.magnetic_energy_density_x2 = np.zeros_like(self.thermal_energy_density)
+
+        self.total_energy_density_x2 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        ############################## Energy density x3 ##############################
+        self.thermal_energy_density_x3 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx3,
+                                                self.gamma
+        )[0]
+        self.kinetic_energy_density_x3 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx3,
+                                                self.gamma
+        )[1]
+        try:
+            self.magnetic_energy_density_x3 = energy_density(
+                                                    self.prs,
+                                                    self.rho,
+                                                    self.vx3,
+                                                    self.gamma,
+                                                    magnetic_field=self.bx3,
+            )[2]
+        except:
+            self.magnetic_energy_density_x3 = np.zeros_like(self.thermal_energy_density)
+
+        self.total_energy_density_x3 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
         ############################## Energy ##############################
         # Axial element lengths
         axial_differences = []
@@ -474,12 +665,42 @@ class py3Pluto:
         self.kinetic_energy_sys = self.kinetic_energy_density * volumes
         self.thermal_energy_sys = self.thermal_energy_density * volumes
         self.magnetic_energy_sys = self.magnetic_energy_density * volumes
-        self.total_energy_sys = self.kinetic_energy_sys + self.thermal_energy_sys + self.magnetic_energy_sys 
+        self.total_energy_sys = self.kinetic_energy_sys + self.thermal_energy_sys + self.magnetic_energy_sys
+        # x1
+        self.kinetic_energy_sys_x1 = self.kinetic_energy_density_x1 * volumes
+        self.thermal_energy_sys_x1 = self.thermal_energy_density_x1 * volumes
+        self.magnetic_energy_sys_x1 = self.magnetic_energy_density_x1 * volumes
+        self.total_energy_sys_x1 = self.kinetic_energy_sys_x1 + self.thermal_energy_sys_x1 + self.magnetic_energy_sys_x1
+        # x2
+        self.kinetic_energy_sys_x2 = self.kinetic_energy_density_x2 * volumes
+        self.thermal_energy_sys_x2 = self.thermal_energy_density_x2 * volumes
+        self.magnetic_energy_sys_x2 = self.magnetic_energy_density_x2 * volumes
+        self.total_energy_sys_x2 = self.kinetic_energy_sys_x2 + self.thermal_energy_sys_x2 + self.magnetic_energy_sys_x2
+        # x3
+        self.kinetic_energy_sys_x3 = self.kinetic_energy_density_x3 * volumes
+        self.thermal_energy_sys_x3 = self.thermal_energy_density_x3 * volumes
+        self.magnetic_energy_sys_x3 = self.magnetic_energy_density_x3 * volumes
+        self.total_energy_sys_x3 = self.kinetic_energy_sys_x3 + self.thermal_energy_sys_x3 + self.magnetic_energy_sys_x3
         # Jet energies
         self.kinetic_energy_jet = self.kinetic_energy_sys * self.tr1
         self.thermal_energy_jet = self.thermal_energy_sys * self.tr1
         self.magnetic_energy_jet = self.magnetic_energy_sys * self.tr1
         self.total_energy_jet = self.total_energy_sys * self.tr1
+        # x1
+        self.kinetic_energy_jet_x1 = self.kinetic_energy_sys_x1 * self.tr1
+        self.thermal_energy_jet_x1 = self.thermal_energy_sys_x1 * self.tr1
+        self.magnetic_energy_jet_x1 = self.magnetic_energy_sys_x1 * self.tr1
+        self.total_energy_jet_x1 = self.total_energy_sys_x1 * self.tr1
+        # x2
+        self.kinetic_energy_jet_x2 = self.kinetic_energy_sys_x2 * self.tr1
+        self.thermal_energy_jet_x2 = self.thermal_energy_sys_x2 * self.tr1
+        self.magnetic_energy_jet_x2 = self.magnetic_energy_sys_x2 * self.tr1
+        self.total_energy_jet_x2 = self.total_energy_sys_x2 * self.tr1
+        # x3
+        self.kinetic_energy_jet_x3 = self.kinetic_energy_sys_x3 * self.tr1
+        self.thermal_energy_jet_x3 = self.thermal_energy_sys_x3 * self.tr1
+        self.magnetic_energy_jet_x3 = self.magnetic_energy_sys_x3 * self.tr1
+        self.total_energy_jet_x3 = self.total_energy_sys_x3 * self.tr1
         ############################## Power ##############################
         # System power
         self.kinetic_power_sys = np.asarray([x/axial_differences for x in self.kinetic_energy_sys]) * self.vx3
@@ -491,8 +712,6 @@ class py3Pluto:
         self.thermal_power_jet = self.thermal_power_sys * self.tr1
         self.magnetic_power_jet = self.magnetic_power_sys * self.tr1
         self.total_power_jet = self.kinetic_power_jet + self.thermal_power_jet + self.magnetic_power_jet
-        ############################## Sound Speed ##############################
-        self.sound_speed = sound_speed(self.gamma, self.prs, self.rho)
 
 
         if self.mirrored == True:
@@ -526,5 +745,3 @@ class py3Pluto:
             self.beta = self._flip_multiply(self.beta)
             self.magnetic_prs = self._flip_multiply(self.magnetic_prs)
             self.sound_speed = self._flip_multiply(self.sound_speed)
-            
-            

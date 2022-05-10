@@ -1,6 +1,14 @@
 #%%
+"""
+The module contains the subclass of the package that deals with all the magnetohydrodynamic visualisation.
+It selects the variable to use for each visualisation method when they are called.
+
+Current version has data selection happening in this class to have physics specific data access from superclass.
+"""
+from typing import Tuple
 from .pluto import py3Pluto
 from mpl_toolkits.axes_grid1 import make_axes_locatable as mal
+from .calculator import RH_MHD
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,21 +18,41 @@ import os
 
 class mhd_jet(py3Pluto):
     """
-    This class is a sub-class of py3Pluto, which stores all information from the simulations
-    and claculations, which can be plotted using the plot or hist methods within this class.
+    This is a sub-class of py3Pluto, designed to visualise all MHD specific data sets calculated in the superclass.
+    
+        data_path: str - path to .h5 files output by PLUTO
+        time_step: int - the number which is in the name of the file representing time-step
+            Defaults to 0
+        dpi: int - sets the matplotlib.pyplot artist's DPI parameter
+            Defaults to 300,
+        image_size: Tuple[int, int] - sets the matplotlib.pyplot artist's figsize argument
+            Defaults to (10,5),
+        ylim: float - sets the x-axis limit using matplotlib.pyplot xlim method
+            Default to None,
+        xlim: float - sets the y-axis limit using matplotlib.pyplot ylim method
+            Default to None,
+        cmap: str - colourmap used by matplotlib, takes a string and will give error if incorrect. 
+            Default to 'bwr',
+        global_limits: bool - if set True, all data file in directory will be looped through, and all
+        the maximum and minimum values of all calculated variables are selected.
+            Default to False,
+        mirrored:bool = False,
+        gamma: float = 5/3,
+        title: str = ''
+
     """
     def __init__(self,
-        data_path,
-        time_step = 0,
-        dpi = 300,
-        image_size = (10,5),
-        ylim = None,
-        xlim = None,
-        cmap = 'bwr',
-        global_limits = False,
-        mirrored = False,
-        gamma = 5/3,
-        title=''
+        data_path: str,
+        time_step: int = 0,
+        dpi: int = 300,
+        image_size: Tuple[int, int] = (10,5),
+        ylim: float = None,
+        xlim: float = None,
+        cmap: str = 'bwr',
+        global_limits: bool = False,
+        mirrored:bool = False,
+        gamma: float = 5/3,
+        title: str = ''
     ):
 
         super().__init__(
@@ -47,7 +75,7 @@ class mhd_jet(py3Pluto):
         """
         Method plots individual data sets that are given as an argument.
         """
-        if data2plot == None:
+        if data2plot == None: # Size can be reduced by creating a dictionary with data2plot as key and name, data are values
             text = """
             Select one of the following arguments to plot them:
                 Magnetic field at x1 axis: 'bx1'
@@ -88,9 +116,31 @@ class mhd_jet(py3Pluto):
                 Plasma Beta:    'beta'
 
                 Magnetic Pressure:      'b_prs'  
+
+                Sysytem Kinetic Energy:     'SKE'
+                System Enthalpy:            'SEN'
+                System Magnetic Energy:     'SME'
+                System Total Energy:        'STE'
+                
+                Jet Kinetic Energy:         'JKE'
+                Jet Enthalpy:               'JEN'
+                Jet Magnetic Energy:        'JME'
+                Jet Total Energy:           'JTE'
+
+                Sysytem Kinetic power:      'SKP'
+                System Thermal power:       'SEP'
+                System Magnetic power:      'SMP'
+                System Total power:         'STP'
+                
+                Jet Kinetic power:          'JKP'
+                Jet Thermal power:          'JEP'
+                Jet Magnetic power:         'JMP'
+                Jet Total power:            'JTP'
+
+                For directional energies:   '###-xN'
             """
             print(text)
-            raise StopIteration('Please give a variable to plot!')
+            raise ValueError('Please give a variable to plot!')
         ### Magnetic Fields ###
         elif data2plot == 'bx1':
             variable_name = 'Magnetic Field in x1 direction'
@@ -196,69 +246,69 @@ class mhd_jet(py3Pluto):
         elif data2plot == 'msfx1':
             variable_name = 'Fast Magneto-acoustic Wave velocity in x1 direction'
             if log == True:
-                data = np.log(self.fast_m)
+                data = np.log(self.fast_ms_x1)
             else:
                 data = self.fast_ms_x1
         elif data2plot == 'msfx2':
             variable_name = 'Fast Magneto-acoustic Wave velocity in x2 direction'
             if log == True:
-                data = np.log(self.fast_m)
+                data = np.log(self.fast_ms_x2)
             else:
                 data = self.fast_ms_x2
         elif data2plot == 'msfx3':
             variable_name = 'Fast Magneto-acoustic Wave velocity in x3 direction'
             if log == True:
-                data = np.log(self.fast_m)
+                data = np.log(self.fast_ms_x3)
             else:
                 data = self.fast_ms_x3
         elif data2plot == 'msfs':
             variable_name = 'Fast Magneto-acoustic speed'
             if log == True:
-                data = np.log(self.fast_m)
+                data = np.log(self.fast_ms_velocity_magnitude)
             else:
                 data = self.fast_ms_velocity_magnitude
         ### Slow ###
         elif data2plot == 'mssx1':
             variable_name = 'Slow Magneto-acoustic Wave velocity in x1 direction'
             if log == True:
-                data = np.log(self.slow_m)
+                data = np.log(self.slow_ms_x1)
             else:
                 data = self.slow_ms_x1
         elif data2plot == 'mssx2':
             variable_name = 'Slow Magneto-acoustic Wave velocity in x2 direction'
             if log == True:
-                data = np.log(self.slow_m)
+                data = np.log(self.slow_ms_x2)
             else:
                 data = self.slow_ms_x2
         elif data2plot == 'mssx3':
             variable_name = 'Slow Magneto-acoustic Wave velocity in x3 direction'
             if log == True:
-                data = np.log(self.slow_m)
+                data = np.log(self.slow_ms_x3)
             else:
                 data = self.slow_ms_x3
         elif data2plot == 'msss':
             variable_name = 'Slow Magneto-acoustic speed'
             if log == True:
-                data = np.log(self.slow_m)
+                data = np.log(self.slow_ms_velocity_magnitude)
             else:
                 data = self.slow_ms_velocity_magnitude
         ### Mach numbers ###
         elif data2plot == 'fmach':
             variable_name = 'Fast wave Mach number'
             if log == True:
-                data = np.log(self.mach_f)
+                data = np.log(self.mach_fast)
             else:
                 data = self.mach_fast
         elif data2plot == 'amach':
             variable_name = 'Alfvén wave Mach number'
             if log == True:
-                data = np.log(self.mach_a)
+                data = np.log(self.mach_alfvén)
             else:
                 data = self.mach_alfvén
         elif data2plot == 'smach':
             variable_name = 'Slow wave Mach number'
             if log == True:
-                data = np.log(self.mach_s)
+                data = np.log(self.mach_slow)
             else:
                 data = self.mach_slow
         ### Plasma Beta ###
@@ -282,9 +332,119 @@ class mhd_jet(py3Pluto):
                 data = np.log(self.sound_speed)
             else:
                 data = self.sound_speed
+        ### Energies ###
+        elif data2plot == 'SKE':
+            variable_name = 'System Kinetic Energy'
+            if log == True:
+                data = np.log(self.kinetic_energy_sys)
+            else:
+                data = self.kinetic_energy_sys
+        elif data2plot == 'SEN':
+            variable_name = 'System Enthalpy'
+            if log == True:
+                data = np.log(self.thermal_energy_sys)
+            else:
+                data = self.thermal_energy_sys
+        elif data2plot == 'SME':
+            variable_name = 'System Magnetic Energy'
+            if log == True:
+                data = np.log(self.magnetic_energy_sys)
+            else:
+                data = self.magnetic_energy_sys
+        elif data2plot == 'STE':
+            variable_name = 'System Total Energy'
+            if log == True:
+                data = np.log(self.total_energy_sys)
+            else:
+                data = self.total_energy_sys
+        elif data2plot == 'JKE':
+            variable_name = 'Jet Kinetic Energy'
+            if log == True:
+                data = np.log(self.kinetic_energy_jet)
+            else:
+                data = self.kinetic_energy_jet
+        elif data2plot == 'JEN':
+            variable_name = 'Jet Enthalpy'
+            if log == True:
+                data = np.log(self.thermal_energy_sys)
+            else:
+                data = self.thermal_energy_sys
+        elif data2plot == 'JME':
+            variable_name = 'Jet Magnetic Energy'
+            if log == True:
+                data = np.log(self.magnetic_energy_sys)
+            else:
+                data = self.magnetic_energy_sys
+        elif data2plot == 'JTE':
+            variable_name = 'Jet Total Energy'
+            if log == True:
+                data = np.log(self.total_energy_sys)
+            else:
+                data = self.total_energy_sys
+        ### Powers ###
+        elif data2plot == 'SKP':
+            variable_name = 'System Kinetic power'
+            if log == True:
+                data = np.log(self.kinetic_power_sys)
+            else:
+                data = self.kinetic_power_sys
+        elif data2plot == 'SEP':
+            variable_name = 'System Thermal power'
+            if log == True:
+                data = np.log(self.thermal_power_sys)
+            else:
+                data = self.thermal_power_sys
+        elif data2plot == 'SMP':
+            variable_name = 'System Magnetic power'
+            if log == True:
+                data = np.log(self.magnetic_power_sys)
+            else:
+                data = self.magnetic_power_sys
+        elif data2plot == 'STP':
+            variable_name = 'System Total power'
+            if log == True:
+                data = np.log(self.total_power_sys)
+            else:
+                data = self.total_power_sys
+        elif data2plot == 'JKP':
+            variable_name = 'Jet Kinetic power'
+            if log == True:
+                data = np.log(self.kinetic_power_jet)
+            else:
+                data = self.kinetic_power_jet
+        elif data2plot == 'JEP':
+            variable_name = 'Jet Thermal power'
+            if log == True:
+                data = np.log(self.thermal_power_sys)
+            else:
+                data = self.thermal_power_sys
+        elif data2plot == 'JMP':
+            variable_name = 'Jet Magnetic power'
+            if log == True:
+                data = np.log(self.magnetic_power_sys)
+            else:
+                data = self.magnetic_power_sys
+        elif data2plot == 'JTP':
+            variable_name = 'Jet Total power'
+            if log == True:
+                data = np.log(self.total_power_sys)
+            else:
+                data = self.total_power_sys
+        ### Directional energies ###
+        elif data2plot == 'JKE-x2':
+            variable_name = 'Jet Kinetic energy in x2'
+            if log == True:
+                data = np.log(self.kinetic_energy_jet_x2)
+            else:
+                data = self.kinetic_energy_jet_x2
+        elif data2plot == 'JME-x2':
+            variable_name = 'Jet Magnetic energy in x2'
+            if log == True:
+                data = np.log(self.magnetic_energy_jet_x2)
+            else:
+                data = self.magnetic_energy_jet_x2
         
-
-
+                
         self.data = data
         self.variable_name = variable_name
 
@@ -306,7 +466,7 @@ class mhd_jet(py3Pluto):
         cax = divider.append_axes('right',size='5%',pad=0.25)
         pl = axes.contourf(self.axial_grid, self.radial_grid, self.data, cmap=self.cmap, levels=128, alpha=0.95)
         plt.colorbar(pl,cax,ticks=np.linspace(np.min(self.data),np.max(self.data), 9))
-        #axes.set_title(self.title)
+        ##axes.set_title(self.title)
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distnace [$R_{jet}$]')
@@ -317,14 +477,13 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            #title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}plot'
+            chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+            if os.path.exists(chck_subdir) is False:
+                os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}plot/{data2plot}/{self.time_step}_{data2plot}_{title}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
@@ -341,7 +500,7 @@ class mhd_jet(py3Pluto):
         data_plot = np.reshape(self.data, new_shape)
         plt.rc('font', size=8)
         fig, axes = plt.subplots(1,1,figsize=self.image_size, dpi=self.dpi)
-        axes.set_title(f'Histogram data for {title} at {self.time_step}')
+        #axes.set_title(f'Histogram data for {title} at {self.time_step}')
         hist = axes.hist(data_plot, bins=bins, align='mid', edgecolor='white')
         axes.set_xlabel('Value')
         axes.set_ylabel('Frequency')
@@ -352,7 +511,7 @@ class mhd_jet(py3Pluto):
             height = col.get_height()
             axes.text(col.get_x() + col.get_width() / 2, height+0.01, label, ha='center', va='bottom')
     
-        if log==True:
+        if data2log==True:
             plt.semilogy()
         
         if close==True:
@@ -362,11 +521,11 @@ class mhd_jet(py3Pluto):
             title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}hist'
+            chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+            if os.path.exists(chck_subdir) is False:
+                os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}hist/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
@@ -467,26 +626,26 @@ class mhd_jet(py3Pluto):
                         self.inter_shock_ra4.append(self.radial_grid[j])
 
         #### Slow shocks #####
-        slow_shock_ax = []
-        slow_shock_ra = []
+        self.slow_shock_ax = []
+        self.slow_shock_ra = []
         for j, row in enumerate(zero_array):
             for i, val in enumerate(row):
                 if (i+1 == len(row)) or (j+1 == len(zero_array)):
                     pass
                 else:
                     if (self.mach_slow[j,i] > 1) and (self.mach_alfvén[j,i+1] < 1) and (self.mach_slow[j,i+1] < 1):
-                        slow_shock_ax.append(self.axial_grid[i])
-                        slow_shock_ra.append(self.radial_grid[j])
+                        self.slow_shock_ax.append(self.axial_grid[i])
+                        self.slow_shock_ra.append(self.radial_grid[j])
                     if (self.mach_slow[j,i] > 1) and (self.mach_alfvén[j+1,i] < 1) and (self.mach_slow[j+1,i] < 1):
-                        slow_shock_ax.append(self.axial_grid[i])
-                        slow_shock_ra.append(self.radial_grid[j])
+                        self.slow_shock_ax.append(self.axial_grid[i])
+                        self.slow_shock_ra.append(self.radial_grid[j])
                     if (self.mach_slow[j,i] > 1) and (self.mach_alfvén[j+1,i+1] < 1) and (self.mach_slow[j+1,i+1] < 1):
-                        slow_shock_ax.append(self.axial_grid[i])
-                        slow_shock_ra.append(self.radial_grid[j])
+                        self.slow_shock_ax.append(self.axial_grid[i])
+                        self.slow_shock_ra.append(self.radial_grid[j])
         
         ### Check array for unit tests
         self.shocks_list = [
-            [slow_shock_ax, slow_shock_ra],
+            [self.slow_shock_ax, self.slow_shock_ra],
             [self.fast_shock_ax, self.fast_shock_ra],
             [self.inter_shock_ax1,self.inter_shock_ra1],
             [self.inter_shock_ax2, self.inter_shock_ra2],
@@ -498,7 +657,7 @@ class mhd_jet(py3Pluto):
         figureS, axesS = plt.subplots(figsize=(self.image_size[0]*1.25, self.image_size[1]*1.25), dpi=self.dpi*2)
         
         if 'slow' in self.plot_shock:
-            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((slow_shock_ax))})', alpha=0.5)
+            axesS.plot(self.slow_shock_ax, self.slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((self.slow_shock_ax))})', alpha=0.5)
         if 'inter' in self.plot_shock:
             axesS.plot(self.inter_shock_ax1, self.inter_shock_ra1, 's', lw=0.25, color='magenta', markersize=3.5, label=f'Inter 1-3 Shocks ({len((self.inter_shock_ax1))})', alpha=0.5)
             axesS.plot(self.inter_shock_ax2, self.inter_shock_ra2, 'v', lw=0.25, color='green', markersize=3.5, label=f'Inter 2-3 Shocks ({len((self.inter_shock_ax2))})', alpha=0.5)
@@ -523,11 +682,11 @@ class mhd_jet(py3Pluto):
             axesS.plot(self.inter_shock_ax3, self.inter_shock_ra3, 'H', lw=0.25, color='orange', markersize=3.5, label=f'Inter 2-4 Shocks ({len((self.inter_shock_ax3))})', alpha=0.5)
 
         if '34' in self.plot_shock:
-            axesS.plot(slow_shock_ax, slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((slow_shock_ax))})', alpha=0.5)
+            axesS.plot(self.slow_shock_ax, self.slow_shock_ra, '+', lw=0.25, color='blue', markersize=3.5, label=f'Slow 3-4 Shocks ({len((self.slow_shock_ax))})', alpha=0.5)
         
 
         axesS.legend()
-        axesS.set_title(f'MHD Shocks from plasma-state transition at {self.time_step}')
+        #axesS.set_title(f'MHD Shocks from plasma-state transition at {self.time_step}')
         axesS.set_xlim(self.xlim[0], self.xlim[1])
         axesS.set_ylim(self.ylim[0], self.ylim[1])
         axesS.set_ylabel(r'Radial distance [$R_{jet}$]')
@@ -540,11 +699,11 @@ class mhd_jet(py3Pluto):
             title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}shocks'
+            chck_subdir = check_dir + f'/{self.plot_shock}'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{self.plot_shock}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+            if os.path.exists(chck_subdir) is False:
+                os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}shocks/{self.plot_shock}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
@@ -583,7 +742,7 @@ class mhd_jet(py3Pluto):
             shrink=0.95, 
             aspect=20,
             pad=0.02, 
-            label=f'{self.variable_name} magnitude', 
+            label=f'{self.variable_name}', 
             format='%.2f'
             )
         
@@ -614,11 +773,11 @@ class mhd_jet(py3Pluto):
             title = self.data_path.split('/')[-2]
             folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}space_time'
+            chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
-                chck_subdir = check_dir + f'/{data2plot}'
-                if os.path.exists(chck_subdir) is False:
-                    os.mkdir(chck_subdir, 755)
+            if os.path.exists(chck_subdir) is False:
+                os.mkdir(chck_subdir, 755)
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
             plt.savefig(f'{self.data_path}space_time/{data2plot}/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
@@ -651,10 +810,11 @@ class mhd_jet(py3Pluto):
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Power')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Power')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Power')
-        axes.set_title(f'Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        ##axes.set_title(f'Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Power')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+        #axes.legend(loc='best', borderaxespad=1, fontsize='small', markerscale=2, bbox_to_anchor=(1, 0.8))
         axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
 
         if close==True:
@@ -668,18 +828,16 @@ class mhd_jet(py3Pluto):
                 os.mkdir(check_dir, 755)
                 chck_subdir = check_dir
             bbox = matplotlib.transforms.Bbox([[0,0], [12,9]])
-            plt.savefig(f'{self.data_path}power/{self.time_step}.jpeg', bbox_inches='tight', pad_inches=0.5)
+            plt.savefig(f'{self.data_path}power/{self.time_step}_pwr.jpeg', bbox_inches='tight', pad_inches=0.5)
             plt.close()
         
-
-
     def plot_energy(self, save=False, close=False):
         """
         Plots the energy curves for the jet
         """
         self.calculate_data(self.time_step)
-        total_sys = [np.sum(x) for x in np.transpose(self.total_energy_sys)]
-        total_jet = [np.sum(x) for x in np.transpose(self.total_energy_jet)]
+        total_sys = np.asarray([np.sum(x) for x in np.transpose(self.total_energy_sys)])
+        total_jet = np.asarray([np.sum(x) for x in np.transpose(self.total_energy_jet)])
         kinetic_jet = [np.sum(x) for x in np.transpose(self.kinetic_energy_jet)]
         enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_energy_jet)]
         magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_energy_jet)]
@@ -693,12 +851,12 @@ class mhd_jet(py3Pluto):
         ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
-        #plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Energy')
+        #plt0 = axes.plot(self.axial_grid, total_sys - total_jet, '-', color='black', ms=2.5, label='Total System Energy')
         plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Energy')
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Energy')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Energy')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Energy')
-        axes.set_title(f'Energy at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        #axes.set_title(f'Energy at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Energy')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -722,12 +880,13 @@ class mhd_jet(py3Pluto):
         """
         Plots the energy density curves for the jet
         """
+        ### Jet should say sys 
         self.calculate_data(self.time_step)
         total_jet = [np.sum(x) for x in np.transpose(self.total_energy_density)]
         kinetic_jet = [np.sum(x) for x in np.transpose(self.kinetic_energy_density)]
         enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_energy_density)]
         magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_energy_density)]
-
+        
         self.list_E_dens = [
             total_jet,
             kinetic_jet,
@@ -740,7 +899,7 @@ class mhd_jet(py3Pluto):
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic System Energy Density')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal System Energy Density')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic System Energy Density')
-        axes.set_title(f'Energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
+        #axes.set_title(f'Energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Energy density')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -852,3 +1011,99 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         self.streamline_check = magnitude
+
+    def plot_azimuthal_energy(self):
+        """
+        Plots the Kinetic and Magnetic energies as a function of axial distance to compare for stability analysis
+        """
+        KE_int = [np.sum(b) for b in np.transpose(self.kinetic_energy_jet_x2)]
+        BE_int = [np.sum(v) for v in np.transpose(self.magnetic_energy_jet_x2)]
+
+        fig, ax = plt.subplots(figsize=(6,6), dpi=500)
+        ax.plot(self.axial_grid, BE_int, 'b--', ms=3, lw=1.5, label='Magnetic')
+        ax.plot(self.axial_grid, KE_int, 'g-.', ms=3, lw=1.5, label='Kinetic')
+        ax.set_ylabel(r'Energy in x2 direction')
+        ax.set_xlabel(r'Axial distance [$R_{jet}$]')
+        ax.set_xlim(self.xlim)
+        ### setup ylim within range ###
+        filtr = [i for i, x in enumerate(self.axial_grid) if x <= self.xlim[1]]
+        max_ke = KE_int[:int(max(filtr))]
+        max_me = BE_int[:int(max(filtr))]
+        max_e = np.max([max_ke, max_me])
+        ax.set_ylim(0, max_e)
+        ax.legend()
+        
+    def oblique_shocks(self, min=0, max=10000):
+        """
+        Use the Ranking-Hugoniot relation for ideal MHD to find oblique shocks
+        """
+        shock_array = np.zeros_like(self.mach_slow)
+        magneto_sonic_mach_mag = np.sqrt(self.mach_fast**2 + self.mach_alfvén**2 + self.mach_slow**2)
+        
+        RHx1 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHx2 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHy1 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHy2 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHxy1 = np.zeros_like(magneto_sonic_mach_mag) 
+        RHxy2 = np.zeros_like(magneto_sonic_mach_mag) 
+
+        RHx1[:, 0:-1], RHx2[:, 0:-1] = RH_MHD(
+            self.gamma,
+            self.beta[:, 0:-1],
+            magneto_sonic_mach_mag[:, 0:-1],
+            self.prs[:, 0:-1],
+            self.prs[:, 1:],
+            )
+        
+        RHy1[0:-1, :], RHy2[0:-1, :] = RH_MHD(
+            self.gamma,
+            self.beta[0:-1, :],
+            magneto_sonic_mach_mag[0:-1, :],
+            self.prs[0:-1, :],
+            self.prs[1:, :],
+            )
+            
+        RHxy1[0:-1, 0:-1], RHxy2[0:-1, 0:-1] = RH_MHD(
+            self.gamma,
+            self.beta[0:-1, 0:-1],
+            magneto_sonic_mach_mag[0:-1, 0:-1],
+            self.prs[0:-1, 0:-1],
+            self.prs[1:, 1:],
+            )
+        
+        ### Mask shocks ###
+        #RHx2[RHx2 < min] = 0.0
+        #RHx2[RHx2 > max] = 0.0
+        #RHy2[RHy2 < min] = 0.0
+        #RHy2[RHy2 > max] = 0.0
+        #RHxy2[RHxy2 < min] = 0.0
+        #RHxy2[RHxy2 > max] = 0.0
+        
+        ma1 = np.ma.masked_greater(np.ma.masked_less(RHx2, min), max)
+        ma2 = np.ma.masked_greater(np.ma.masked_less(RHy2, min), max)
+        ma3 = np.ma.masked_greater(np.ma.masked_less(RHxy2, min), max)
+
+        ma4 = np.ma.masked_greater(np.ma.masked_less(RHx1, min), max)
+        ma5 = np.ma.masked_greater(np.ma.masked_less(RHy1, min), max)
+        ma6 = np.ma.masked_greater(np.ma.masked_less(RHxy1, min), max)
+
+        figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
+        divider = mal(axes)
+        cax = divider.append_axes('right',size='5%',pad=0.25)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma4, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma1, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma5, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma2, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma6, cmap=self.cmap, levels=16, alpha=0.35)
+        pl = axes.contourf(self.axial_grid, self.radial_grid, ma3, cmap=self.cmap, levels=16, alpha=0.35)
+        plt.colorbar(
+            pl,
+            cax,
+            )
+        axes.set_facecolor('0.85')
+        axes.set_xlim(self.xlim[0], self.xlim[1])
+        axes.set_ylim(self.ylim[0], self.ylim[1])
+        axes.set_ylabel(r'Radial distance [$R_{jet}$]')
+        axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+        

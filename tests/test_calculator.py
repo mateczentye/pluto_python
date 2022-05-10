@@ -9,7 +9,7 @@ import pluto_python.calculator as c
 
 @pytest.mark.phys
 def test_magnetic_field():
-    assert c.magnetic_field(1,1) == pytest.approx(1.783655867)
+    assert c.magnetic_field(1,1) == pytest.approx(2.272192004)
 
 @pytest.mark.phys
 def test_ms_speed():
@@ -33,11 +33,11 @@ def test_magneto_acoustic_velocity_res():
 
 @pytest.mark.phys
 def test_machnumber():
-    assert c.mach_number(16.45860550417676, c.magnetosonic_speed(0.1,2.0, c.magnetic_field(1.5,1.5))) == 2
+    assert pytest.approx(c.mach_number(16.45860550417676, c.magnetosonic_speed(0.1,2.0, c.magnetic_field(1.5,1.5)))) == 1.667316972
 
 @pytest.mark.phys
 def test_energy_density():
-    assert c.energy_density(0.6, 1, 16.4586, 2.1845, 5/3) == [pytest.approx(1.5), pytest.approx(135.442757), pytest.approx(2.38602)]
+    assert c.energy_density(0.6, 1, 16.4586, 5/3, 2.1845) == [pytest.approx(1.5), pytest.approx(135.442757), pytest.approx(2.38602)]
 
 @pytest.mark.phys
 def test_magnetic_pressure():
@@ -46,3 +46,7 @@ def test_magnetic_pressure():
 @pytest.mark.phys
 def test_soundspeed():
     assert c.sound_speed(5/3, 0.6, 1) == 1
+
+@pytest.mark.phys
+def test_effective_over_pressure():
+    assert c.effective_kappa(2,2.5,1) == 4.5
