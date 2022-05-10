@@ -1,7 +1,7 @@
 [![Documentation Status](https://readthedocs.org/projects/pluto-python/badge/?version=latest)](https://pluto-python.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/mateczentye/pluto_python/branch/master/graph/badge.svg?token=46GL89W9G9)](https://codecov.io/gh/mateczentye/pluto_python)
 
-Ducumentation available here: https://pluto-python.readthedocs.io/en/latest/
+Ducumentation available here: https://pluto-python.readthedocs.io/en/master/
 
 Package was made to analyse the h5 output files from PLUTO
 
