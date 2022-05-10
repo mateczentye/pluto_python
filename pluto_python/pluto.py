@@ -264,7 +264,6 @@ class py3Pluto:
     def classifier(self, delta_time):
         """
         delta_time: is the time step of which is number of the file by pluto
-        or 'all' <- will be removed soon
         """
         self._reader()
         time_string = str(delta_time)
@@ -505,30 +504,6 @@ class py3Pluto:
                             delta_time=time,
                             )[self.Bx3][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
-            self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
-            ############################## Alfvén Velocities ##############################
-            self.avx1 = alfven_velocity(self.bx1, self.rho)
-            self.avx2 = alfven_velocity(self.bx2, self.rho)
-            self.avx3 = alfven_velocity(self.bx3, self.rho)
-            self.alfvén_velocity_magnitude = np.sqrt(self.avx1**2 + self.avx2**2 + self.avx3**2)
-            ############################## Magneto acoustic Waves ##############################
-            self.slow_ms_x1, self.fast_ms_x1 = magneto_acoustic_velocity(self.bx1, self.prs, self.rho, self.gamma)
-            self.slow_ms_x2, self.fast_ms_x2 = magneto_acoustic_velocity(self.bx2, self.prs, self.rho, self.gamma)
-            self.slow_ms_x3, self.fast_ms_x3 = magneto_acoustic_velocity(self.bx3, self.prs, self.rho, self.gamma)
-            self.fast_ms_velocity_magnitude = np.sqrt(self.fast_ms_x1**2 + self.fast_ms_x2**2 + self.fast_ms_x3**2)
-            self.slow_ms_velocity_magnitude = np.sqrt(self.slow_ms_x1**2 + self.slow_ms_x2**2 + self.slow_ms_x3**2)
-            ############################## Mach numbers ##############################
-            self.mach_fast = mach_number(self.velocity_magnitude, self.fast_ms_velocity_magnitude)
-            self.mach_slow = mach_number(self.velocity_magnitude, self.slow_ms_velocity_magnitude)
-            self.mach_alfvén = mach_number(self.velocity_magnitude, self.alfvén_velocity_magnitude)
-            ############################## Magnetic pressure ##############################
-            self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
-            ############################## Plasma Beta ##############################
-            self.beta = (self.prs / self.magnetic_prs)
-            #self.bx1s = np.reshape(self.classifier(delta_time=time)[self.b_stag1], self.XZ_shape).T
-            #self.bx2s = np.reshape(self.classifier(delta_time=time)[self.b_stag2], self.XZ_shape).T
-            #self.bx3s = np.reshape(self.classifier(delta_time=time)[self.b_stag3], self.XZ_shape).T
-
             try:
                 ############################## General Lagrangian Multiplier ##############################
                 self.glm = np.reshape(
@@ -540,6 +515,34 @@ class py3Pluto:
                 print('Divergence Cleaning is not enabled!')
         except:
             print('No Magnetic fields present in data!')
+            self.bx1 = np.zeros(self.vx1)
+            self.bx2 = np.zeros(self.vx1)
+            self.bx3 = np.zeros(self.vx1)
+            
+        self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
+        ############################## Alfvén Velocities ##############################
+        self.avx1 = alfven_velocity(self.bx1, self.rho)
+        self.avx2 = alfven_velocity(self.bx2, self.rho)
+        self.avx3 = alfven_velocity(self.bx3, self.rho)
+        self.alfvén_velocity_magnitude = np.sqrt(self.avx1**2 + self.avx2**2 + self.avx3**2)
+        ############################## Magneto acoustic Waves ##############################
+        self.slow_ms_x1, self.fast_ms_x1 = magneto_acoustic_velocity(self.bx1, self.prs, self.rho, self.gamma)
+        self.slow_ms_x2, self.fast_ms_x2 = magneto_acoustic_velocity(self.bx2, self.prs, self.rho, self.gamma)
+        self.slow_ms_x3, self.fast_ms_x3 = magneto_acoustic_velocity(self.bx3, self.prs, self.rho, self.gamma)
+        self.fast_ms_velocity_magnitude = np.sqrt(self.fast_ms_x1**2 + self.fast_ms_x2**2 + self.fast_ms_x3**2)
+        self.slow_ms_velocity_magnitude = np.sqrt(self.slow_ms_x1**2 + self.slow_ms_x2**2 + self.slow_ms_x3**2)
+        ############################## Mach numbers ##############################
+        self.mach_fast = mach_number(self.velocity_magnitude, self.fast_ms_velocity_magnitude)
+        self.mach_slow = mach_number(self.velocity_magnitude, self.slow_ms_velocity_magnitude)
+        self.mach_alfvén = mach_number(self.velocity_magnitude, self.alfvén_velocity_magnitude)
+        ############################## Magnetic pressure ##############################
+        self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
+        ############################## Plasma Beta ##############################
+        self.beta = (self.prs / self.magnetic_prs)
+        #self.bx1s = np.reshape(self.classifier(delta_time=time)[self.b_stag1], self.XZ_shape).T
+        #self.bx2s = np.reshape(self.classifier(delta_time=time)[self.b_stag2], self.XZ_shape).T
+        #self.bx3s = np.reshape(self.classifier(delta_time=time)[self.b_stag3], self.XZ_shape).T
+
         ############################## Energy density ##############################
         self.thermal_energy_density = energy_density(
                                                 self.prs,
@@ -558,8 +561,8 @@ class py3Pluto:
                                                     self.prs,
                                                     self.rho,
                                                     self.velocity_magnitude,
-                                                    self.magnetic_field_magnitude,
-                                                    self.gamma
+                                                    self.gamma,
+                                                    magnetic_field=self.magnetic_field_magnitude,
             )[2]
         except:
             self.magnetic_energy_density = np.zeros_like(self.thermal_energy_density)
@@ -583,8 +586,8 @@ class py3Pluto:
                                                     self.prs,
                                                     self.rho,
                                                     self.vx1,
-                                                    self.bx1,
-                                                    self.gamma
+                                                    self.gamma,
+                                                    magnetic_field=self.bx1,
             )[2]
         except:
             self.magnetic_energy_density_x1 = np.zeros_like(self.thermal_energy_density)
@@ -608,8 +611,8 @@ class py3Pluto:
                                                     self.prs,
                                                     self.rho,
                                                     self.vx2,
-                                                    self.bx2,
-                                                    self.gamma
+                                                    self.gamma,
+                                                    magnetic_field=self.bx2,
             )[2]
         except:
             self.magnetic_energy_density_x2 = np.zeros_like(self.thermal_energy_density)
@@ -633,8 +636,8 @@ class py3Pluto:
                                                     self.prs,
                                                     self.rho,
                                                     self.vx3,
-                                                    self.bx3,
-                                                    self.gamma
+                                                    self.gamma,
+                                                    magnetic_field=self.bx3,
             )[2]
         except:
             self.magnetic_energy_density_x3 = np.zeros_like(self.thermal_energy_density)

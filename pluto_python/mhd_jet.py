@@ -885,8 +885,9 @@ class mhd_jet(py3Pluto):
         total_jet = [np.sum(x) for x in np.transpose(self.total_energy_density)]
         kinetic_jet = [np.sum(x) for x in np.transpose(self.kinetic_energy_density)]
         enthalpy_jet = [np.sum(x) for x in np.transpose(self.thermal_energy_density)]
+        print(self.magnetic_energy_density)
         magnetic_jet = [np.sum(x) for x in np.transpose(self.magnetic_energy_density)]
-
+        
         self.list_E_dens = [
             total_jet,
             kinetic_jet,
