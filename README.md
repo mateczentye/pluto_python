@@ -5,8 +5,8 @@ Ducumentation available here: https://pluto-python.readthedocs.io/en/master/
 
 Package was made to analyse the h5 output files from PLUTO
 
-Package works with 2D data set. PLUTO can output 2.5D data sets which is also handled in here. Or 3D data set if one dimension is only 1 element long.
-    So Grid shapes of (X, Z), (X, Y=1, Z)
+Package works with 2D and 3D data sets. PLUTO can output 2.5D data sets which is also handled in here.
+    So Grid shapes of (X, Z), (X, Y, Z) can be analysed
 
 pluto.py: contains the data reading and sorting methods to define all the variables that are used in other sub-classes to plot or calculate with.
 
