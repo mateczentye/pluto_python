@@ -447,45 +447,73 @@ class py3Pluto:
         This method is to calculate all subsidary data sets from the simulation data.
         sets global variables that are accessible by sub classes to use
         """
+        no_data_msg = '{} cannot be calculated.'
         self.data_dict = {} # This contains all the calculated data
         self.time_step = time
+        self.data_dict.update({'time_step' : self.time_step})
         ############################## Velocities ##############################
-        self.vx1 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.radial_velocity][::, self.x2_slice_index, ::],
-                        self.XZ_shape).T
-        self.data_dict.update({'vx1' : self.vx1})
+        try:
+            self.vx1 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.radial_velocity][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            self.data_dict.update({'vx1' : self.vx1})
+        except Exception as e:
+            print(no_data_msg.format('vx1'))
+            print(e)
 
-        self.vx2 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.azimuthal_velocity][::, self.x2_slice_index, ::],
-                        self.XZ_shape).T
-        self.vx3 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.axial_velocity][::, self.x2_slice_index, ::],
-                        self.XZ_shape).T
+        try:
+            self.vx2 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.azimuthal_velocity][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            self.data_dict.update({'vx2' : self.vx2})
+        except Exception as e:
+            print(no_data_msg.format('vx2'))
+            print(e)
+
+        try:
+                
+            self.vx3 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.axial_velocity][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            self.data_dict.update({'vx3' : self.vx3})
+        except Exception as e:
+            print(no_data_msg.format('vx3'))
+            print(e)
+            
         self.velocity_magnitude = np.sqrt(self.vx1**2 + self.vx2**2 + self.vx3**2)
+        self.data_dict.update({'vxs' : self.velocity_magnitude})
+
         ############################## Pressure, Density and Tracer ##############################
         self.prs = np.reshape(
                     self.classifier(
                         delta_time=time,
                         )[self.pressure][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
+        self.data_dict.update({'prs' : self.prs})
+
         self.rho = np.reshape(
                     self.classifier(
                         delta_time=time,
                         )[self.density][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
+        self.data_dict.update({'rho' : self.rho})
+
         self.tr1 = np.reshape(
                     self.classifier(
                         delta_time=time,
                         )[self.tracer1][::, self.x2_slice_index, ::],
                         self.XZ_shape).T
+        self.data_dict.update({'tr1' : self.tr1})
+
         ############################## Sound Speed ##############################
         self.sound_speed = sound_speed(self.gamma, self.prs, self.rho)
+        self.data_dict.update({'c' : self.sound_speed})
 
         try:
             ############################## Magnetic fields ##############################
@@ -494,16 +522,21 @@ class py3Pluto:
                             delta_time=time,
                             )[self.Bx1][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
+
+
             self.bx2 = np.reshape(
                         self.classifier(
                             delta_time=time,
                             )[self.Bx2][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
+
+
             self.bx3 = np.reshape(
                         self.classifier(
                             delta_time=time,
                             )[self.Bx3][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
+
             try:
                 ############################## General Lagrangian Multiplier ##############################
                 self.glm = np.reshape(
