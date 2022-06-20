@@ -471,11 +471,11 @@ class py3Pluto:
                             self.XZ_shape).T
             self.data_dict.update({'vx2' : self.vx2})
         except Exception as e:
+            self.vx2 = np.zeros_like(self.vx1)
             print(no_data_msg.format('vx2'))
             print(e)
 
-        try:
-                
+        try:                
             self.vx3 = np.reshape(
                         self.classifier(
                             delta_time=time,
@@ -483,74 +483,104 @@ class py3Pluto:
                             self.XZ_shape).T
             self.data_dict.update({'vx3' : self.vx3})
         except Exception as e:
+            self.vx3 = np.zeros_like(self.vx1)
             print(no_data_msg.format('vx3'))
             print(e)
-            
+
         self.velocity_magnitude = np.sqrt(self.vx1**2 + self.vx2**2 + self.vx3**2)
         self.data_dict.update({'vxs' : self.velocity_magnitude})
 
         ############################## Pressure, Density and Tracer ##############################
-        self.prs = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.pressure][::, self.x2_slice_index, ::],
-                        self.XZ_shape).T
-        self.data_dict.update({'prs' : self.prs})
+        try:
+            self.prs = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.pressure][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            self.data_dict.update({'prs' : self.prs})
+        except Exception as e:
+            self.prs = np.zeros_like(self.vx1)
+            print(no_data_msg.format('prs'))
+            print(e)
+            
+        try:    
+            self.rho = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.density][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            self.data_dict.update({'rho' : self.rho})
+        except Exception as e:
+            self.rho = np.zeros_like(self.vx1)
+            print(no_data_msg.format('rho'))
+            print(e)
+            
+        try:
+            self.tr1 = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.tracer1][::, self.x2_slice_index, ::],
+                            self.XZ_shape).T
+            self.data_dict.update({'tr1' : self.tr1})
+        except Exception as e:
+            self.tr1 = np.zeros_like(self.vx1)
+            print(no_data_msg.format('tr1'))
+            print(e)
 
-        self.rho = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.density][::, self.x2_slice_index, ::],
-                        self.XZ_shape).T
-        self.data_dict.update({'rho' : self.rho})
-
-        self.tr1 = np.reshape(
-                    self.classifier(
-                        delta_time=time,
-                        )[self.tracer1][::, self.x2_slice_index, ::],
-                        self.XZ_shape).T
-        self.data_dict.update({'tr1' : self.tr1})
-
+        ### Continue from here
+        
         ############################## Sound Speed ##############################
+        
         self.sound_speed = sound_speed(self.gamma, self.prs, self.rho)
         self.data_dict.update({'c' : self.sound_speed})
-
+        
+        ############################## Magnetic fields ##############################
         try:
-            ############################## Magnetic fields ##############################
             self.bx1 = np.reshape(
                         self.classifier(
                             delta_time=time,
                             )[self.Bx1][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
+            self.data_dict.update({'bx1' : self.bx1})
+        except Exception as e:
+            self.bx1 = np.zeros_like(self.vx1)
+            print(no_data_msg.format('bx1'))
+            print(e)
 
-
+        try:
             self.bx2 = np.reshape(
                         self.classifier(
                             delta_time=time,
                             )[self.Bx2][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
+            self.data_dict.update({'bx2' : self.bx2})
+        except Exception as e:
+            self.bx2 = np.zeros_like(self.vx1)
+            print(no_data_msg.format('bx1'))
+            print(e)
 
-
+        try:
             self.bx3 = np.reshape(
                         self.classifier(
                             delta_time=time,
                             )[self.Bx3][::, self.x2_slice_index, ::],
                             self.XZ_shape).T
-
-            try:
-                ############################## General Lagrangian Multiplier ##############################
-                self.glm = np.reshape(
-                            self.classifier(
-                                delta_time=time,
-                                )[self.psi_glm],
-                                self.XZ_shape).T
-            except:
-                print('Divergence Cleaning is not enabled!')
+            self.data_dict.update({'bx3' : self.bx3})
+        except Exception as e:
+            self.bx3 = np.zeros_like(self.vx1)
+            print(no_data_msg.format('bx1'))
+            print(e)
+        ############################## General Lagrangian Multiplier ##############################
+        try:
+            self.glm = np.reshape(
+                        self.classifier(
+                            delta_time=time,
+                            )[self.psi_glm],
+                            self.XZ_shape).T
+            self.data_dict.update({'glm' : self.glm})
         except:
-            print('No Magnetic fields present in data!')
-            self.bx1 = np.zeros(self.vx1)
-            self.bx2 = np.zeros(self.vx1)
-            self.bx3 = np.zeros(self.vx1)
+            print('Divergence Cleaning is not enabled!')
+            self.glm = np.zeros_like(self.vx1)
 
         self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
         ############################## Alfvén Velocities ##############################
