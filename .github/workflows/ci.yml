@@ -46,3 +46,4 @@ jobs:
           name: codecov-umbrella
           functionalities: coveragepy
           verbose: true
+          directory: ./
