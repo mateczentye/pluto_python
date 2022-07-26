@@ -1,9 +1,6 @@
-#%%
 """
 The module contains the subclass of the package that deals with all the magnetohydrodynamic visualisation.
 It selects the variable to use for each visualisation method when they are called.
-
-Current version has data selection happening in this class to have physics specific data access from superclass.
 """
 from typing import Tuple
 from .pluto import py3Pluto
@@ -76,375 +73,18 @@ class mhd_jet(py3Pluto):
         Method plots individual data sets that are given as an argument.
         """
         if data2plot == None: # Size can be reduced by creating a dictionary with data2plot as key and name, data are values
-            text = """
-            Select one of the following arguments to plot them:
-                Magnetic field at x1 axis: 'bx1'
-                Magnetic field at x2 axis: 'bx2'
-                Magnetic field at x3 axis: 'bx3'
-                Magnetic Field magnitude:  'bxs'
-
-                Velocity at x1 axis: 'vx1'
-                Velocity at x2 axis: 'vx2'
-                Velocity at x3 axis: 'vx3'
-                Velocity magnitude:  'vxs'
-
-                Pressure field:     'prs'
-                Density field:      'rho'
-                Jet Tracer:         'tr1'
-
-                General Lagrangian Multiplier: 'glm'
-
-                Alfvén Wave Velocity along x1 axis: 'avx1'
-                Alfvén Wave Velocity along x2 axis: 'avx2'
-                Alfvén Wave Velocity along x3 axis: 'avx3'
-                Alfvén Wave Velocity Magnitude:     'avxs'
-
-                Fast Magneto-acoustic Wave along x1 axis:   'msfx1'
-                Fast Magneto-acoustic Wave along x2 axis:   'msfx2'
-                Fast Magneto-acoustic Wave along x3 axis:   'msfx3'
-                Fast Magneto-acoustic Wave magnitude:       'msfs'
-
-                Slow Magneto-acoustic Wave along x1 axis:   'mssx1'
-                Slow Magneto-acoustic Wave along x2 axis:   'mssx2'
-                Slow Magneto-acoustic Wave along x3 axis:   'mssx3'
-                Slow Magneto-acoustic Wave magnitude:       'msss'
-
-                Fast MS Wave Mach number: 'fmach'
-                Alfvén Wave Mach number:  'amach'
-                Slow MS Wave Mach number: 'smach'
-
-                Plasma Beta:    'beta'
-
-                Magnetic Pressure:      'b_prs'  
-
-                Sysytem Kinetic Energy:     'SKE'
-                System Enthalpy:            'SEN'
-                System Magnetic Energy:     'SME'
-                System Total Energy:        'STE'
-                
-                Jet Kinetic Energy:         'JKE'
-                Jet Enthalpy:               'JEN'
-                Jet Magnetic Energy:        'JME'
-                Jet Total Energy:           'JTE'
-
-                Sysytem Kinetic power:      'SKP'
-                System Thermal power:       'SEP'
-                System Magnetic power:      'SMP'
-                System Total power:         'STP'
-                
-                Jet Kinetic power:          'JKP'
-                Jet Thermal power:          'JEP'
-                Jet Magnetic power:         'JMP'
-                Jet Total power:            'JTP'
-
-                For directional energies:   '###-xN'
-            """
-            print(text)
+            
+            for sign, name in zip(self.varname_dict.keys(), self.varname_dict.values()):
+                print(f'{sign:>15}:     {name}')
             raise ValueError('Please give a variable to plot!')
-        ### Magnetic Fields ###
-        elif data2plot == 'bx1':
-            variable_name = 'Magnetic Field in x1 direction'
+
+        else:
+            variable_name = self.varname_dict[data2plot]
             if log == True:
-                data = np.log(self.bx1)
+                data = np.log(self.data_dict[data2plot])
             else:
-                data = self.bx1
-        elif data2plot == 'bx2':
-            variable_name = 'Magnetic Field in x2 direction'
-            if log == True:
-                data = np.log(self.bx2)
-            else:
-                data = self.bx2
-        elif data2plot == 'bx3':
-            variable_name = 'Magnetic Field in x3 direction'
-            if log == True:
-                data = np.log(self.bx3)
-            else:
-                data = self.bx3
-        elif data2plot == 'bxs':
-            variable_name = 'Magnetic Field magnitude'
-            if log == True:
-                data = np.log(self.magnetic_field_magnitude)
-            else:
-                data = self.magnetic_field_magnitude
-        ### Velocities ###
-        elif data2plot == 'vx1':
-            variable_name = 'Velocity in x1 direction'
-            if log == True:
-                data = np.log(self.vx1)
-            else:
-                data = self.vx1
-        elif data2plot == 'vx2':
-            variable_name = 'Velocity in x2 direction'
-            if log == True:
-                data = np.log(self.vx2)
-            else:
-                data = self.vx2
-        elif data2plot == 'vx3':
-            variable_name = 'Velocity in x3 direction'
-            if log == True:
-                data = np.log(self.vx3)
-            else:
-                data = self.vx3
-        elif data2plot == 'vxs':
-            variable_name = 'Velocity Magnitude'
-            if log == True:
-                data = np.log(self.velocity_magnitude)
-            else:
-                data = self.velocity_magnitude
-        ### Pressure, Density, Tracer and GLM ###
-        elif data2plot == 'prs':
-            variable_name = 'Pressure'
-            if log == True:
-                data = np.log(self.prs)
-            else:
-                data = self.prs
-        elif data2plot == 'rho':
-            variable_name = 'Density'
-            if log == True:
-                data = np.log(self.rho)
-            else:
-                data = self.rho
-        elif data2plot == 'tr1':
-            variable_name = 'Density weighted tracer'
-            if log == True:
-                data = np.log(self.tr1)
-            else:
-                data = self.tr1
-        elif data2plot == 'glm':
-            variable_name = 'General Lagrangian Multiplier'
-            if log == True:
-                data = np.log(self.glm)
-            else:
-                data = self.glm
-        ### Alfvén Velocities ###
-        elif data2plot == 'avx1':
-            variable_name = 'Alfvén velocity in x1 direction'
-            if log == True:
-                data = np.log(self.avx1)
-            else:
-                data = self.avx1
-        elif data2plot == 'avx2':
-            variable_name = 'Alfvén velocity in x2 direction'
-            if log == True:
-                data = np.log(self.avx2)
-            else:
-                data = self.avx2
-        elif data2plot == 'avx3':
-            variable_name = 'Alfvén velocity in x3 direction'
-            if log == True:
-                data = np.log(self.avx3)
-            else:
-                data = self.avx3
-        elif data2plot == 'avxs':
-            variable_name = 'Alfvén speed'
-            if log == True:
-                data = np.log(self.alfvén_velocity_magnitude)
-            else:
-                data = self.alfvén_velocity_magnitude
-        ### Magneto-acoustic wave velocities ###
-        ### Fast ###
-        elif data2plot == 'msfx1':
-            variable_name = 'Fast Magneto-acoustic Wave velocity in x1 direction'
-            if log == True:
-                data = np.log(self.fast_ms_x1)
-            else:
-                data = self.fast_ms_x1
-        elif data2plot == 'msfx2':
-            variable_name = 'Fast Magneto-acoustic Wave velocity in x2 direction'
-            if log == True:
-                data = np.log(self.fast_ms_x2)
-            else:
-                data = self.fast_ms_x2
-        elif data2plot == 'msfx3':
-            variable_name = 'Fast Magneto-acoustic Wave velocity in x3 direction'
-            if log == True:
-                data = np.log(self.fast_ms_x3)
-            else:
-                data = self.fast_ms_x3
-        elif data2plot == 'msfs':
-            variable_name = 'Fast Magneto-acoustic speed'
-            if log == True:
-                data = np.log(self.fast_ms_velocity_magnitude)
-            else:
-                data = self.fast_ms_velocity_magnitude
-        ### Slow ###
-        elif data2plot == 'mssx1':
-            variable_name = 'Slow Magneto-acoustic Wave velocity in x1 direction'
-            if log == True:
-                data = np.log(self.slow_ms_x1)
-            else:
-                data = self.slow_ms_x1
-        elif data2plot == 'mssx2':
-            variable_name = 'Slow Magneto-acoustic Wave velocity in x2 direction'
-            if log == True:
-                data = np.log(self.slow_ms_x2)
-            else:
-                data = self.slow_ms_x2
-        elif data2plot == 'mssx3':
-            variable_name = 'Slow Magneto-acoustic Wave velocity in x3 direction'
-            if log == True:
-                data = np.log(self.slow_ms_x3)
-            else:
-                data = self.slow_ms_x3
-        elif data2plot == 'msss':
-            variable_name = 'Slow Magneto-acoustic speed'
-            if log == True:
-                data = np.log(self.slow_ms_velocity_magnitude)
-            else:
-                data = self.slow_ms_velocity_magnitude
-        ### Mach numbers ###
-        elif data2plot == 'fmach':
-            variable_name = 'Fast wave Mach number'
-            if log == True:
-                data = np.log(self.mach_fast)
-            else:
-                data = self.mach_fast
-        elif data2plot == 'amach':
-            variable_name = 'Alfvén wave Mach number'
-            if log == True:
-                data = np.log(self.mach_alfvén)
-            else:
-                data = self.mach_alfvén
-        elif data2plot == 'smach':
-            variable_name = 'Slow wave Mach number'
-            if log == True:
-                data = np.log(self.mach_slow)
-            else:
-                data = self.mach_slow
-        ### Plasma Beta ###
-        elif data2plot == 'beta':
-            variable_name = 'Plasma Beta'
-            if log == True:
-                data = np.log(self.beta)
-            else:
-                data = self.beta
-        ### Magnetic pressure ###
-        elif data2plot == 'b_prs':
-            variable_name = 'Magnetic pressure'
-            if log == True:
-                data = np.log(self.magnetic_prs)
-            else:
-                data = self.magnetic_prs
-        ### Sound Speed ###
-        elif data2plot == 'cs':
-            variable_name = 'Ideal Sound Speed'
-            if log == True:
-                data = np.log(self.sound_speed)
-            else:
-                data = self.sound_speed
-        ### Energies ###
-        elif data2plot == 'SKE':
-            variable_name = 'System Kinetic Energy'
-            if log == True:
-                data = np.log(self.kinetic_energy_sys)
-            else:
-                data = self.kinetic_energy_sys
-        elif data2plot == 'SEN':
-            variable_name = 'System Enthalpy'
-            if log == True:
-                data = np.log(self.thermal_energy_sys)
-            else:
-                data = self.thermal_energy_sys
-        elif data2plot == 'SME':
-            variable_name = 'System Magnetic Energy'
-            if log == True:
-                data = np.log(self.magnetic_energy_sys)
-            else:
-                data = self.magnetic_energy_sys
-        elif data2plot == 'STE':
-            variable_name = 'System Total Energy'
-            if log == True:
-                data = np.log(self.total_energy_sys)
-            else:
-                data = self.total_energy_sys
-        elif data2plot == 'JKE':
-            variable_name = 'Jet Kinetic Energy'
-            if log == True:
-                data = np.log(self.kinetic_energy_jet)
-            else:
-                data = self.kinetic_energy_jet
-        elif data2plot == 'JEN':
-            variable_name = 'Jet Enthalpy'
-            if log == True:
-                data = np.log(self.thermal_energy_sys)
-            else:
-                data = self.thermal_energy_sys
-        elif data2plot == 'JME':
-            variable_name = 'Jet Magnetic Energy'
-            if log == True:
-                data = np.log(self.magnetic_energy_sys)
-            else:
-                data = self.magnetic_energy_sys
-        elif data2plot == 'JTE':
-            variable_name = 'Jet Total Energy'
-            if log == True:
-                data = np.log(self.total_energy_sys)
-            else:
-                data = self.total_energy_sys
-        ### Powers ###
-        elif data2plot == 'SKP':
-            variable_name = 'System Kinetic power'
-            if log == True:
-                data = np.log(self.kinetic_power_sys)
-            else:
-                data = self.kinetic_power_sys
-        elif data2plot == 'SEP':
-            variable_name = 'System Thermal power'
-            if log == True:
-                data = np.log(self.thermal_power_sys)
-            else:
-                data = self.thermal_power_sys
-        elif data2plot == 'SMP':
-            variable_name = 'System Magnetic power'
-            if log == True:
-                data = np.log(self.magnetic_power_sys)
-            else:
-                data = self.magnetic_power_sys
-        elif data2plot == 'STP':
-            variable_name = 'System Total power'
-            if log == True:
-                data = np.log(self.total_power_sys)
-            else:
-                data = self.total_power_sys
-        elif data2plot == 'JKP':
-            variable_name = 'Jet Kinetic power'
-            if log == True:
-                data = np.log(self.kinetic_power_jet)
-            else:
-                data = self.kinetic_power_jet
-        elif data2plot == 'JEP':
-            variable_name = 'Jet Thermal power'
-            if log == True:
-                data = np.log(self.thermal_power_sys)
-            else:
-                data = self.thermal_power_sys
-        elif data2plot == 'JMP':
-            variable_name = 'Jet Magnetic power'
-            if log == True:
-                data = np.log(self.magnetic_power_sys)
-            else:
-                data = self.magnetic_power_sys
-        elif data2plot == 'JTP':
-            variable_name = 'Jet Total power'
-            if log == True:
-                data = np.log(self.total_power_sys)
-            else:
-                data = self.total_power_sys
-        ### Directional energies ###
-        elif data2plot == 'JKE-x2':
-            variable_name = 'Jet Kinetic energy in x2'
-            if log == True:
-                data = np.log(self.kinetic_energy_jet_x2)
-            else:
-                data = self.kinetic_energy_jet_x2
-        elif data2plot == 'JME-x2':
-            variable_name = 'Jet Magnetic energy in x2'
-            if log == True:
-                data = np.log(self.magnetic_energy_jet_x2)
-            else:
-                data = self.magnetic_energy_jet_x2
-        
-                
+                data = self.data_dict[data2plot]
+                        
         self.data = data
         self.variable_name = variable_name
 
@@ -466,7 +106,6 @@ class mhd_jet(py3Pluto):
         cax = divider.append_axes('right',size='5%',pad=0.25)
         pl = axes.contourf(self.axial_grid, self.radial_grid, self.data, cmap=self.cmap, levels=128, alpha=0.95)
         plt.colorbar(pl,cax,ticks=np.linspace(np.min(self.data),np.max(self.data), 9))
-        ##axes.set_title(self.title)
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distnace [$R_{jet}$]')
@@ -500,7 +139,6 @@ class mhd_jet(py3Pluto):
         data_plot = np.reshape(self.data, new_shape)
         plt.rc('font', size=8)
         fig, axes = plt.subplots(1,1,figsize=self.image_size, dpi=self.dpi)
-        #axes.set_title(f'Histogram data for {title} at {self.time_step}')
         hist = axes.hist(data_plot, bins=bins, align='mid', edgecolor='white')
         axes.set_xlabel('Value')
         axes.set_ylabel('Frequency')
@@ -805,16 +443,13 @@ class mhd_jet(py3Pluto):
             ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
-        #plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Power')
         plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Power')
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Power')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Power')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Power')
-        ##axes.set_title(f'Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Power')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
-        #axes.legend(loc='best', borderaxespad=1, fontsize='small', markerscale=2, bbox_to_anchor=(1, 0.8))
         axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
 
         if close==True:
@@ -851,12 +486,10 @@ class mhd_jet(py3Pluto):
         ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
-        #plt0 = axes.plot(self.axial_grid, total_sys - total_jet, '-', color='black', ms=2.5, label='Total System Energy')
         plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Energy')
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Energy')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Energy')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Energy')
-        #axes.set_title(f'Energy at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Energy')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -899,7 +532,6 @@ class mhd_jet(py3Pluto):
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic System Energy Density')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal System Energy Density')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic System Energy Density')
-        #axes.set_title(f'Energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Energy density')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -1070,14 +702,6 @@ class mhd_jet(py3Pluto):
             self.prs[0:-1, 0:-1],
             self.prs[1:, 1:],
             )
-        
-        ### Mask shocks ###
-        #RHx2[RHx2 < min] = 0.0
-        #RHx2[RHx2 > max] = 0.0
-        #RHy2[RHy2 < min] = 0.0
-        #RHy2[RHy2 > max] = 0.0
-        #RHxy2[RHxy2 < min] = 0.0
-        #RHxy2[RHxy2 > max] = 0.0
         
         ma1 = np.ma.masked_greater(np.ma.masked_less(RHx2, min), max)
         ma2 = np.ma.masked_greater(np.ma.masked_less(RHy2, min), max)
