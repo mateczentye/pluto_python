@@ -1,4 +1,3 @@
-#%%
 """
 This module contains the super class for the package:
     - all data is stored here

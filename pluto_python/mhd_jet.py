@@ -1,9 +1,6 @@
-#%%
 """
 The module contains the subclass of the package that deals with all the magnetohydrodynamic visualisation.
 It selects the variable to use for each visualisation method when they are called.
-
-Current version has data selection happening in this class to have physics specific data access from superclass.
 """
 from typing import Tuple
 from .pluto import py3Pluto
