@@ -77,8 +77,8 @@ def test_no_variable_given():
 
 @pytest.mark.util
 def test_save_plot():
-    test_object.plot('vx1', save=True)
-    assert os.path.exists(f'{path}plot/vx1/0_vx1_.jpeg')
+    test_object.plot('vx1', save=True, title='test')
+    assert os.path.exists(f'{path}plot/vx1/{test_object.time_step}_vx1_test.jpeg')
 
 @pytest.mark.util
 def test_save_hist():
