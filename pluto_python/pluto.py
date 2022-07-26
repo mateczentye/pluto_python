@@ -583,25 +583,43 @@ class py3Pluto:
             self.glm = np.zeros_like(self.vx1)
 
         self.magnetic_field_magnitude = np.sqrt(self.bx1**2 + self.bx2**2 + self.bx3**2)
+        self.data_dict.update({'bxs' : self.magnetic_field_magnitude})
         ############################## Alfvén Velocities ##############################
         self.avx1 = alfven_velocity(self.bx1, self.rho)
+        self.data_dict.update({'avx1' : self.avx1})
         self.avx2 = alfven_velocity(self.bx2, self.rho)
+        self.data_dict.update({'avx2' : self.avx2})
         self.avx3 = alfven_velocity(self.bx3, self.rho)
+        self.data_dict.update({'avx3' : self.avx3})
         self.alfvén_velocity_magnitude = np.sqrt(self.avx1**2 + self.avx2**2 + self.avx3**2)
+        self.data_dict.update({'avxs' : self.alfvén_velocity_magnitude})
         ############################## Magneto acoustic Waves ##############################
         self.slow_ms_x1, self.fast_ms_x1 = magneto_acoustic_velocity(self.bx1, self.prs, self.rho, self.gamma)
+        self.data_dict.update({'mssx1' : self.slow_ms_x1})
+        self.data_dict.update({'msfx1' : self.fast_ms_x1})
         self.slow_ms_x2, self.fast_ms_x2 = magneto_acoustic_velocity(self.bx2, self.prs, self.rho, self.gamma)
+        self.data_dict.update({'mssx2' : self.slow_ms_x2})
+        self.data_dict.update({'msfx1' : self.fast_ms_x2})
         self.slow_ms_x3, self.fast_ms_x3 = magneto_acoustic_velocity(self.bx3, self.prs, self.rho, self.gamma)
+        self.data_dict.update({'mssx3' : self.slow_ms_x3})
+        self.data_dict.update({'msfx1' : self.fast_ms_x3})
         self.fast_ms_velocity_magnitude = np.sqrt(self.fast_ms_x1**2 + self.fast_ms_x2**2 + self.fast_ms_x3**2)
+        self.data_dict.update({'msfs' : self.fast_ms_velocity_magnitude})
         self.slow_ms_velocity_magnitude = np.sqrt(self.slow_ms_x1**2 + self.slow_ms_x2**2 + self.slow_ms_x3**2)
+        self.data_dict.update({'msss' : self.slow_ms_velocity_magnitude})
         ############################## Mach numbers ##############################
         self.mach_fast = mach_number(self.velocity_magnitude, self.fast_ms_velocity_magnitude)
+        self.data_dict.update({'fmach' : self.mach_fast})
         self.mach_slow = mach_number(self.velocity_magnitude, self.slow_ms_velocity_magnitude)
+        self.data_dict.update({'smach' : self.mach_slow})
         self.mach_alfvén = mach_number(self.velocity_magnitude, self.alfvén_velocity_magnitude)
+        self.data_dict.update({'amach' : self.mach_alfvén})
         ############################## Magnetic pressure ##############################
         self.magnetic_prs = magnetic_pressure(self.magnetic_field_magnitude)
+        self.data_dict.update({'b_prs' : self.magnetic_prs})
         ############################## Plasma Beta ##############################
         self.beta = (self.prs / self.magnetic_prs)
+        self.data_dict.update({'beta' : self.beta})
         #self.bx1s = np.reshape(self.classifier(delta_time=time)[self.b_stag1], self.XZ_shape).T
         #self.bx2s = np.reshape(self.classifier(delta_time=time)[self.b_stag2], self.XZ_shape).T
         #self.bx3s = np.reshape(self.classifier(delta_time=time)[self.b_stag3], self.XZ_shape).T
@@ -628,9 +646,12 @@ class py3Pluto:
                                                 magnetic_field=self.magnetic_field_magnitude,
         )[2]
     
-        #self.magnetic_energy_density = np.zeros_like(self.thermal_energy_density)
+        self.data_dict.update({'TED' : self.thermal_energy_density})
+        self.data_dict.update({'KED' : self.kinetic_energy_density})
+        self.data_dict.update({'MED' : self.kinetic_energy_density})
 
         self.total_energy_density = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        self.data_dict.update({'TotED' : self.total_energy_density})
         ############################## Energy density x1 ##############################
         self.thermal_energy_density_x1 = energy_density(
                                                 self.prs,
@@ -644,18 +665,20 @@ class py3Pluto:
                                                 self.vx1,
                                                 self.gamma
         )[1]
-        try:
-            self.magnetic_energy_density_x1 = energy_density(
-                                                    self.prs,
-                                                    self.rho,
-                                                    self.vx1,
-                                                    self.gamma,
-                                                    magnetic_field=self.bx1,
-            )[2]
-        except:
-            self.magnetic_energy_density_x1 = np.zeros_like(self.thermal_energy_density)
+        self.magnetic_energy_density_x1 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx1,
+                                                self.gamma,
+                                                magnetic_field=self.bx1,
+        )[2]
+
+        self.data_dict.update({'TEDx1' : self.thermal_energy_density_x1})
+        self.data_dict.update({'KEDx1' : self.kinetic_energy_density_x1})
+        self.data_dict.update({'MEDx1' : self.magnetic_energy_density_x1})
 
         self.total_energy_density_x1 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        self.data_dict.update({'TotEDx1' : self.total_energy_density_x1})
         ############################## Energy density x2 ##############################
         self.thermal_energy_density_x2 = energy_density(
                                                 self.prs,
@@ -669,18 +692,20 @@ class py3Pluto:
                                                 self.vx2,
                                                 self.gamma
         )[1]
-        try:
-            self.magnetic_energy_density_x2 = energy_density(
-                                                    self.prs,
-                                                    self.rho,
-                                                    self.vx2,
-                                                    self.gamma,
-                                                    magnetic_field=self.bx2,
-            )[2]
-        except:
-            self.magnetic_energy_density_x2 = np.zeros_like(self.thermal_energy_density)
+        self.magnetic_energy_density_x2 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx2,
+                                                self.gamma,
+                                                magnetic_field=self.bx2,
+        )[2]
+        
+        self.data_dict.update({'TEDx2' : self.thermal_energy_density_x2})
+        self.data_dict.update({'KEDx2' : self.kinetic_energy_density_x2})
+        self.data_dict.update({'MEDx2' : self.magnetic_energy_density_x2})
 
         self.total_energy_density_x2 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        self.data_dict.update({'TotEDx2' : self.total_energy_density_x2})
         ############################## Energy density x3 ##############################
         self.thermal_energy_density_x3 = energy_density(
                                                 self.prs,
@@ -694,18 +719,21 @@ class py3Pluto:
                                                 self.vx3,
                                                 self.gamma
         )[1]
-        try:
-            self.magnetic_energy_density_x3 = energy_density(
-                                                    self.prs,
-                                                    self.rho,
-                                                    self.vx3,
-                                                    self.gamma,
-                                                    magnetic_field=self.bx3,
-            )[2]
-        except:
-            self.magnetic_energy_density_x3 = np.zeros_like(self.thermal_energy_density)
+        
+        self.magnetic_energy_density_x3 = energy_density(
+                                                self.prs,
+                                                self.rho,
+                                                self.vx3,
+                                                self.gamma,
+                                                magnetic_field=self.bx3,
+        )[2]
+    
+        self.data_dict.update({'TEDx3' : self.thermal_energy_density_x3})
+        self.data_dict.update({'KEDx3' : self.kinetic_energy_density_x3})
+        self.data_dict.update({'MEDx3' : self.magnetic_energy_density_x3})
 
         self.total_energy_density_x3 = self.kinetic_energy_density + self.thermal_energy_density + self.magnetic_energy_density
+        self.data_dict.update({'TotEDx3' : self.total_energy_density_x3})
         ############################## Energy ##############################
         # Axial element lengths
         axial_differences = []
@@ -724,58 +752,100 @@ class py3Pluto:
             radial_scaler.append(dsurf)
         # Volume elements
         volumes = np.transpose([x*np.asarray(radial_scaler) for x in axial_differences])
+
         # System energies
         self.kinetic_energy_sys = self.kinetic_energy_density * volumes
         self.thermal_energy_sys = self.thermal_energy_density * volumes
         self.magnetic_energy_sys = self.magnetic_energy_density * volumes
         self.total_energy_sys = self.kinetic_energy_sys + self.thermal_energy_sys + self.magnetic_energy_sys
+        self.data_dict.update({'SKE' : self.kinetic_energy_sys})
+        self.data_dict.update({'STE' : self.thermal_energy_sys})
+        self.data_dict.update({'SME' : self.magnetic_energy_sys})
+        self.data_dict.update({'TSE' : self.total_energy_sys})
         # x1
         self.kinetic_energy_sys_x1 = self.kinetic_energy_density_x1 * volumes
         self.thermal_energy_sys_x1 = self.thermal_energy_density_x1 * volumes
         self.magnetic_energy_sys_x1 = self.magnetic_energy_density_x1 * volumes
         self.total_energy_sys_x1 = self.kinetic_energy_sys_x1 + self.thermal_energy_sys_x1 + self.magnetic_energy_sys_x1
+        self.data_dict.update({'STEx1' : self.kinetic_energy_sys_x1})
+        self.data_dict.update({'SKEx1' : self.thermal_energy_sys_x1})
+        self.data_dict.update({'SMEx1' : self.magnetic_energy_sys_x1})
+        self.data_dict.update({'TSEx1' : self.total_energy_sys_x1})
         # x2
         self.kinetic_energy_sys_x2 = self.kinetic_energy_density_x2 * volumes
         self.thermal_energy_sys_x2 = self.thermal_energy_density_x2 * volumes
         self.magnetic_energy_sys_x2 = self.magnetic_energy_density_x2 * volumes
         self.total_energy_sys_x2 = self.kinetic_energy_sys_x2 + self.thermal_energy_sys_x2 + self.magnetic_energy_sys_x2
+        self.data_dict.update({'SKEx2' : self.kinetic_energy_sys_x2})
+        self.data_dict.update({'STEx2' : self.thermal_energy_sys_x2})
+        self.data_dict.update({'SMEx2' : self.magnetic_energy_sys_x2})
+        self.data_dict.update({'TSEx2' : self.total_energy_sys_x2})
         # x3
         self.kinetic_energy_sys_x3 = self.kinetic_energy_density_x3 * volumes
         self.thermal_energy_sys_x3 = self.thermal_energy_density_x3 * volumes
         self.magnetic_energy_sys_x3 = self.magnetic_energy_density_x3 * volumes
         self.total_energy_sys_x3 = self.kinetic_energy_sys_x3 + self.thermal_energy_sys_x3 + self.magnetic_energy_sys_x3
+        self.data_dict.update({'SKEx3' : self.kinetic_energy_sys_x3})
+        self.data_dict.update({'STEx3' : self.thermal_energy_sys_x3})
+        self.data_dict.update({'SMEx3' : self.magnetic_energy_sys_x3})
+        self.data_dict.update({'TSEx3' : self.total_energy_sys_x3})
         # Jet energies
         self.kinetic_energy_jet = self.kinetic_energy_sys * self.tr1
         self.thermal_energy_jet = self.thermal_energy_sys * self.tr1
         self.magnetic_energy_jet = self.magnetic_energy_sys * self.tr1
         self.total_energy_jet = self.total_energy_sys * self.tr1
+        self.data_dict.update({'JKE' : self.kinetic_energy_jet})
+        self.data_dict.update({'JTE' : self.thermal_energy_jet})
+        self.data_dict.update({'JME' : self.magnetic_energy_jet})
+        self.data_dict.update({'TJE' : self.total_energy_jet})
         # x1
         self.kinetic_energy_jet_x1 = self.kinetic_energy_sys_x1 * self.tr1
         self.thermal_energy_jet_x1 = self.thermal_energy_sys_x1 * self.tr1
         self.magnetic_energy_jet_x1 = self.magnetic_energy_sys_x1 * self.tr1
         self.total_energy_jet_x1 = self.total_energy_sys_x1 * self.tr1
+        self.data_dict.update({'JKEx1' : self.kinetic_energy_jet_x1})
+        self.data_dict.update({'JTEx1' : self.thermal_energy_jet_x1})
+        self.data_dict.update({'JMEx1' : self.magnetic_energy_jet_x1})
+        self.data_dict.update({'TJEx1' : self.total_energy_jet_x1})
         # x2
         self.kinetic_energy_jet_x2 = self.kinetic_energy_sys_x2 * self.tr1
         self.thermal_energy_jet_x2 = self.thermal_energy_sys_x2 * self.tr1
         self.magnetic_energy_jet_x2 = self.magnetic_energy_sys_x2 * self.tr1
         self.total_energy_jet_x2 = self.total_energy_sys_x2 * self.tr1
+        self.data_dict.update({'JKEx2' : self.kinetic_energy_jet_x2})
+        self.data_dict.update({'JTEx2' : self.thermal_energy_jet_x2})
+        self.data_dict.update({'JMEx2' : self.magnetic_energy_jet_x2})
+        self.data_dict.update({'TJEx2' : self.total_energy_jet_x2})
         # x3
         self.kinetic_energy_jet_x3 = self.kinetic_energy_sys_x3 * self.tr1
         self.thermal_energy_jet_x3 = self.thermal_energy_sys_x3 * self.tr1
         self.magnetic_energy_jet_x3 = self.magnetic_energy_sys_x3 * self.tr1
         self.total_energy_jet_x3 = self.total_energy_sys_x3 * self.tr1
+        self.data_dict.update({'JKEx3' : self.kinetic_energy_jet_x3})
+        self.data_dict.update({'JTEx3' : self.thermal_energy_jet_x3})
+        self.data_dict.update({'JMEx3' : self.magnetic_energy_jet_x3})
+        self.data_dict.update({'TJEx3' : self.total_energy_jet_x3})
         ############################## Power ##############################
         # System power
         self.kinetic_power_sys = np.asarray([x/axial_differences for x in self.kinetic_energy_sys]) * self.vx3
         self.thermal_power_sys = np.asarray([x/axial_differences for x in self.thermal_energy_sys]) * self.vx3
         self.magnetic_power_sys = np.asarray([x/axial_differences for x in self.magnetic_energy_sys]) * self.vx3
         self.total_power_sys = self.kinetic_power_sys + self.thermal_power_sys + self.magnetic_power_sys
+        self.data_dict.update({'SKP' : self.kinetic_power_sys})
+        self.data_dict.update({'STP' : self.thermal_power_sys})
+        self.data_dict.update({'SMP' : self.magnetic_power_sys})
+        self.data_dict.update({'TSP' : self.total_power_sys})
         # Jet power
         self.kinetic_power_jet = self.kinetic_power_sys * self.tr1
         self.thermal_power_jet = self.thermal_power_sys * self.tr1
         self.magnetic_power_jet = self.magnetic_power_sys * self.tr1
         self.total_power_jet = self.kinetic_power_jet + self.thermal_power_jet + self.magnetic_power_jet
-
+        self.data_dict.update({'JKP' : self.kinetic_power_jet})
+        self.data_dict.update({'JTP' : self.thermal_power_jet})
+        self.data_dict.update({'JMP' : self.magnetic_power_jet})
+        self.data_dict.update({'TJP' : self.total_power_jet})
+        
+        #self.data_dict.update({'' : self.})
 
         if self.mirrored == True:
             self.bx1 = self._flip_multiply(self.bx1)
