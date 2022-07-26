@@ -4,7 +4,7 @@ import h5py
 import os
 import numpy as np
 import sys
-sys.path.insert(0,'..')
+sys.path.insert(0,'../')
 from pluto_python.tools import rearrange_axial_grid as rag
 
 @pytest.mark.util

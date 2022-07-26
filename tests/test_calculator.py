@@ -4,7 +4,7 @@ import h5py
 import os
 import numpy as np
 import sys
-sys.path.insert(0,'..')
+sys.path.insert(0,'../')
 import pluto_python.calculator as c
 
 @pytest.mark.phys

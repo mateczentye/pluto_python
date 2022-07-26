@@ -4,7 +4,7 @@ import h5py
 import os
 import numpy as np
 import sys
-sys.path.insert(0,'..')
+sys.path.insert(0,'../')
 from pluto_python.pluto import py3Pluto
 
 path = os.getcwd()+'/tests/test_files/'
