@@ -106,7 +106,6 @@ class mhd_jet(py3Pluto):
         cax = divider.append_axes('right',size='5%',pad=0.25)
         pl = axes.contourf(self.axial_grid, self.radial_grid, self.data, cmap=self.cmap, levels=128, alpha=0.95)
         plt.colorbar(pl,cax,ticks=np.linspace(np.min(self.data),np.max(self.data), 9))
-        ##axes.set_title(self.title)
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distnace [$R_{jet}$]')
@@ -140,7 +139,6 @@ class mhd_jet(py3Pluto):
         data_plot = np.reshape(self.data, new_shape)
         plt.rc('font', size=8)
         fig, axes = plt.subplots(1,1,figsize=self.image_size, dpi=self.dpi)
-        #axes.set_title(f'Histogram data for {title} at {self.time_step}')
         hist = axes.hist(data_plot, bins=bins, align='mid', edgecolor='white')
         axes.set_xlabel('Value')
         axes.set_ylabel('Frequency')
@@ -445,16 +443,13 @@ class mhd_jet(py3Pluto):
             ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
-        #plt0 = axes.plot(self.axial_grid, total_sys, '-', color='black', ms=2.5, label='Total System Power')
         plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Power')
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Power')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Power')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Power')
-        ##axes.set_title(f'Power at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Power')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
-        #axes.legend(loc='best', borderaxespad=1, fontsize='small', markerscale=2, bbox_to_anchor=(1, 0.8))
         axes.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize='small', markerscale=2)
 
         if close==True:
@@ -491,12 +486,10 @@ class mhd_jet(py3Pluto):
         ]
 
         figure, axes = plt.subplots(figsize=(self.image_size[0], self.image_size[1]), dpi=self.dpi)
-        #plt0 = axes.plot(self.axial_grid, total_sys - total_jet, '-', color='black', ms=2.5, label='Total System Energy')
         plt1 = axes.plot(self.axial_grid, total_jet, '-', color='blue', ms=2.5, label='Total Jet Energy')
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic Jet Energy')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal Jet Energy')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic Jet Energy')
-        #axes.set_title(f'Energy at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Energy')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -539,7 +532,6 @@ class mhd_jet(py3Pluto):
         plt2 = axes.plot(self.axial_grid, kinetic_jet, '-.', color='green', ms=2.5, label='Kinetic System Energy Density')
         plt3 = axes.plot(self.axial_grid, enthalpy_jet, ':', color='orange', ms=1.5, label='Thermal System Energy Density')
         plt4 = axes.plot(self.axial_grid, magnetic_jet, '--', color='red', ms=1.5, label='Magnetic System Energy Density')
-        #axes.set_title(f'Energy density at time = {self.tstop * int(self.timestep.replace("Timestep_", "")) / 1001 :.1f} of {self.simulation_title}')
         axes.set_xlim(self.xlim[0], self.xlim[1])
         axes.set_ylabel(r'Energy density')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
@@ -710,14 +702,6 @@ class mhd_jet(py3Pluto):
             self.prs[0:-1, 0:-1],
             self.prs[1:, 1:],
             )
-        
-        ### Mask shocks ###
-        #RHx2[RHx2 < min] = 0.0
-        #RHx2[RHx2 > max] = 0.0
-        #RHy2[RHy2 < min] = 0.0
-        #RHy2[RHy2 > max] = 0.0
-        #RHxy2[RHxy2 < min] = 0.0
-        #RHxy2[RHxy2 > max] = 0.0
         
         ma1 = np.ma.masked_greater(np.ma.masked_less(RHx2, min), max)
         ma2 = np.ma.masked_greater(np.ma.masked_less(RHy2, min), max)
