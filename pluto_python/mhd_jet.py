@@ -76,6 +76,7 @@ class mhd_jet(py3Pluto):
             
             for sign, name in zip(self.varname_dict.keys(), self.varname_dict.values()):
                 print(f'{sign:>15}:     {name}')
+            data = None
             raise ValueError('Please give a variable to plot!')
 
         else:

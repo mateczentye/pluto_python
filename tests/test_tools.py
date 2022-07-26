@@ -38,4 +38,3 @@ def test_rag():
     ]
 
     assert np.shape(rag(twoD, test)) == np.shape(test)
-
