@@ -78,39 +78,39 @@ def test_no_variable_given():
 @pytest.mark.util
 def test_save_plot():
     test_object.plot('vx1', save=True, title='test')
-    assert os.path.exists(f'{path}plot/vx1/{test_object.time_step}_vx1_test.jpeg')
+    assert os.path.exists(f'{path}plot/vx1/{test_object.time_step}_vx1_test.jpeg') == True
 
 @pytest.mark.util
 def test_save_hist():
     test_object.hist('vx1', save=True)
-    assert os.path.exists(f'{path}hist/vx1/{test_object.time_step}.jpeg')
+    assert os.path.exists(f'{path}hist/vx1/{test_object.time_step}.jpeg') == True
 
 @pytest.mark.util
 def test_save_shocks():
     test_object.shocks(save=True)
-    assert os.path.exists(f'{path}shocks/{test_object.plot_shock}/{test_object.time_step}.jpeg')
+    assert os.path.exists(f'{path}shocks/{test_object.plot_shock}/{test_object.time_step}.jpeg') == True
 
 @pytest.mark.util
 def test_save_plot_spacetime():
     test_object.plot_spacetime('vx1', save=True)
-    assert os.path.exists(f'{path}space_time/vx1/{test_object.time_step}.jpeg')
+    assert os.path.exists(f'{path}space_time/vx1/{test_object.time_step}.jpeg') == True
 
 @pytest.mark.util
 def test_save_plot_power():
     test_object.plot_power(save=True)
-    assert os.path.exists(f'{path}power/{test_object.time_step}_pwr.jpeg')
+    assert os.path.exists(f'{path}power/{test_object.time_step}_pwr.jpeg') == True
 
 @pytest.mark.util
 def test_save_plot_energy():
     test_object.plot_energy(save=True)
-    assert os.path.exists(f'{path}energy/{test_object.time_step}.jpeg')
+    assert os.path.exists(f'{path}energy/{test_object.time_step}.jpeg') == True
 
 @pytest.mark.util
 def test_save_plot_energy_density():
     test_object.plot_energy_density(save=True)
-    assert os.path.exists(f'{path}energy_density/{test_object.time_step}.jpeg')
+    assert os.path.exists(f'{path}energy_density/{test_object.time_step}.jpeg') == True
 
 @pytest.mark.util
 def test_save_plot_fieldlines():
     test_object.plot_fieldlines(save=True)
-    assert os.path.exists(f'{path}field_line/{test_object.time_step}.jpeg')
+    assert os.path.exists(f'{path}field_line/{test_object.time_step}.jpeg') == True
