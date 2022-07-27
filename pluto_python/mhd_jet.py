@@ -117,7 +117,6 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}plot'
             chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
@@ -157,8 +156,6 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            title = self.data_path.split('/')[-2]
-            folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}hist'
             chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
@@ -325,7 +322,6 @@ class mhd_jet(py3Pluto):
         
 
         axesS.legend()
-        #axesS.set_title(f'MHD Shocks from plasma-state transition at {self.time_step}')
         axesS.set_xlim(self.xlim[0], self.xlim[1])
         axesS.set_ylim(self.ylim[0], self.ylim[1])
         axesS.set_ylabel(r'Radial distance [$R_{jet}$]')
@@ -335,8 +331,6 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            title = self.data_path.split('/')[-2]
-            folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}shocks'
             chck_subdir = check_dir + f'/{self.plot_shock}'
             if os.path.exists(check_dir) is False:
@@ -409,8 +403,6 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            title = self.data_path.split('/')[-2]
-            folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}space_time'
             chck_subdir = check_dir + f'/{data2plot}'
             if os.path.exists(check_dir) is False:
@@ -457,8 +449,6 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            title = self.data_path.split('/')[-2]
-            folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}power'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
@@ -500,8 +490,6 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            title = self.data_path.split('/')[-2]
-            folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}energy'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
@@ -542,8 +530,6 @@ class mhd_jet(py3Pluto):
             plt.close()
 
         if save==True:
-            title = self.data_path.split('/')[-2]
-            folder = title.replace(' ', '_')
             check_dir = f'{self.data_path}energy_density'
             if os.path.exists(check_dir) is False:
                 os.mkdir(check_dir, 755)
