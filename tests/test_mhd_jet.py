@@ -42,6 +42,12 @@ def test_shocks():
     assert type(test_object.shocks_list) == list
 
 @pytest.mark.util
+def test_shocks_groups():
+    test_object.shocks('slow, inter, fast')
+    assert type(test_object.shocks_list) == list
+
+
+@pytest.mark.util
 def test_spacetime():
     test_object.plot_spacetime('prs')
     assert type(test_object.list2plot) == list
@@ -125,4 +131,4 @@ def test_azimuthal_energy():
 def test_oblique_shocks():
     test_object.oblique_shocks()
     assert test_object.oblique_shocks_check == type(mpl.figure.Figure())
-    
+
