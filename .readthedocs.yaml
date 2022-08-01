@@ -32,6 +32,6 @@ python:
   #system_packages: true
 
 # Build documentation in the docs/ directory with Sphinx
-sphinx:
-   configuration: docs/conf.py
-   builder: html
+#sphinx:
+   #configuration: docs/conf.py
+   #builder: html
