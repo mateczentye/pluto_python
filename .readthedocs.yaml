@@ -22,11 +22,11 @@ build:
 
 # Optionally declare the Python requirements required to build your docs
 python:
-   #version: '3.8'
+   version: '3.8'
    install:
    #- requirements: docs/requirements.txt
-   - method: pip
-      path: .
+   - method: setuptool
+      path: setup.py
       #extra_requirements:
         #- docs
   #system_packages: true
