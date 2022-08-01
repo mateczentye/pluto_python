@@ -1,4 +1,7 @@
 sphinx
 sphinx_rtd_theme
 readthedocs-sphinx-search
+h5py
+numpy
+matplotlib
 pluto_python
