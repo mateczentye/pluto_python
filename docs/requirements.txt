@@ -4,4 +4,3 @@ readthedocs-sphinx-search
 h5py
 numpy
 matplotlib
-pluto_python
