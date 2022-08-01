@@ -29,7 +29,7 @@ Background
 The package was designed and initial versions developped during the author's MPhys
 research project, to analyse and visualise the output of PLUTO h5 output files.
 
-Classes and methods
+Modules
 ===================
 
 
