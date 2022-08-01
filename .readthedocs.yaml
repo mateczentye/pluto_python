@@ -24,10 +24,8 @@ build:
 python:
    version: '3.8'
    install:
-   #- requirements: docs/requirements.txt
-   - method: setuptool
-      path: "."
-      #extra_requirements:
+   - requirements: docs/requirements.txt
+   - method: pip
         #- docs
   #system_packages: true
 
