@@ -125,3 +125,4 @@ def test_azimuthal_energy():
 def test_oblique_shocks():
     test_object.oblique_shocks()
     assert test_object.oblique_shocks_check == type(mpl.figure.Figure())
+    

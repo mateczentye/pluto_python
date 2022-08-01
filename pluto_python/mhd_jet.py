@@ -722,5 +722,3 @@ class mhd_jet(py3Pluto):
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
 
         self.oblique_shocks_check = type(figure)
-
-        
