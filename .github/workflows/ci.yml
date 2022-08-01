@@ -47,3 +47,4 @@ jobs:
           functionalities: coveragepy
           verbose: true
           directory: ./
+          files: ./coverage.xml
