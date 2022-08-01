@@ -112,8 +112,8 @@ class mhd_jet(py3Pluto):
                 save: Argument if the plot should be saved or not 
                     default is False
                 title: This will place additional string into the file name when saving
-
-                """
+                    default is ''
+        """
         self._data(data2plot=data2plot, log=log, close=close, save=save)
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
         plt.tight_layout()
@@ -205,7 +205,7 @@ class mhd_jet(py3Pluto):
                     default is False
                 save: Argument if the plot should be saved or not 
                     default is False
-
+        
         """
         self.plot_shock = plot_shock
         #### Super fast MS to Super Alfvénic ####
