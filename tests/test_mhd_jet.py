@@ -3,6 +3,7 @@ import pytest
 import h5py
 import os
 import numpy as np
+import matplotlib as mpl
 import sys
 sys.path.insert(0,'..')
 from pluto_python.mhd_jet import mhd_jet as mj
@@ -114,3 +115,13 @@ def test_save_plot_energy_density():
 def test_save_plot_fieldlines():
     test_object.plot_fieldlines(save=True)
     assert os.path.exists(f'{path}field_line/{test_object.time_step}.jpeg') == True
+
+@pytest.mark.util
+def test_azimuthal_energy():
+    test_object.plot_azimuthal_energy()
+    assert test_object.azimuthal_energy_plot_check == type(mpl.figure.Figure())
+
+@pytest.mark.util
+def test_oblique_shocks():
+    test_object.oblique_shocks()
+    assert test_object.oblique_shocks_check == type(mpl.figure.Figure())

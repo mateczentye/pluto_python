@@ -651,6 +651,10 @@ class mhd_jet(py3Pluto):
         max_e = np.max([max_ke, max_me])
         ax.set_ylim(0, max_e)
         ax.legend()
+
+        self.azimuthal_energy_plot_check = type(fig)
+
+
         
     def oblique_shocks(self, min=0, max=10000):
         """
@@ -716,5 +720,7 @@ class mhd_jet(py3Pluto):
         axes.set_ylim(self.ylim[0], self.ylim[1])
         axes.set_ylabel(r'Radial distance [$R_{jet}$]')
         axes.set_xlabel(r'Axial distance [$R_{jet}$]')
+
+        self.oblique_shocks_check = type(figure)
 
         
