@@ -40,7 +40,6 @@ pluto.py
    :members:
    :undoc-members:
    :private-members:
-   :special-members:
 
 
 mhd_jet.py
@@ -49,7 +48,6 @@ mhd_jet.py
    :members:
    :undoc-members:
    :private-members:
-   :special-members:
 
 caculator.py
 ------------
@@ -57,7 +55,6 @@ caculator.py
    :members:
    :undoc-members:
    :private-members:
-   :special-members:
 
 tools.py
 --------
@@ -65,7 +62,6 @@ tools.py
    :members:
    :undoc-members:
    :private-members:
-   :special-members:
 
 Indices and tables
 ==================
