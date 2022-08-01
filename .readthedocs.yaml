@@ -26,7 +26,7 @@ python:
    install:
    #- requirements: docs/requirements.txt
    - method: setuptool
-      path: setup.py
+      path: /.
       #extra_requirements:
         #- docs
   #system_packages: true
