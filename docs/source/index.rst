@@ -11,7 +11,7 @@ files that are exported during simulation from PLUTO (http://plutocode.ph.unito.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
 
@@ -38,29 +38,22 @@ pluto.py
 
 .. automodule:: pluto_python.pluto
    :members:
-   :undoc-members:
-   :private-members:
-   
+
+
 mhd_jet.py
 ----------
 .. automodule:: pluto_python.mhd_jet
    :members:
-   :undoc-members:
-   :private-members:
 
 caculator.py
 ------------
 .. automodule:: pluto_python.calculator
    :members:
-   :undoc-members:
-   :private-members:
 
 tools.py
 --------
 .. automodule:: pluto_python.tools
    :members:
-   :undoc-members:
-   :private-members:
 
 Indices and tables
 ==================
