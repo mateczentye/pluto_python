@@ -11,16 +11,17 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import sphinx_rtd_theme
+import sphinx
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('..'))
 #sys.path.insert(0, os.path.abspath('../../'))
 
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'Python3 PLUTO'
+project = 'pluto_python'
 copyright = '2022, Máté I. Czentye'
 author = 'Máté I. Czentye'
 
