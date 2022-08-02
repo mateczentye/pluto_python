@@ -16,25 +16,26 @@ import os
 class mhd_jet(py3Pluto):
     """This is a sub-class of py3Pluto, designed to visualise all MHD specific data sets calculated in the superclass.
     
-    data_path: str - path to .h5 files output by PLUTO
-    time_step: int - the number which is in the name of the file representing time-step
-        Defaults to 0
-    dpi: int - sets the matplotlib.pyplot artist's DPI parameter
-        Defaults to 300,
-    image_size: Tuple[int, int] - sets the matplotlib.pyplot artist's figsize argument
-        Defaults to (10,5),
-    ylim: float - sets the x-axis limit using matplotlib.pyplot xlim method
-        Default to None,
-    xlim: float - sets the y-axis limit using matplotlib.pyplot ylim method
-        Default to None,
-    cmap: str - colourmap used by matplotlib, takes a string and will give error if incorrect. 
-        Default to 'bwr',
-    global_limits: bool - if set True, all data file in directory will be looped through, and all
-    the maximum and minimum values of all calculated variables are selected.
-        Default to False,
-    mirrored:bool = False,
-    gamma: float = 5/3,
-    title: str = ''
+    Arguments:
+        data_path: str - path to .h5 files output by PLUTO
+        time_step: int - the number which is in the name of the file representing time-step
+            Defaults to 0
+        dpi: int - sets the matplotlib.pyplot artist's DPI parameter
+            Defaults to 300,
+        image_size: Tuple[int, int] - sets the matplotlib.pyplot artist's figsize argument
+            Defaults to (10,5),
+        ylim: float - sets the x-axis limit using matplotlib.pyplot xlim method
+            Default to None,
+        xlim: float - sets the y-axis limit using matplotlib.pyplot ylim method
+            Default to None,
+        cmap: str - colourmap used by matplotlib, takes a string and will give error if incorrect. 
+            Default to 'bwr',
+        global_limits: bool - if set True, all data file in directory will be looped through, and all
+        the maximum and minimum values of all calculated variables are selected.
+            Default to False,
+        mirrored:bool = False,
+        gamma: float = 5/3,
+        title: str = ''
 
     """
     def __init__(self,
