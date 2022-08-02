@@ -19,8 +19,7 @@ import matplotlib
 import os
 
 class py3Pluto:
-    """
-    This class makes an object from reading in the file at the selected timestep
+    """This class makes an object from reading in the file at the selected timestep
     with all its simulated and calculated subsidary data ready formated for plotting
     using the subclasses like mhd_jet.
     """
@@ -140,9 +139,6 @@ class py3Pluto:
         self.sound_speed = None
         ### Utility Variables
         #self.simulation_title = self.data_path.split('/')[-2]
-        
-
-
 
         self.shape_limits = self._read_ini()
         self._reader()
@@ -172,8 +168,7 @@ class py3Pluto:
             self.global_limits = self._get_limits()
 
     def _read_ini(self):
-        """
-        Method reads in data from the .ini file currently works for cylindrical polar coords
+        """Method reads in data from the .ini file currently works for cylindrical polar coords
         """
         files = os.listdir(self.data_path)
         ini_file = [file for file in files if '.ini' in file]
@@ -261,8 +256,7 @@ class py3Pluto:
         return None
         
     def classifier(self, delta_time):
-        """
-        delta_time: is the time step of which is number of the file by pluto
+        """delta_time: is the time step of which is number of the file by pluto
         """
         self._reader()
         time_string = str(delta_time)
@@ -357,8 +351,7 @@ class py3Pluto:
         return data
 
     def _flip_multiply(self, array, sign_change=False):
-        """
-        This method makes a single quadrant mirrored along the axial direction
+        """This method makes a single quadrant mirrored along the axial direction
         """
         y = self.radial_grid
         yi = np.flip(y, 0)
@@ -376,8 +369,7 @@ class py3Pluto:
         return new_array
 
     def _get_limits(self,log=False):
-        """
-        This method runs through all available data to set the colour limits up
+        """This method runs through all available data to set the colour limits up
         for each variable globally, across all time steps.
         """
         limits = {}
@@ -416,8 +408,7 @@ class py3Pluto:
         return limits
 
     def set_levels(self,variable):
-        """
-        This sets the global limits for the colourbars
+        """This sets the global limits for the colourbars
         """
         if self.global_limits_bool == False:
             
@@ -442,8 +433,7 @@ class py3Pluto:
         return levels
 
     def calculate_data(self, time):
-        """
-        This method is to calculate all subsidary data sets from the simulation data.
+        """This method is to calculate all subsidary data sets from the simulation data.
         sets global variables that are accessible by sub classes to use
         """
         no_data_msg = '{} cannot be calculated.'
