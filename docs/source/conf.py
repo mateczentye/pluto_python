@@ -33,8 +33,8 @@ author = 'Máté I. Czentye'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.doctest',
+    #'sphinx.ext.autosummary',
+    #'sphinx.ext.doctest',
     'sphinx_rtd_theme',
     #'sphinx.ext.napoleon',
     #'sphinx.ext.todo',
