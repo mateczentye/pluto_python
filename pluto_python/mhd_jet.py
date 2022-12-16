@@ -1,6 +1,6 @@
-"""
-The module contains the subclass of the package that deals with all the magnetohydrodynamic visualisation.
+"""The module contains the subclass of the package that deals with all the magnetohydrodynamic visualisation.
 It selects the variable to use for each visualisation method when they are called.
+
 """
 from typing import Tuple
 from .pluto import py3Pluto
@@ -14,9 +14,9 @@ import time
 import os
 
 class mhd_jet(py3Pluto):
-    """
-    This is a sub-class of py3Pluto, designed to visualise all MHD specific data sets calculated in the superclass.
+    """This is a sub-class of py3Pluto, designed to visualise all MHD specific data sets calculated in the superclass.
     
+    Arguments:
         data_path: str - path to .h5 files output by PLUTO
         time_step: int - the number which is in the name of the file representing time-step
             Defaults to 0
@@ -69,8 +69,8 @@ class mhd_jet(py3Pluto):
         self.simulation_title = title
 
     def _data(self, data2plot=None, log=False, close=False, save=False):
-        """
-        Method plots individual data sets that are given as an argument.
+        """Method plots individual data sets that are given as an argument.
+
         """
         if data2plot == None: # Size can be reduced by creating a dictionary with data2plot as key and name, data are values
             
@@ -95,10 +95,21 @@ class mhd_jet(py3Pluto):
         self.title = f'{prefix} {variable_name}'
 
     def plot(self, data2plot=None, log=False, close=False, save=False, title=''):
-        """
-        This method plots the simulated data sets output by PLUTO, contained within the h5 file
+        """This method plots the simulated data sets output by PLUTO, contained within the h5 file
         while additionally also plots the wave velocities, machnumbers and other calculated values.
         Focuses on spatial distributon of the data.
+            
+        Arguments:
+            data2plot: string variable matching the available data in the data_dict class attribute 
+                default is None
+            log: Boolean if values should be log or not 
+                default is False
+            close: will not plot the graph 
+                default is False
+            save: Argument if the plot should be saved or not 
+                default is False
+            title: This will place additional string into the file name when saving
+                default is ''
         """
         self._data(data2plot=data2plot, log=log, close=close, save=save)
         figure, axes = plt.subplots(figsize=self.image_size, dpi=self.dpi)
@@ -128,8 +139,22 @@ class mhd_jet(py3Pluto):
             plt.close()
 
     def hist(self,  data2plot=None, data2log=False, close=False, save=False, bins=None, log=False):
-        """
-        Method to plot histogram of the data which is passed in as the argument
+        """Method to plot histogram of the data which is passed in as the argument
+            
+        Arguments:
+            data2plot: string variable matching the available data in the data_dict class attribute 
+                default is None
+            data2log: Boolean if y-axis should be log or not 
+                default is False
+            close: will not plot the graph 
+                default is False
+            save: Argument if the plot should be saved or not 
+                default is False
+            bins: Set the number of bins - same as matplotlib histogram method bins argument 
+                default is None
+            log: Boolean if values should be log or not 
+                default is False
+
         """
         self._data(data2plot=data2plot, log=log, close=close, save=save)
         title = self.title
@@ -167,8 +192,15 @@ class mhd_jet(py3Pluto):
             plt.close()
         
     def shocks(self, plot_shock='12, 13, 14, 23, 24, 34', save=False, close=False):
-        """
-        method to plot MHD shocks
+        """Method to plot MHD shocks
+
+        Arguments:
+            plot_shocks: string that refers to the shock category i.e.: 12, 34, slow, inter
+            close: will not plot the graph 
+                default is False
+            save: Argument if the plot should be saved or not 
+                default is False
+        
         """
         self.plot_shock = plot_shock
         #### Super fast MS to Super Alfvénic ####
@@ -342,8 +374,24 @@ class mhd_jet(py3Pluto):
             plt.close()
 
     def plot_spacetime(self, data2plot=None, begin=0, end=-1, radial_step=0, log=False, close=False, save=False):
-        """
-        Space-time diagram plotting method
+        """Space-time diagram plotting method
+
+        Arguments:
+            data2plot: string variable matching the available data in the data_dict class attribute 
+                default is None
+            begin: the first time step as indicated in the PLUTO output file 
+                defaults is 0
+            end: last time step to be loaded in as indicated in the PLUTO output file 
+                defaults is -1
+            radial_step: choses the radial step in stencil index to plot 
+                default is 0 for axial symmetry axis
+            log: Boolean if values should be log or not 
+                default is False
+            close: will not plot the graph 
+                default is False
+            save: Argument if the plot should be saved or not 
+                default is False
+
         """
         ### Deal with mirrored images ###
         check_mirr = self.mirrored
@@ -417,8 +465,14 @@ class mhd_jet(py3Pluto):
             self.mirrored = True
 
     def plot_power(self, save=False, close=False):
-        """
-        Plots the power curves for the jet
+        """Plots the power curves for the jet
+
+        Arguments:
+            close: will not plot the graph 
+                default is False
+            save: Argument if the plot should be saved or not 
+                default is False
+        
         """
         self.calculate_data(self.time_step)
         total_sys = [np.sum(x) for x in np.transpose(self.total_power_sys)]
@@ -458,8 +512,14 @@ class mhd_jet(py3Pluto):
             plt.close()
         
     def plot_energy(self, save=False, close=False):
-        """
-        Plots the energy curves for the jet
+        """Plots the energy curves for the jet
+    
+        Arguments:
+            close: will not plot the graph 
+                default is False
+            save: Argument if the plot should be saved or not 
+                default is False
+
         """
         self.calculate_data(self.time_step)
         total_sys = np.asarray([np.sum(x) for x in np.transpose(self.total_energy_sys)])
@@ -499,8 +559,14 @@ class mhd_jet(py3Pluto):
             plt.close()
 
     def plot_energy_density(self, save=False, close=False):
-        """
-        Plots the energy density curves for the jet
+        """Plots the energy density curves for the jet
+        
+        Arguments:
+            close: will not plot the graph 
+                default is False
+            save: Argument if the plot should be saved or not 
+                default is False
+    
         """
         ### Jet should say sys 
         self.calculate_data(self.time_step)
@@ -539,9 +605,20 @@ class mhd_jet(py3Pluto):
             plt.close()
 
     def plot_fieldlines(self, save=False, close=False, levels=128, min_bxs=None, max_bxs=None, min_bx2=None, max_bx2=None):
-        """
-        Plots a vector plot of the magnetic field lines in the axial-radial plane,
+        """Plots a vector plot of the magnetic field lines in the axial-radial plane,
         while plots the true magnitude of the magnetic field accounted in all 3 directions.
+
+        Arguments:
+            save: Argument if the plot should be saved or not 
+                default is False
+            close: will not plot the graph 
+                default is False
+            levels: the resolution of the contour plot (as per matplotlib.pyplot.contour method)
+            min_bxs: minimum value of magnetic field magnitude
+            max_bxs: maximum value of magnetic field magnitude
+            min_bx2: minimum value of magnetic field in x2 direction
+            max_bx2: maximum value of magnetic field in x2 direction
+
         """
         b_mag = self.magnetic_field_magnitude
         cmp='jet'
@@ -634,6 +711,7 @@ class mhd_jet(py3Pluto):
     def plot_azimuthal_energy(self):
         """
         Plots the Kinetic and Magnetic energies as a function of axial distance to compare for stability analysis
+
         """
         KE_int = [np.sum(b) for b in np.transpose(self.kinetic_energy_jet_x2)]
         BE_int = [np.sum(v) for v in np.transpose(self.magnetic_energy_jet_x2)]
@@ -657,8 +735,12 @@ class mhd_jet(py3Pluto):
 
         
     def oblique_shocks(self, min=0, max=10000):
-        """
-        Use the Ranking-Hugoniot relation for ideal MHD to find oblique shocks
+        """Use the Ranking-Hugoniot relation for ideal MHD to find oblique shocks
+
+        Arguments: 
+            min: minimum value of the Mach number
+            max: maximum value of the Mach number
+
         """
         shock_array = np.zeros_like(self.mach_slow)
         magneto_sonic_mach_mag = np.sqrt(self.mach_fast**2 + self.mach_alfvén**2 + self.mach_slow**2)
